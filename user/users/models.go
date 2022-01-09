@@ -10,6 +10,7 @@ import (
 	"github.com/autocompound/docker_backend/user/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/mongo/options"
 
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	"golang.org/x/crypto/bcrypt"
@@ -31,10 +32,8 @@ type UserModel struct {
 	Email     string
 	Role      string
 	// Image              *string
-	PasswordHash string
+	PasswordHash string `json:"-"`// to hide filed in json
 }
-
-// mogo.ModelRegistry.Register(UserModel{})
 
 // A hack way to save ManyToMany relationship,
 // DB schema looks like: id, created_at, updated_at, deleted_at, following_id, followed_by_id.
@@ -49,14 +48,6 @@ type UserModel struct {
 // 	FollowingID  uint
 // 	FollowedBy   UserModel
 // 	FollowedByID uint
-// }
-
-// Migrate the schema of database if needed
-// func AutoMigrate() {
-// 	db := common.GetDB()
-
-// 	db.AutoMigrate(&UserModel{})
-// 	// db.AutoMigrate(&FollowModel{})
 // }
 
 // What's bcrypt? https://en.wikipedia.org/wiki/Bcrypt
@@ -119,6 +110,30 @@ func SaveOne(data *UserModel) error {
 		return err
 	}
 	return errors.New("User already exists!")
+}
+
+// You could input string which will be saved in database returning with error info
+// 	if err := FindOne(&userModel); err != nil { ... }
+func GetProfile(ID string) (UserModel, error) {
+	client := common.GetDB()
+	person := &UserModel{}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	//convert string to objectid
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		panic(err)
+	}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&person)
+
+	return *person, err
 }
 
 // You could update properties of an UserModel to database returning with error info.

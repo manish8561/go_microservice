@@ -19,22 +19,21 @@ func UsersRegister(router *gin.RouterGroup) {
 // 	router.PUT("/", UserUpdate)
 // }
 
-// func ProfileRegister(router *gin.RouterGroup) {
-// 	router.GET("/:username", ProfileRetrieve)
-// 	router.POST("/:username/follow", ProfileFollow)
-// 	router.DELETE("/:username/follow", ProfileUnfollow)
-// }
+func ProfileRegister(router *gin.RouterGroup) {
+	router.GET("/", ProfileRetrieve)
+	// router.POST("/:username/follow", ProfileFollow)
+	// router.DELETE("/:username/follow", ProfileUnfollow)
+}
 
-// func ProfileRetrieve(c *gin.Context) {
-// 	username := c.Param("username")
-// 	userModel, err := FindOneUser(&UserModel{Username: username})
-// 	if err != nil {
-// 		c.JSON(http.StatusNotFound, common.NewError("profile", errors.New("Invalid username")))
-// 		return
-// 	}
-// 	profileSerializer := ProfileSerializer{c, userModel}
-// 	c.JSON(http.StatusOK, gin.H{"profile": profileSerializer.Response()})
-// }
+func ProfileRetrieve(c *gin.Context) {
+	my_user_id, _ := c.Get("my_user_id")
+	userModel, err := GetProfile(my_user_id.(string))
+	if err != nil {
+		c.JSON(http.StatusNotFound, common.NewError("profile", err))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"profile": userModel})
+}
 
 // func ProfileFollow(c *gin.Context) {
 // 	username := c.Param("username")

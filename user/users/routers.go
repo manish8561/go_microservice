@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/autocompound/docker_backend/user/common"
@@ -9,7 +10,7 @@ import (
 )
 
 func UsersRegister(router *gin.RouterGroup) {
-	// router.POST("/", UsersRegistration)
+	router.POST("/", UsersRegistration)
 	router.POST("/login", UsersLogin)
 }
 
@@ -70,25 +71,23 @@ func UsersRegister(router *gin.RouterGroup) {
 // 	c.JSON(http.StatusOK, gin.H{"profile": serializer.Response()})
 // }
 
-// func UsersRegistration(c *gin.Context) {
-// 	userModelValidator := NewUserModelValidator()
-// 	if err := userModelValidator.Bind(c); err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, common.NewValidatorError(err))
-// 		return
-// 	}
-
-// 	if err := SaveOne(&userModelValidator.userModel); err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
-// 		return
-// 	}
-// 	c.Set("my_user_model", userModelValidator.userModel)
-// 	serializer := UserSerializer{c}
-// 	c.JSON(http.StatusCreated, gin.H{"user": serializer.Response()})
-// }
+func UsersRegistration(c *gin.Context) {
+	userModelValidator := NewUserModelValidator()
+	if err := userModelValidator.Bind(c); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, common.NewValidatorError(err))
+		return
+	}
+	if err := SaveOne(&(userModelValidator.userModel)); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
+		return
+	}
+	// c.Set("my_user_model", userModelValidator.userModel)
+	// serializer := UserSerializer{c}
+	c.JSON(http.StatusCreated, gin.H{"user": "success"})
+}
 
 // user login function for jwt token
 func UsersLogin(c *gin.Context) {
-
 	loginValidator := NewLoginValidator()
 	if err := loginValidator.Bind(c); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, common.NewValidatorError(err))
@@ -105,7 +104,8 @@ func UsersLogin(c *gin.Context) {
 		c.JSON(http.StatusForbidden, common.NewError("login", errors.New("Not Registered email or invalid password")))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token":common.GenToken("manish")})
+	fmt.Println(userModel)
+	c.JSON(http.StatusOK, gin.H{"token":common.GenToken(userModel.ID.Hex())})
 }
 
 // func UserRetrieve(c *gin.Context) {

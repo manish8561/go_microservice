@@ -1,6 +1,8 @@
 package users
 
 import (
+	"time"
+
 	"github.com/autocompound/docker_backend/user/common"
 	"github.com/gin-gonic/gin"
 )
@@ -10,11 +12,12 @@ import (
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
 type UserModelValidator struct {
-	Username  string    `form:"username" json:"username" binding:"exists,alphanum,min=4,max=255"`
-	Email     string    `form:"email" json:"email" binding:"exists,email"`
-	Password  string    `form:"password" json:"password" binding:"exists,min=8,max=255"`
-	Bio       string    `form:"bio" json:"bio" binding:"max=1024"`
-	Image     string    `form:"image" json:"image" binding:"omitempty,url"`
+	Firstname string `form:"firstname" json:"firstname" binding:"required,alphanum,min=4,max=255"`
+	Lastname  string `form:"lastname" json:"lastname" binding:"required,alphanum,min=4,max=255"`
+	Email     string `form:"email" json:"email" binding:"required,email"`
+	Password  string `form:"password" json:"password" binding:"required,min=8,max=255"`
+
+	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	userModel UserModel `json:"-"`
 }
 
@@ -26,16 +29,20 @@ func (self *UserModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	self.userModel.Username = self.Username
+	self.userModel.Firstname = self.Firstname
+	self.userModel.Lastname = self.Lastname
 	self.userModel.Email = self.Email
-	self.userModel.Bio = self.Bio
+	self.userModel.Role = "user"
+	self.userModel.Status = "active"
+	self.userModel.Created = time.Now()
+	self.userModel.Modified = time.Now()
 
 	if self.Password != common.NBRandomPassword {
 		self.userModel.setPassword(self.Password)
 	}
-	if self.Image != "" {
-		self.userModel.Image = &self.Image
-	}
+	// if self.Image != "" {
+	// 	self.userModel.Image = &self.Image
+	// }
 	return nil
 }
 
@@ -48,14 +55,14 @@ func NewUserModelValidator() UserModelValidator {
 
 func NewUserModelValidatorFillWith(userModel UserModel) UserModelValidator {
 	userModelValidator := NewUserModelValidator()
-	userModelValidator.Username = userModel.Username
+	userModelValidator.Firstname = userModel.Firstname
+	userModelValidator.Lastname = userModel.Lastname
 	userModelValidator.Email = userModel.Email
-	userModelValidator.Bio = userModel.Bio
 	userModelValidator.Password = common.NBRandomPassword
 
-	if userModel.Image != nil {
-		userModelValidator.Image = *userModel.Image
-	}
+	// if userModel.Image != nil {
+	// 	userModelValidator.Image = *userModel.Image
+	// }
 	return userModelValidator
 }
 

@@ -1,27 +1,26 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
-	"github.com/go-bongo/bongo"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var conn *bongo.Connection
+var client *mongo.Client
 
 // Opening a database and save the reference to `Database` struct.
-func Init() *bongo.Connection {
-	config := &bongo.Config{
-		ConnectionString: os.Getenv("MONGO_HOST"),
-		Database:         os.Getenv("MONGO_DATABASE"),
-	}
-	connection, err := bongo.Connect(config)
-
+func InitDB() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	c, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+os.Getenv("MONGO_HOST")+":27017"))
 	if err != nil {
 		fmt.Println("db err: (Init) ", err)
 	}
-	conn = connection
-	return connection
+	client = c
 }
 
 // This function will create a temporarily database for running testing cases
@@ -44,6 +43,6 @@ func Init() *bongo.Connection {
 // }
 
 // Using this function to get a connection, you can create your connection pool here.
-func GetDB() *bongo.Connection {
-	return conn
+func GetDB() *mongo.Client {
+	return client
 }

@@ -25,9 +25,8 @@ func main() {
 	// initalize variable from config
 	common.InitVariables()
 	
-	conn := common.Init()
-	// Migrate(db)
-	defer conn.Session.Close()
+	common.InitDB()
+	// defer conn.Session.Close()
 
 	r := gin.Default()
 

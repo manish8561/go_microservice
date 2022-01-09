@@ -1,4 +1,4 @@
-# ![RealWorld Example App](logo.png)
+# ![Go Microservice]
 
 
 [![Build Status](https://travis-ci.org/wangzitian0/golang-gin-realworld-example-app.svg?branch=master)](https://travis-ci.org/wangzitian0/golang-gin-realworld-example-app)

@@ -1,28 +1,37 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/autocompound/docker_backend/user/common"
-	"github.com/go-bongo/bongo"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const CollectionName = "users"
 
 // Models should only be concerned with database schema, more strict checking should be put in validator.
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type UserModel struct {
-	bongo.DocumentBase `bson:",inline"`
-	FirstName          string
-	LastName           string
-	Gender             string
-	Username           string
-	Email              string
-	Bio                string
-	Image              *string
-	PasswordHash       string
+	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created   time.Time          `bson:"_created" json:"_created"`
+	Modified  time.Time          `bson:"_modified" json:"_modified"`
+	Firstname string
+	Lastname  string
+	Status    string
+	Username  string
+	Email     string
+	Role      string
+	// Image              *string
+	PasswordHash string
 }
 
 // mogo.ModelRegistry.Register(UserModel{})
@@ -77,25 +86,40 @@ func (u *UserModel) checkPassword(password string) error {
 // 	userModel, err := FindOneUser(&UserModel{Username: "username0"})
 func FindOneUser(email string) (UserModel, error) {
 	person := &UserModel{}
-	
-	connection := common.GetDB()
-	err := connection.Collection("people").FindOne(bson.M{"email": email}, person)
+
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&person)
 
 	if err != nil {
 		fmt.Println(err.Error())
 	} else {
-		fmt.Println("Found user:", person)
+		fmt.Println("Found user:", person.ID.Hex())
 	}
 	return *person, err
 }
 
 // You could input an UserModel which will be saved in database returning with error info
 // 	if err := SaveOne(&userModel); err != nil { ... }
-// func SaveOne(data interface{}) error {
-// 	db := common.GetDB()
-// 	err := db.Save(data).Error
-// 	return err
-// }
+func SaveOne(data *UserModel) error {
+	client := common.GetDB()
+	person := &UserModel{}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// to check for unique email address
+	err := collection.FindOne(ctx, bson.M{"email": data.Email}).Decode(&person)
+	if err != nil {
+		res, err := collection.InsertOne(ctx, data)
+		fmt.Println(res, "Inserted")
+		return err
+	}
+	return errors.New("User already exists!")
+}
 
 // You could update properties of an UserModel to database returning with error info.
 //  err := db.Model(userModel).Update(UserModel{Username: "wangzitian0"}).Error

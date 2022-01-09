@@ -29,7 +29,7 @@ func RandString(n int) string {
 
 // Keep this two config private, it should not expose to open source
 var NBSecretPassword = "A String Very Very Very Strong!!@##$!@#$"
-// var NBRandomPassword = "A String Very Very Very Niubilty!!@##$!@#4"
+var NBRandomPassword = "A String Very Very Very Niubilty!!@##$!@#4"
 
 // initial values in the project
 func InitVariables() {
@@ -42,6 +42,11 @@ func InitVariables() {
 		secret = "secret"
 	}
 	NBSecretPassword = secret
+	random_password, ok := os.LookupEnv("RANDOM_PASSWORD")
+	if !ok {
+		random_password = "random password"
+	}
+	NBSecretPassword = random_password
 }
 
 // A Util function to generate jwt_token which can be used in the request header

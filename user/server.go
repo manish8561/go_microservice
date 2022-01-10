@@ -30,7 +30,7 @@ func main() {
 
 	r := gin.Default()
 
-	v1 := r.Group("/api")
+	v1 := r.Group("/api/user_service")
 	users.UsersRegister(v1.Group("/users"))
 	v1.Use(users.AuthMiddleware(false))
 
@@ -45,7 +45,7 @@ func main() {
 
 	// articles.ArticlesRegister(v1.Group("/articles"))
 
-	testAuth := r.Group("/api/ping")
+	testAuth := r.Group("/api/user_service/ping")
 
 	testAuth.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{

@@ -17,7 +17,19 @@ This codebase was created to demonstrate a fully fledged fullstack application b
 docker_backend
 |   
 user service
-├── bongo.db
+├── mongo.db
+├── server.go
+├── common
+│   ├── utils.go        //small tools function
+│   └── database.go     //DB connect manager
+├── users
+|   ├── models.go       //data models define & DB operation
+|   ├── routers.go      //business logic & router binding
+|   ├── middlewares.go  //put the before & after logic of handle request
+|   └── validators.go   //form/json checker
+├── ...
+farm service
+├── mongo.db
 ├── server.go
 ├── common
 │   ├── utils.go        //small tools function

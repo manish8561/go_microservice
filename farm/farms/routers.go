@@ -15,7 +15,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 
 func FarmRetrieve(c *gin.Context) {
 	my_user_id, _ := c.Get("my_user_id")
-	userModel, err := GetProfile(my_user_id.(string))
+	userModel, err := GetFarm(my_user_id.(string))
 	if err != nil {
 		c.JSON(http.StatusNotFound, common.NewError("profile", err))
 		return

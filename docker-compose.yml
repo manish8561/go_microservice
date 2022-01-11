@@ -20,7 +20,6 @@ services:
   #     - "/data2/dvolumes/prestoc/dockerrabbit:/var/lib/rabbitmq"
   #   networks:
   #     - my_network
-
   # message_service:
   #   hostname: message_service
   #   ports:
@@ -73,16 +72,6 @@ services:
   #   networks:
   #     my_network:
   #       ipv4_address: 20.10.11.3
-  # gateway_service:
-  #   hostname: gateway_service
-  #   ports:
-  #     - "0.0.0.0:8081:8081"
-  #   container_name: gateway_service
-  #   build: ./gateway_service/
-  #   restart: always
-  #   networks:
-  #     my_network:
-  #       ipv4_address: 20.10.11.2
 
   user:
     hostname: user
@@ -94,7 +83,28 @@ services:
     env_file: ./config/user.env
     networks:
       my_network:
-        ipv4_address: 20.10.11.10
+        ipv4_address: 20.10.11.3
+  farm:
+    hostname: farm
+    ports:
+      - "0.0.0.0:3002:3002"
+    container_name: farm
+    restart: always
+    build: ./farm
+    env_file: ./config/farm.env
+    networks:
+      my_network:
+        ipv4_address: 20.10.11.4
+  gateway_service:
+    hostname: gateway_service
+    ports:
+      - "0.0.0.0:8081:8081"
+    container_name: gateway_service
+    restart: always
+    build: ./gateway_service
+    networks:
+      my_network:
+        ipv4_address: 20.10.11.2
 networks:
   my_network:
     driver: bridge

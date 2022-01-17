@@ -62,6 +62,13 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			//checking for admin role
+			if role := claims["role"].(string); role != "admin" {
+				if auto401 {
+					c.AbortWithError(http.StatusUnauthorized, err)
+				}
+				return
+			}
 			my_user_id := claims["id"].(string)
 			fmt.Println(my_user_id, claims["id"])
 			UpdateContextUserModel(c, my_user_id)

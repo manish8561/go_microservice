@@ -104,7 +104,7 @@ func UsersLogin(c *gin.Context) {
 		return
 	}
 	fmt.Println(userModel)
-	c.JSON(http.StatusOK, gin.H{"token":common.GenToken(userModel.ID.Hex())})
+	c.JSON(http.StatusOK, gin.H{"token":common.GenToken(userModel.ID.Hex(), userModel.Role)})
 }
 
 // func UserRetrieve(c *gin.Context) {

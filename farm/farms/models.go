@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/mongo/options"
-
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
@@ -25,7 +24,7 @@ type FarmModel struct {
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created    time.Time          `bson:"_created" json:"_created"`
 	Modified   time.Time          `bson:"_modified" json:"_modified"`
-	PID        int
+	PID        int               
 	Token      string
 	TokenType  string
 	Status     string
@@ -33,7 +32,6 @@ type FarmModel struct {
 	Vault      string
 	// PasswordHash string `json:"-"` // to hide filed in json
 }
-
 
 // You could input the conditions and it will return an FarmModel in database with error info.
 // 	farmModel, err := FindOneUser(&FarmModel{Username: "username0"})
@@ -97,23 +95,23 @@ func GetFarm(ID string) (FarmModel, error) {
 
 	return *farm, err
 }
+
 // Farm list api with page and limit
 func GetAll(page int64, limit int64) ([]*FarmModel, error) {
 	client := common.GetDB()
-	var farms  []*FarmModel
+	var farms []*FarmModel
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
 
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSkip((page - 1) * limit).SetLimit(limit)
+	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 
-	cursor, err := collection.Find(ctx, bson.M{},opts)
+	cursor, err := collection.Find(ctx, bson.M{"status": "active"}, opts)
 	if err != nil {
 		return farms, err
 	}

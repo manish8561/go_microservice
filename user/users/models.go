@@ -181,21 +181,3 @@ func GetProfile(ID string) (UserModel, error) {
 // 	return err
 // }
 
-// You could get a following list of userModel
-// 	followings := userModel.GetFollowings()
-// func (u UserModel) GetFollowings() []UserModel {
-// 	db := common.GetDB()
-// 	tx := db.Begin()
-// 	var follows []FollowModel
-// 	var followings []UserModel
-// 	tx.Where(FollowModel{
-// 		FollowedByID: u.ID,
-// 	}).Find(&follows)
-// 	for _, follow := range follows {
-// 		var userModel UserModel
-// 		tx.Model(&follow).Related(&userModel, "Following")
-// 		followings = append(followings, userModel)
-// 	}
-// 	tx.Commit()
-// 	return followings
-// }

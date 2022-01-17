@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,7 +17,26 @@ var client *mongo.Client
 func InitDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	c, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URL")))
+	//function to monitor mongodb
+	monitor := &event.CommandMonitor{
+		Started: func(_ context.Context, e *event.CommandStartedEvent) {
+			fmt.Println(e.Command)
+		},
+		Succeeded: func(_ context.Context, e *event.CommandSucceededEvent) {
+			fmt.Println(e.Reply)
+		},
+		Failed: func(_ context.Context, e *event.CommandFailedEvent) {
+			fmt.Println(e)
+		},
+	}
+	// client options
+	clientOpts := options.Client().ApplyURI(os.Getenv("MONGO_URL"))
+	if os.Getenv("GIN_MODE") != "release" {
+		clientOpts.SetMonitor(monitor)
+	}
+	// connect
+	c, err := mongo.Connect(ctx, clientOpts)
+
 	if err != nil {
 		fmt.Println("db err: (Init) ", err)
 	}

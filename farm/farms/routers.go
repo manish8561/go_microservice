@@ -26,8 +26,14 @@ func FarmList(c *gin.Context) {
 	if err != nil {
 		page = 1
 	}
+	if page <= 0 {
+		page = 1
+	}
 	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
 	if err != nil {
+		limit = 10
+	}
+	if limit <= 10 {
 		limit = 10
 	}
 	farmModel, err := GetAll(page, limit)

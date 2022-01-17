@@ -10,6 +10,7 @@ import (
 	"github.com/autocompound/docker_backend/user/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	// "go.mongodb.org/mongo-driver/mongo/options"
 
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
@@ -32,7 +33,7 @@ type UserModel struct {
 	Email     string
 	Role      string
 	// Image              *string
-	PasswordHash string `json:"-"`// to hide filed in json
+	PasswordHash string `json:"-"` // to hide filed in json
 }
 
 // A hack way to save ManyToMany relationship,
@@ -124,7 +125,8 @@ func GetProfile(ID string) (UserModel, error) {
 	//convert string to objectid
 	objID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
-		panic(err)
+		// panic(err)
+		return *person, err
 	}
 
 	// Find the document for which the _id field matches id.

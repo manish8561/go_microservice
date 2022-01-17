@@ -11,79 +11,53 @@ import (
 // - Validator: write the form/json checking rule according to the doc https://github.com/go-playground/validator
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
-type UserModelValidator struct {
-	Firstname string `form:"firstname" json:"firstname" binding:"required,alphanum,min=4,max=255"`
-	Lastname  string `form:"lastname" json:"lastname" binding:"required,alphanum,min=4,max=255"`
-	Email     string `form:"email" json:"email" binding:"required,email"`
-	Password  string `form:"password" json:"password" binding:"required,min=8,max=255"`
+type FarmModelValidator struct {
+	PID      int    `form:"pid" json:"pid" binding:"required"`
+	Token    string `form:"token" json:"token" binding:"required,alphanum,max=255"`
+	TokenType    string `form:"tokenType" json:"TokenType" binding:"required"`
+	Vault    string `form:"vault" json:"vault" binding:"required,alphanum,max=255"`
+	Masterchef string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
 
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
-	userModel UserModel `json:"-"`
+	farmModel FarmModel `json:"-"`
 }
 
 // There are some difference when you create or update a model, you need to fill the DataModel before
 // update so that you can use your origin data to cheat the validator.
 // BTW, you can put your general binding logic here such as setting password.
-func (self *UserModelValidator) Bind(c *gin.Context) error {
+func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	err := common.Bind(c, self)
 	if err != nil {
 		return err
 	}
-	self.userModel.Firstname = self.Firstname
-	self.userModel.Lastname = self.Lastname
-	self.userModel.Email = self.Email
-	self.userModel.Role = "user"
-	self.userModel.Status = "active"
-	self.userModel.Created = time.Now()
-	self.userModel.Modified = time.Now()
+	self.farmModel.PID = self.PID
+	self.farmModel.Token = self.Token
+	self.farmModel.TokenType = self.TokenType
+	self.farmModel.Vault = self.Vault
+	self.farmModel.Masterchef = self.Masterchef
+	self.farmModel.Status = "active"
+	self.farmModel.Created = time.Now()
+	self.farmModel.Modified = time.Now()
 
-	if self.Password != common.NBRandomPassword {
-		self.userModel.setPassword(self.Password)
-	}
-	// if self.Image != "" {
-	// 	self.userModel.Image = &self.Image
-	// }
 	return nil
 }
 
 // You can put the default value of a Validator here
-func NewUserModelValidator() UserModelValidator {
-	userModelValidator := UserModelValidator{}
-	//userModelValidator.User.Email ="w@g.cn"
-	return userModelValidator
+func NewFarmModelValidator() FarmModelValidator {
+	farmModelValidator := FarmModelValidator{}
+	return farmModelValidator
 }
 
-func NewUserModelValidatorFillWith(userModel UserModel) UserModelValidator {
-	userModelValidator := NewUserModelValidator()
-	userModelValidator.Firstname = userModel.Firstname
-	userModelValidator.Lastname = userModel.Lastname
-	userModelValidator.Email = userModel.Email
-	userModelValidator.Password = common.NBRandomPassword
+func NewFarmModelValidatorFillWith(farmModel FarmModel) FarmModelValidator {
+	farmModelValidator := NewFarmModelValidator()
+	farmModelValidator.PID = farmModel.PID
+	farmModelValidator.Token = farmModel.Token
+	farmModelValidator.TokenType = farmModel.TokenType
+	farmModelValidator.Vault = farmModel.Vault
+	farmModelValidator.Masterchef = farmModel.Masterchef
 
-	// if userModel.Image != nil {
-	// 	userModelValidator.Image = *userModel.Image
-	// }
-	return userModelValidator
+
+	return farmModelValidator
 }
 
-type LoginValidator struct {
-	Email     string    `form:"email" json:"email" binding:"required,email"`
-	Password  string    `form:"password" json:"password" binding:"required,min=8,max=255"`
-	userModel UserModel `json:"-"`
-}
 
-func (self *LoginValidator) Bind(c *gin.Context) error {
-	err := common.Bind(c, self)
-	if err != nil {
-		return err
-	}
-
-	self.userModel.Email = self.Email
-	return nil
-}
-
-// You can put the default value of a Validator here
-func NewLoginValidator() LoginValidator {
-	loginValidator := LoginValidator{}
-	return loginValidator
-}

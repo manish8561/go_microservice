@@ -33,7 +33,7 @@ func main() {
 	// farms.UsersRegister(v1.Group("/users"))
 	// v1.Use(farms.AuthMiddleware(false))
 
-	v1.Use(farms.AuthMiddleware(true))
+	v1.Use(farms.AuthMiddleware(false))
 	farms.FarmsRegister(v1.Group("/farm"))
 
 	testAuth := r.Group("/api/farm_service/ping")

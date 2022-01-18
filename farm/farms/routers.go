@@ -1,7 +1,6 @@
 package farms
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,7 +12,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	router.GET("/", FarmList)
 	router.GET("/:id", FarmRetrieve)
 	router.POST("/", FarmSave)
-	// router.POST("/:username/follow", FarmFollow)
+	router.PUT("/", FarmUpdate)
 	// router.DELETE("/:username/follow", FarmUnfollow)
 }
 
@@ -56,6 +55,22 @@ func FarmRetrieve(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": farmModel})
 }
+/*
+function to update single farm using put api
+*/
+func FarmUpdate(c *gin.Context) {
+	farmModelValidator := NewFarmModelValidator()
+	if err := farmModelValidator.Bind(c); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, common.NewError("message", err))
+		return
+	}
+	if err := UpdateOne(&(farmModelValidator.farmModel)); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "updated farm successfully"})
+}
+
 
 /*
 function to save farm in db
@@ -63,7 +78,6 @@ function to save farm in db
 func FarmSave(c *gin.Context) {
 	farmModelValidator := NewFarmModelValidator()
 	if err := farmModelValidator.Bind(c); err != nil {
-		fmt.Println(err, "manish")
 		c.JSON(http.StatusUnprocessableEntity, common.NewError("message", err))
 		return
 	}
@@ -71,5 +85,5 @@ func FarmSave(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"farm": "success"})
+	c.JSON(http.StatusCreated, gin.H{"message": "farm inserted"})
 }

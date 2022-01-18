@@ -24,33 +24,13 @@ type FarmModel struct {
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created    time.Time          `bson:"_created" json:"_created"`
 	Modified   time.Time          `bson:"_modified" json:"_modified"`
-	PID        int               
+	PID        int
 	Token      string
 	TokenType  string
 	Status     string
 	Masterchef string
 	Vault      string
 	// PasswordHash string `json:"-"` // to hide filed in json
-}
-
-// You could input the conditions and it will return an FarmModel in database with error info.
-// 	farmModel, err := FindOneUser(&FarmModel{Username: "username0"})
-func FindOneUser(token string) (FarmModel, error) {
-	person := &FarmModel{}
-
-	client := common.GetDB()
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err := collection.FindOne(ctx, bson.M{"token": token}).Decode(&person)
-
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		fmt.Println("Found user:", person.ID.Hex())
-	}
-	return *person, err
 }
 
 // You could input an FarmModel which will be saved in database returning with error info
@@ -70,6 +50,26 @@ func SaveOne(data *FarmModel) error {
 		return err
 	}
 	return errors.New("farm already exists!")
+}
+
+// You could input an FarmModel which will be updated in database returning with error info
+// 	if err := UpdateOne(&farmModel); err != nil { ... }
+func UpdateOne(data *FarmModel) error {
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// to check for unique email address
+	opts := options.Update().SetUpsert(false)
+	// update := bson.D{{"$set", bson.D{{"token", "newemail@example.com"}}}}
+	update := bson.D{{"$set", data}}
+
+	res, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return err
+	}
+	fmt.Println(res, "Updated")
+	return err
 }
 
 // You could input string which will be saved in database returning with error info
@@ -123,11 +123,3 @@ func GetAll(page int64, limit int64) ([]*FarmModel, error) {
 	}
 	return farms, err
 }
-
-// You could update properties of an FarmModel to database returning with error info.
-//  err := db.Model(farmModel).Update(FarmModel{Username: "wangzitian0"}).Error
-// func (model *FarmModel) Update(data interface{}) error {
-// 	db := common.GetDB()
-// 	err := db.Model(model).Update(data).Error
-// 	return err
-// }

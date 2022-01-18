@@ -5,6 +5,7 @@ import (
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // *ModelValidator containing two parts:
@@ -12,10 +13,11 @@ import (
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
 type FarmModelValidator struct {
-	PID      int    `form:"pid" json:"pid" binding:"required"`
-	Token    string `form:"token" json:"token" binding:"required,alphanum,max=255"`
-	TokenType    string `form:"tokenType" json:"TokenType" binding:"required"`
-	Vault    string `form:"vault" json:"vault" binding:"required,alphanum,max=255"`
+	ID         string `form:"_id" json:"_id" `
+	PID        int    `form:"pid" json:"pid" binding:"required"`
+	Token      string `form:"token" json:"token" binding:"required,alphanum,max=255"`
+	TokenType  string `form:"tokenType" json:"TokenType" binding:"required"`
+	Vault      string `form:"vault" json:"vault" binding:"required,alphanum,max=255"`
 	Masterchef string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
 
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
@@ -39,6 +41,14 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	self.farmModel.Created = time.Now()
 	self.farmModel.Modified = time.Now()
 
+	// using _id to update row in db
+	if self.ID != "" {
+		objID, err := primitive.ObjectIDFromHex(self.ID)
+		if err != nil {
+			return err
+		}
+		self.farmModel.ID = objID
+	}
 	return nil
 }
 
@@ -47,17 +57,3 @@ func NewFarmModelValidator() FarmModelValidator {
 	farmModelValidator := FarmModelValidator{}
 	return farmModelValidator
 }
-
-func NewFarmModelValidatorFillWith(farmModel FarmModel) FarmModelValidator {
-	farmModelValidator := NewFarmModelValidator()
-	farmModelValidator.PID = farmModel.PID
-	farmModelValidator.Token = farmModel.Token
-	farmModelValidator.TokenType = farmModel.TokenType
-	farmModelValidator.Vault = farmModel.Vault
-	farmModelValidator.Masterchef = farmModel.Masterchef
-
-
-	return farmModelValidator
-}
-
-

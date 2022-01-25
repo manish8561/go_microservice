@@ -8,6 +8,7 @@ import (
 	// "github.com/autocompound/docker_backend/farm/articles"
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/autocompound/docker_backend/farm/farms"
+	"github.com/autocompound/docker_backend/farm/contracts"
 	// "github.com/go-bongo/bongo"
 )
 
@@ -35,6 +36,7 @@ func main() {
 
 	v1.Use(farms.AuthMiddleware(false))
 	farms.FarmsRegister(v1.Group("/farm"))
+	contracts.ContractsRegister(v1.Group("/contract"))
 
 	testAuth := r.Group("/api/farm_service/ping")
 

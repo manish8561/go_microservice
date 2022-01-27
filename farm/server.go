@@ -4,7 +4,7 @@ import (
 	// "fmt"
 
 	"github.com/gin-gonic/gin"
-
+	"net/http"
 	// "github.com/autocompound/docker_backend/farm/articles"
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/autocompound/docker_backend/farm/farms"
@@ -66,6 +66,8 @@ func main() {
 	//    UserModelID:userA.ID,
 	//}).First(&userAA)
 	//fmt.Println(userAA)
+
+	r.StaticFS("/file", http.Dir("public"))
 
 	r.Run() // listen and serve on 0.0.0.0:8080
 }

@@ -3,12 +3,14 @@ package main
 import (
 	// "fmt"
 
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+
 	// "github.com/autocompound/docker_backend/farm/articles"
 	"github.com/autocompound/docker_backend/farm/common"
-	"github.com/autocompound/docker_backend/farm/farms"
 	"github.com/autocompound/docker_backend/farm/contracts"
+	"github.com/autocompound/docker_backend/farm/farms"
 	// "github.com/go-bongo/bongo"
 )
 
@@ -26,7 +28,6 @@ func main() {
 	common.InitVariables()
 
 	common.InitDB()
-	// defer conn.Session.Close()
 
 	r := gin.Default()
 
@@ -66,8 +67,9 @@ func main() {
 	//    UserModelID:userA.ID,
 	//}).First(&userAA)
 	//fmt.Println(userAA)
-
+	r.MaxMultipartMemory = 8 << 20  // 8 MiB
 	r.StaticFS("/file", http.Dir("public"))
+
 
 	r.Run() // listen and serve on 0.0.0.0:8080
 }

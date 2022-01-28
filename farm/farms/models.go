@@ -30,6 +30,8 @@ type FarmModel struct {
 	Status     string
 	Masterchef string
 	Vault      string
+	Token0Img  string
+	Token1Img  string
 	// PasswordHash string `json:"-"` // to hide filed in json
 }
 

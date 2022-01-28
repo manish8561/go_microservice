@@ -5,6 +5,8 @@
 *.launch
 .settings/
 
+#images
+public
 
 #System Files
 .DS_Store

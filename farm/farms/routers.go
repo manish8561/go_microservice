@@ -3,16 +3,18 @@ package farms
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/gin-gonic/gin"
 )
 
 func FarmsRegister(router *gin.RouterGroup) {
+	// Set a lower memory limit for multipart forms (default is 32 MiB)
+	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
 	router.GET("/", FarmList)
 	router.GET("/:id", FarmRetrieve)
 	router.POST("/upload", FileUpload)
@@ -97,11 +99,8 @@ func FarmUpdate(c *gin.Context) {
 function to save farm in db
 */
 func FileUpload(c *gin.Context) {
-	// Set a lower memory limit for multipart forms (default is 32 MiB)
-	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
-
 	// single file
-	file, header, err := c.Request.FormFile("file")
+	file, handler, err := c.Request.FormFile("file")
 	if file == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no file uploaded"})
 		return
@@ -110,17 +109,33 @@ func FileUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
 		return
 	}
-	filename := header.Filename
+	filename := handler.Filename
+
+	// fmt.Println("manish", handler.Size)
+	// fmt.Println("manish", handler.Header)
+	if handler.Size > (4 * 1024 * 1024) {// 4MB
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File size is greater than 4MB"})
+		return
+	}
+
+	// check the type of the image upload
+	fileType := handler.Header.Get("Content-Type")
+	if !strings.Contains(fileType, "image") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File is not an image"})
+		return
+	}
 
 	out, err := os.Create("public/" + filename)
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
+		return
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, file)
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
+		return
 	}
 	filepath := "http://localhost:3002/file/" + filename
 

@@ -17,7 +17,7 @@ var client *mongo.Client
 func InitDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	//function to monitor mongodb
+	//function to monitor mongodb logs mongodb queries and data
 	monitor := &event.CommandMonitor{
 		Started: func(_ context.Context, e *event.CommandStartedEvent) {
 			fmt.Println(e.Command)

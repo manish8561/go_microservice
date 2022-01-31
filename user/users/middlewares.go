@@ -1,6 +1,7 @@
 package users
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -57,16 +58,16 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 		})
 		if err != nil {
 			if auto401 {
+				c.JSON(http.StatusUnauthorized, gin.H{"message":"Token Expired"})
 				c.AbortWithError(http.StatusUnauthorized, err)
+				return
 			}
-			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			//checking for admin role
 			if role := claims["role"].(string); role != "admin" {
-				if auto401 {
-					c.AbortWithError(http.StatusUnauthorized, err)
-				}
+				c.JSON(http.StatusUnauthorized, gin.H{"message":"You dont have the access"})
+				c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
 				return
 			}
 			my_user_id := claims["id"].(string)

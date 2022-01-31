@@ -4,7 +4,7 @@ import (
 	// "fmt"
 
 	"net/http"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	// "github.com/autocompound/docker_backend/farm/articles"
@@ -30,6 +30,7 @@ func main() {
 	common.InitDB()
 
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	v1 := r.Group("/api/farm_service")
 	// farms.UsersRegister(v1.Group("/users"))

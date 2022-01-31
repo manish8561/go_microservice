@@ -95,16 +95,16 @@ func UsersLogin(c *gin.Context) {
 	userModel, err := FindOneUser(loginValidator.Email)
 
 	if err != nil {
-		c.JSON(http.StatusForbidden, common.NewError("login", errors.New("Not Registered email or invalid password")))
+		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid  email or password")))
 		return
 	}
 
 	if userModel.checkPassword(loginValidator.Password) != nil {
-		c.JSON(http.StatusForbidden, common.NewError("login", errors.New("Not Registered email or invalid password")))
+		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid email or password")))
 		return
 	}
 	fmt.Println(userModel)
-	c.JSON(http.StatusOK, gin.H{"token":common.GenToken(userModel.ID.Hex(), userModel.Role)})
+	c.JSON(http.StatusOK, gin.H{"token": common.GenToken(userModel.ID.Hex(), userModel.Role)})
 }
 
 // func UserRetrieve(c *gin.Context) {

@@ -65,7 +65,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			//checking for admin role
-			if role := claims["role"].(string); role != "admin" {
+			if role := claims["role"].(string); role != "admin" && auto401 {
 				c.JSON(http.StatusUnauthorized, gin.H{"message":"You dont have the access"})
 				c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
 				return

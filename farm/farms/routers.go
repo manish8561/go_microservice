@@ -15,11 +15,11 @@ import (
 func FarmsRegister(router *gin.RouterGroup) {
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
-	router.GET("/", FarmList)
+	router.GET("", FarmList)
 	router.GET("/:id", FarmRetrieve)
 	router.POST("/upload", FileUpload)
-	router.POST("/", FarmSave)
-	router.PUT("/", FarmUpdate)
+	router.POST("", FarmSave)
+	router.PUT("", FarmUpdate)
 	// router.DELETE("/:username/follow", FarmUnfollow)
 }
 

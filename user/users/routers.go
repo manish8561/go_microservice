@@ -10,7 +10,7 @@ import (
 )
 
 func UsersRegister(router *gin.RouterGroup) {
-	router.POST("/", UsersRegistration)
+	router.POST("", UsersRegistration)
 	router.POST("/login", UsersLogin)
 }
 
@@ -20,7 +20,7 @@ func UsersRegister(router *gin.RouterGroup) {
 // }
 
 func ProfileRegister(router *gin.RouterGroup) {
-	router.GET("/", ProfileRetrieve)
+	router.GET("", ProfileRetrieve)
 	// router.POST("/:username/follow", ProfileFollow)
 	// router.DELETE("/:username/follow", ProfileUnfollow)
 }

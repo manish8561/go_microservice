@@ -48,7 +48,7 @@ func main() {
 	// farms.UsersRegister(v1.Group("/users"))
 	// v1.Use(farms.AuthMiddleware(false))
 
-	v1.Use(farms.AuthMiddleware(false))
+	v1.Use(common.AuthMiddleware(false))
 	farms.FarmsRegister(v1.Group("/farm"))
 	contracts.ContractsRegister(v1.Group("/contract"))
 

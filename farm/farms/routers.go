@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/gin-gonic/gin"
@@ -109,7 +110,11 @@ func FileUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
 		return
 	}
-	filename := handler.Filename
+	// convert current timestamp into string
+	t := time.Now().Unix()
+	n := strconv.FormatInt(t, 10)
+
+	filename := n+"_"+handler.Filename
 
 	// fmt.Println("manish", handler.Size)
 	// fmt.Println("manish", handler.Header)
@@ -137,7 +142,7 @@ func FileUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
 		return
 	}
-	filepath := os.Getenv("UPLOAD_URL") + filename
+	filepath := os.Getenv("UPLOAD_URL") + filename 
 
 	// Upload the file to specific dst.
 	// c.SaveUploadedFile(file, dst)

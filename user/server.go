@@ -45,9 +45,9 @@ func main() {
 	// Register the middleware
 	v1 := r.Group("/api/user_service")
 	users.UsersRegister(v1.Group("/users"))
-	v1.Use(users.AuthMiddleware(false))
+	v1.Use(common.AuthMiddleware(false))
 
-	v1.Use(users.AuthMiddleware(true))
+	v1.Use(common.AuthMiddleware(true))
 	users.ProfileRegister(v1.Group("/profile"))
 
 	// articles.ArticlesAnonymousRegister(v1.Group("/articles"))

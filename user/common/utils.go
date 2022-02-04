@@ -59,8 +59,8 @@ func GenToken(id string, role string) string {
 	jwt_token := jwt.New(jwt.GetSigningMethod("HS256"))
 	// Set some claims
 	jwt_token.Claims = jwt.MapClaims{
-		"id":  id,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+		"id":   id,
+		"exp":  time.Now().Add(time.Hour * 24).Unix(),
 		"role": role,
 	}
 	// Sign and get the complete encoded token as a string
@@ -145,6 +145,11 @@ func UpdateContextUserModel(c *gin.Context, my_user_id string) {
 //  r.Use(AuthMiddleware(true))
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.Request.Header["Authorization"] == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "No Token Found"})
+			c.AbortWithError(http.StatusUnauthorized, errors.New("No Token Found"))
+			return
+		}
 		// UpdateContextUserModel(c, 0)
 		token, err := request.ParseFromRequest(c.Request, MyAuth2Extractor, func(token *jwt.Token) (interface{}, error) {
 			b := ([]byte(NBSecretPassword))
@@ -170,4 +175,5 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 		}
 	}
 }
+
 // ------- common middleware code end--------------------

@@ -144,6 +144,11 @@ func UpdateContextUserModel(c *gin.Context, my_user_id string) {
 //  r.Use(AuthMiddleware(true))
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if c.Request.Header["Authorization"] == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "No Token Found"})
+			c.AbortWithError(http.StatusUnauthorized, errors.New("No Token Found"))
+			return
+		}
 		// UpdateContextUserModel(c, 0)
 		token, err := request.ParseFromRequest(c.Request, MyAuth2Extractor, func(token *jwt.Token) (interface{}, error) {
 			b := ([]byte(NBSecretPassword))

@@ -6,6 +6,8 @@ RUN apk add build-base
 ## image that will hold our application source
 ## files
 RUN mkdir /app
+# Path for upload files in docker
+RUN mkdir /app/public
 ## We copy everything in the root directory
 ## into our /app directory
 ADD . /app

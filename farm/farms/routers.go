@@ -137,7 +137,7 @@ func FileUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
 		return
 	}
-	filepath := "http://localhost:3002/file/" + filename
+	filepath := os.Getenv("UPLOAD_URL") + filename
 
 	// Upload the file to specific dst.
 	// c.SaveUploadedFile(file, dst)

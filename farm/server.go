@@ -81,7 +81,8 @@ func main() {
 	//}).First(&userAA)
 	//fmt.Println(userAA)
 	r.MaxMultipartMemory = 8 << 20  // 8 MiB
-	r.StaticFS("/file", http.Dir("public"))
+	r.StaticFS("/api/farm_service/file", http.Dir("public"))
+	// r.StaticFS("/api/farm_service/file", http.Dir("/data/dvolumes/autocompound/public"))
 
 
 	r.Run() // listen and serve on 0.0.0.0:8080

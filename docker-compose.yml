@@ -17,7 +17,7 @@ services:
   #   image: rabbitmq:3-management
   #   restart: always
   #   volumes:
-  #     - "/data2/dvolumes/autocompound/docker_rabbit:/var/lib/rabbitmq"
+  #     - "/data/dvolumes/autocompound/docker_rabbit:/var/lib/rabbitmq"
   #   networks:
   #     - my_network
   # message_service:
@@ -93,7 +93,7 @@ services:
     build: ./farm
     env_file: ./config/farm.env
     volumes:
-      - "/data2/dvolumes/autocompound/public:./farm/public"
+      - "/data/dvolumes/autocompound/public:/app/public:rw"
     networks:
       my_network:
         ipv4_address: 20.10.11.4

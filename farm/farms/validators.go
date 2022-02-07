@@ -19,8 +19,10 @@ type FarmModelValidator struct {
 	TokenType  string `form:"tokenType" json:"TokenType" binding:"required"`
 	Vault      string `form:"vault" json:"vault" binding:"required,alphanum,max=255"`
 	Masterchef string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
-	Token0Img  string `form:"token0Img" json:"token0Img" binding:"required,max=255"`
-	Token1Img  string `form:"token1Img" json:"token1Img" binding:"required,max=255"`
+	Router string `form:"router" json:"router" binding:"required,alphanum,max=255"`
+	Stake string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
+	Token0Img  string `form:"token0Img" json:"token0Img" binding:"max=255"`
+	Token1Img  string `form:"token1Img" json:"token1Img" binding:"max=255"`
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	farmModel FarmModel `json:"-"`
 }
@@ -38,6 +40,8 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	self.farmModel.TokenType = self.TokenType
 	self.farmModel.Vault = self.Vault
 	self.farmModel.Masterchef = self.Masterchef
+	self.farmModel.Router = self.Router
+	self.farmModel.Stake = self.Stake
 	self.farmModel.Token0Img = self.Token0Img
 	self.farmModel.Token1Img = self.Token1Img
 	self.farmModel.Status = "active"

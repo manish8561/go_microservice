@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// controller file with routes
+// register api(s) in this function
 func UsersRegister(router *gin.RouterGroup) {
 	router.POST("", UsersRegistration)
 	router.POST("/login", UsersLogin)
@@ -29,10 +31,10 @@ func ProfileRetrieve(c *gin.Context) {
 	my_user_id, _ := c.Get("my_user_id")
 	userModel, err := GetProfile(my_user_id.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, common.NewError("profile", err))
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": common.NewError("profile", err)})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"profile": userModel})
+	c.JSON(http.StatusOK, gin.H{"profile": userModel, success: true})
 }
 
 // func ProfileFollow(c *gin.Context) {
@@ -73,11 +75,11 @@ func ProfileRetrieve(c *gin.Context) {
 func UsersRegistration(c *gin.Context) {
 	userModelValidator := NewUserModelValidator()
 	if err := userModelValidator.Bind(c); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, common.NewValidatorError(err))
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": common.NewValidatorError(err)})
 		return
 	}
 	if err := SaveOne(&(userModelValidator.userModel)); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": common.NewError("database", err)})
 		return
 	}
 	// c.Set("my_user_model", userModelValidator.userModel)

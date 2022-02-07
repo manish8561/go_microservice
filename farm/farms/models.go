@@ -29,6 +29,8 @@ type FarmModel struct {
 	TokenType  string
 	Status     string
 	Masterchef string
+	Router     string
+	Stake      string	
 	Vault      string
 	Token0Img  string
 	Token1Img  string

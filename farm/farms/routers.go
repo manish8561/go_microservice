@@ -97,7 +97,7 @@ func FarmUpdate(c *gin.Context) {
 }
 
 /*
-function to save farm in db
+function to upload file in the farm
 */
 func FileUpload(c *gin.Context) {
 	// single file
@@ -115,21 +115,21 @@ func FileUpload(c *gin.Context) {
 	n := strconv.FormatInt(t, 10)
 
 	filename := n+"_"+handler.Filename
-
-	// fmt.Println("manish", handler.Size)
-	// fmt.Println("manish", handler.Header)
+	
+	// file size handler
 	if handler.Size > (4 * 1024 * 1024) {// 4MB
 		c.JSON(http.StatusBadRequest, gin.H{"error": "File size is greater than 4MB"})
 		return
 	}
 
-	// check the type of the image upload
+	// file type handler check the type of the image upload
 	fileType := handler.Header.Get("Content-Type")
 	if !strings.Contains(fileType, "image") {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "File is not an image"})
 		return
 	}
 
+	// create directory
 	out, err := os.Create("public/" + filename)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
@@ -137,15 +137,13 @@ func FileUpload(c *gin.Context) {
 	}
 	defer out.Close()
 
+	// copy file
 	_, err = io.Copy(out, file)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file err : %s", err.Error())})
 		return
 	}
-	filepath := os.Getenv("UPLOAD_URL") + filename 
-
-	// Upload the file to specific dst.
-	// c.SaveUploadedFile(file, dst)
+	filepath := os.Getenv("UPLOAD_URL") + filename
 
 	c.JSON(http.StatusCreated, gin.H{"message": "file uploaded", "filepath": filepath})
 }

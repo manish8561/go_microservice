@@ -9,7 +9,7 @@
 > ### Golang/Gin codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld] spec and API.
 
 
-This codebase was created to demonstrate a fully fledged fullstack application built with **Golang/Gin** including CRUD operations, authentication, routing, pagination, and more.
+This codebase was created to demonstrate a fully fledged fullstack application built with **Golang/Gin** including Mongodb, CRUD operations, authentication, routing, pagination, and more.
 
 
 # Directory structure
@@ -17,7 +17,6 @@ This codebase was created to demonstrate a fully fledged fullstack application b
 docker_backend
 |   
 user service
-├── mongo.db
 ├── server.go
 ├── common
 │   ├── utils.go        //small tools function
@@ -29,7 +28,6 @@ user service
 |   └── validators.go   //form/json checker
 ├── ...
 farm service
-├── mongo.db
 ├── server.go
 ├── common
 │   ├── utils.go        //small tools function

@@ -20,7 +20,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
 	router.GET("", FarmList)
-
+	router.GET("/total", FarmTotal)
 	router.Use(common.AuthMiddleware(true))
 
 	router.GET("/:id", FarmRetrieve)
@@ -31,7 +31,18 @@ func FarmsRegister(router *gin.RouterGroup) {
 }
 
 /*
-function to retrive single farm using get api
+function to total farm counts
+*/
+func FarmTotal(c *gin.Context) {
+	status := c.Query("status")
+
+	num := GetTotal(status)
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
+}
+
+/*
+function to retrive farm list using get api
 */
 func FarmList(c *gin.Context) {
 	//convert string to number
@@ -46,15 +57,17 @@ func FarmList(c *gin.Context) {
 	if err != nil {
 		limit = 10
 	}
-	if limit <= 10 {
+	if limit <= 0 {
 		limit = 10
 	}
-	farmModel, err := GetAll(page, limit)
+	status := c.Query("status")
+
+	farmModel, err := GetAll(page, limit, status)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": farmModel})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": farmModel})
 }
 
 /*
@@ -124,7 +137,7 @@ func FileUpload(c *gin.Context) {
 	n := strconv.FormatInt(t, 10)
 
 	//replace whitespaces from file name
-	str := strings.Replace(handler.Filename," ", "_", -1)
+	str := strings.Replace(handler.Filename, " ", "_", -1)
 	filename := n + "_" + str
 	// file size handler
 	if handler.Size > (4 * 1024 * 1024) { // 4MB

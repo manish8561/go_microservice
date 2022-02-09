@@ -21,23 +21,23 @@ const CollectionName = "farms"
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type FarmModel struct {
-	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created    time.Time          `bson:"_created" json:"_created"`
-	Modified   time.Time          `bson:"_modified" json:"_modified"`
-	StrategyABI string
-	PID        int
-	Token      string
-	TokenType  string
-	Status     string
-	Masterchef string
-	Router     string
-	Stake      string
-	Reward      string
-	Strategy   string
-	Token0Img  string
-	Token1Img  string
+	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created         time.Time          `bson:"_created" json:"_created"`
+	Modified        time.Time          `bson:"_modified" json:"_modified"`
+	StrategyABI     string
+	PID             int
+	Token           string
+	TokenType       string
+	Status          string
+	Masterchef      string
+	Router          string
+	Stake           string
+	Reward          string
+	Strategy        string
+	Token0Img       string
+	Token1Img       string
 	StakePercentage int
-	TokenPerBlock int
+	TokenPerBlock   int
 	// PasswordHash string `json:"-"` // to hide filed in json
 }
 
@@ -105,21 +105,45 @@ func GetFarm(ID string) (FarmModel, error) {
 }
 
 // Farm list api with page and limit
-func GetAll(page int64, limit int64) ([]*FarmModel, error) {
+func GetTotal(status string) int64 {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"status": status}
+	if status == "" {
+		query = bson.M{}
+	}
+
+	num, err := collection.CountDocuments(ctx, query)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+// Farm list api with page and limit
+func GetAll(page int64, limit int64, status string) ([]*FarmModel, error) {
 	client := common.GetDB()
 	var farms []*FarmModel
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
+fmt.Println(limit,"limit")
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
 	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	query := bson.M{"status": status}
+	if status == "" {
+		query = bson.M{}
+	}
 
-	cursor, err := collection.Find(ctx, bson.M{"status": "active"}, opts)
+	cursor, err := collection.Find(ctx, query, opts)
 	if err != nil {
 		return farms, err
 	}

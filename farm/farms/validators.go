@@ -13,16 +13,20 @@ import (
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
 type FarmModelValidator struct {
-	ID         string `form:"_id" json:"_id" `
-	PID        int    `form:"pid" json:"pid" binding:"required"`
-	Token      string `form:"token" json:"token" binding:"required,alphanum,max=255"`
-	TokenType  string `form:"tokenType" json:"TokenType" binding:"required"`
-	Vault      string `form:"vault" json:"vault" binding:"required,alphanum,max=255"`
-	Masterchef string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
-	Router string `form:"router" json:"router" binding:"required,alphanum,max=255"`
-	Stake string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
-	Token0Img  string `form:"token0Img" json:"token0Img" binding:"max=255"`
-	Token1Img  string `form:"token1Img" json:"token1Img" binding:"max=255"`
+	ID              string `form:"_id" json:"_id"`
+	StrategyABI     string `form: "strategyABI" json:"strategyABI" binding:"required"`
+	PID             int    `form:"pid" json:"pid" binding:"required"`
+	Token           string `form:"token" json:"token" binding:"required,alphanum,max=255"`
+	TokenType       string `form:"tokenType" json:"TokenType" binding:"required,max=50"`
+	Strategy        string `form:"strategy" json:"strategy" binding:"max=255"`
+	Masterchef      string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
+	Router          string `form:"router" json:"router" binding:"required,alphanum,max=255"`
+	Reward          string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
+	Stake           string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
+	Token0Img       string `form:"token0Img" json:"token0Img" binding:"max=255"`
+	Token1Img       string `form:"token1Img" json:"token1Img" binding:"max=255"`
+	TokenPerBlock   int    `form:"tokenPerBlock" json:"tokenPerBlock" binding:"required"`
+	StakePercentage int    `form:"stakePercentage" json:"stakePercentage" binding:"required"`
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	farmModel FarmModel `json:"-"`
 }
@@ -35,13 +39,17 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	self.farmModel.StrategyABI = self.StrategyABI
 	self.farmModel.PID = self.PID
 	self.farmModel.Token = self.Token
 	self.farmModel.TokenType = self.TokenType
-	self.farmModel.Vault = self.Vault
+	self.farmModel.Strategy = self.Strategy
 	self.farmModel.Masterchef = self.Masterchef
 	self.farmModel.Router = self.Router
 	self.farmModel.Stake = self.Stake
+	self.farmModel.Reward = self.Reward
+	self.farmModel.TokenPerBlock = self.TokenPerBlock
+	self.farmModel.StakePercentage = self.StakePercentage
 	self.farmModel.Token0Img = self.Token0Img
 	self.farmModel.Token1Img = self.Token1Img
 	self.farmModel.Status = "active"

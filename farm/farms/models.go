@@ -24,16 +24,20 @@ type FarmModel struct {
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created    time.Time          `bson:"_created" json:"_created"`
 	Modified   time.Time          `bson:"_modified" json:"_modified"`
+	StrategyABI string
 	PID        int
 	Token      string
 	TokenType  string
 	Status     string
 	Masterchef string
 	Router     string
-	Stake      string	
-	Vault      string
+	Stake      string
+	Reward      string
+	Strategy   string
 	Token0Img  string
 	Token1Img  string
+	StakePercentage int
+	TokenPerBlock int
 	// PasswordHash string `json:"-"` // to hide filed in json
 }
 

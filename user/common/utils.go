@@ -145,33 +145,35 @@ func UpdateContextUserModel(c *gin.Context, my_user_id string) {
 //  r.Use(AuthMiddleware(true))
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.Header["Authorization"] == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"message": "No Token Found"})
-			c.AbortWithError(http.StatusUnauthorized, errors.New("No Token Found"))
-			return
-		}
-		// UpdateContextUserModel(c, 0)
-		token, err := request.ParseFromRequest(c.Request, MyAuth2Extractor, func(token *jwt.Token) (interface{}, error) {
-			b := ([]byte(NBSecretPassword))
-			return b, nil
-		})
-		if err != nil {
-			if auto401 {
+		if auto401 {
+			if c.Request.Header["Authorization"] == nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"message": "No Token Found"})
+				c.AbortWithError(http.StatusUnauthorized, errors.New("No Token Found"))
+				return
+			}
+			// UpdateContextUserModel(c, 0)
+			token, err := request.ParseFromRequest(c.Request, MyAuth2Extractor, func(token *jwt.Token) (interface{}, error) {
+				b := ([]byte(NBSecretPassword))
+				return b, nil
+			})
+			if err != nil {
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "Token Expired"})
 				c.AbortWithError(http.StatusUnauthorized, err)
 				return
 			}
-		}
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			//checking for admin role
-			if role := claims["role"].(string); role != "admin" && auto401 {
-				c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-				c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
-				return
+			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+				//checking for admin role
+				if role := claims["role"].(string); role != "admin" && auto401 {
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					return
+				}
+				my_user_id := claims["id"].(string)
+				fmt.Println(my_user_id, claims["id"])
+				UpdateContextUserModel(c, my_user_id)
 			}
-			my_user_id := claims["id"].(string)
-			fmt.Println(my_user_id, claims["id"])
-			UpdateContextUserModel(c, my_user_id)
+		} else {
+			c.Next()
 		}
 	}
 }

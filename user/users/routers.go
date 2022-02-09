@@ -31,10 +31,10 @@ func ProfileRetrieve(c *gin.Context) {
 	my_user_id, _ := c.Get("my_user_id")
 	userModel, err := GetProfile(my_user_id.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": common.NewError("profile", err)})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"profile": userModel, success: true})
+	c.JSON(http.StatusOK, gin.H{"profile": userModel, "success": true})
 }
 
 // func ProfileFollow(c *gin.Context) {
@@ -47,7 +47,7 @@ func ProfileRetrieve(c *gin.Context) {
 // 	myUserModel := c.MustGet("my_user_model").(UserModel)
 // 	err = myUserModel.following(userModel)
 // 	if err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
+// 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 // 		return
 // 	}
 // 	serializer := ProfileSerializer{c, userModel}
@@ -65,7 +65,7 @@ func ProfileRetrieve(c *gin.Context) {
 
 // 	err = myUserModel.unFollowing(userModel)
 // 	if err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
+// 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 // 		return
 // 	}
 // 	serializer := ProfileSerializer{c, userModel}
@@ -79,7 +79,7 @@ func UsersRegistration(c *gin.Context) {
 		return
 	}
 	if err := SaveOne(&(userModelValidator.userModel)); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": common.NewError("database", err)})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 	// c.Set("my_user_model", userModelValidator.userModel)
@@ -124,7 +124,7 @@ func UsersLogin(c *gin.Context) {
 
 // 	userModelValidator.userModel.ID = myUserModel.ID
 // 	if err := myUserModel.Update(userModelValidator.userModel); err != nil {
-// 		c.JSON(http.StatusUnprocessableEntity, common.NewError("database", err))
+// 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 // 		return
 // 	}
 // 	UpdateContextUserModel(c, myUserModel.ID)

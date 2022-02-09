@@ -16,10 +16,13 @@ import (
 // controller file with routes
 // register api in this function
 func FarmsRegister(router *gin.RouterGroup) {
-	
+
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
 	router.GET("", FarmList)
+
+	router.Use(common.AuthMiddleware(true))
+
 	router.GET("/:id", FarmRetrieve)
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
@@ -48,7 +51,7 @@ func FarmList(c *gin.Context) {
 	}
 	farmModel, err := GetAll(page, limit)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": common.NewError("message", err), "success": false})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": farmModel})
@@ -61,7 +64,7 @@ func FarmRetrieve(c *gin.Context) {
 	id := c.Param("id")
 	farmModel, err := GetFarm(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": common.NewError("message", err), "success": false})
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": farmModel, "success": true})
@@ -73,11 +76,11 @@ function to save farm in db
 func FarmSave(c *gin.Context) {
 	farmModelValidator := NewFarmModelValidator()
 	if err := farmModelValidator.Bind(c); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": common.NewError("message", err), "success": false})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	if err := SaveOne(&(farmModelValidator.farmModel)); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": common.NewError("database", err), "success": false})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "farm inserted", "success": true})
@@ -89,11 +92,11 @@ function to update single farm using put api
 func FarmUpdate(c *gin.Context) {
 	farmModelValidator := NewFarmModelValidator()
 	if err := farmModelValidator.Bind(c); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": common.NewError("message", err), "success": false})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	if err := UpdateOne(&(farmModelValidator.farmModel)); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": common.NewError("database", err), "success": false})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "updated farm successfully", "success": true})
@@ -120,8 +123,9 @@ func FileUpload(c *gin.Context) {
 	t := time.Now().Unix()
 	n := strconv.FormatInt(t, 10)
 
-	filename := n + "_" + handler.Filename
-
+	//replace whitespaces from file name
+	str := strings.Replace(handler.Filename," ", "_", -1)
+	filename := n + "_" + str
 	// file size handler
 	if handler.Size > (4 * 1024 * 1024) { // 4MB
 		c.JSON(http.StatusBadRequest, gin.H{"error": "File size is greater than 4MB", "success": false})

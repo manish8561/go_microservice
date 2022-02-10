@@ -71,7 +71,7 @@ services:
       - NODE_ENV=dev
     networks:
       my_network:
-        ipv4_address: 20.10.11.4
+        ipv4_address: 20.10.11.5
   user:
     hostname: user
     ports:

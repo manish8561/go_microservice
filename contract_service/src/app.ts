@@ -73,9 +73,9 @@ class App {
 
     private initializeControllers(controllers: Controller[]) {
         controllers.forEach(controller => {
-            this.app.use("/api", controller.router);
+            this.app.use("/api/contract_service", controller.router);
         });
-        this.app.get("/app/status", (req, res) => {
+        this.app.get("/api/contract_service/status", (req, res) => {
             return res.status(200).send({ status: "success" });
         });
     }

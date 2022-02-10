@@ -59,20 +59,19 @@ services:
   #   networks:
   #     my_network:
   #       ipv4_address: 20.10.11.4
-  # user_service:
-  #   hostname: user_service
-  #   ports:
-  #     - "0.0.0.0:3001:3001"
-  #   container_name: user_service
-  #   restart: always
-  #   build: ./user_service
-  #   env_file: ./config/user.env
-  #   environment:
-  #     - NODE_ENV=dev
-  #   networks:
-  #     my_network:
-  #       ipv4_address: 20.10.11.3
-
+  contract_service:
+    hostname: contract_service
+    ports:
+      - "0.0.0.0:3003:3003"
+    container_name: user_service
+    restart: always
+    build: ./contract_service
+    env_file: ./config/contract.env
+    environment:
+      - NODE_ENV=dev
+    networks:
+      my_network:
+        ipv4_address: 20.10.11.4
   user:
     hostname: user
     ports:

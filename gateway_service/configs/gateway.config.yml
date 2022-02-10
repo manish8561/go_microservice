@@ -1,0 +1,55 @@
+http:
+  port: 8081
+admin:
+  port: 9876
+  host: localhost
+apiEndpoints:
+  api:
+    host: localhost
+    paths: "/ip"
+  users:
+    paths: "/api/user_service/*"
+  farms:
+    paths: "/api/farm_service/*"
+serviceEndpoints:
+  httpbin:
+    url: "https://httpbin.org"
+  users:
+    url: "http://20.10.11.3:3001"
+  farms:
+    url: "http://20.10.11.4:3002"
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+pipelines:
+  default:
+    apiEndpoints:
+      - api
+    policies:
+      # Uncomment `key-auth:` when instructed to in the Getting Started guide.
+      # - key-auth:
+      - proxy:
+          - action:
+              serviceEndpoint: httpbin
+              changeOrigin: true
+  users:
+    apiEndpoints:
+      - users
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: users
+  farms:
+      apiEndpoints:
+        - farms
+      policies:
+        - proxy:
+            - action:
+                serviceEndpoint: farms
+

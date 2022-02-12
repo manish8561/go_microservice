@@ -14,21 +14,26 @@ import (
 // Then, you can just call model.save() after the data is ready in DataModel.
 type FarmModelValidator struct {
 	ID              string `form:"_id" json:"_id"`
-	StrategyABI     string `form: "strategyABI" json:"strategyABI" binding:"required"`
+	Strategy_ABI     string `form: "strategy_abi" json:"strategy_abi" binding:"required"`
 	PID             int    `form:"pid" json:"pid" binding:"required"`
-	Token           string `form:"token" json:"token" binding:"required,alphanum,max=255"`
-	TokenType       string `form:"tokenType" json:"TokenType" binding:"required,max=50"`
-	Strategy        string `form:"strategy" json:"strategy" binding:"max=255"`
+	// Address         string `form:"address" json:"address" binding:"required,alphanum,max=255"` //strategy or vault address dynamic
+	Name            string `form:"name" json:"name" binding:"required,max=255"`
+	Token_Type       string `form:"token_type" json:"token_type" binding:"required,max=10"`
+	Deposit_Token    string `from:"deposit_token json:"deposit_token"  binding:"required,alphanum,max=255"`
 	Masterchef      string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
 	Router          string `form:"router" json:"router" binding:"required,alphanum,max=255"`
 	Reward          string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
 	Stake           string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
-	Token0Img       string `form:"token0Img" json:"token0Img" binding:"max=255"`
-	Token1Img       string `form:"token1Img" json:"token1Img" binding:"max=255"`
-	TokenPerBlock   int    `form:"tokenPerBlock" json:"tokenPerBlock" binding:"required"`
-	StakePercentage int    `form:"stakePercentage" json:"stakePercentage" binding:"required"`
+	Token0          Token `form:"token0" json:"token0" binding:"required"`
+	Token1          Token `form:"token1" json:"token1" `
+	Token_Per_Block   int    `form:"token_per_block" json:"token_per_block" binding:"required"`
+	Bonus_Multiplier int    `form:"bonus_multiplier" json:"bonus_multiplier" binding:"required"`
+	Source          string    `form:"source" json:"source" binding:"required,max=255"`
+	Source_Link      string    `form:"source_link" json:"source_link" binding:"required,max=255"`
+
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	farmModel FarmModel `json:"-"`
+
 }
 
 // There are some difference when you create or update a model, you need to fill the DataModel before
@@ -39,19 +44,19 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	self.farmModel.StrategyABI = self.StrategyABI
+	self.farmModel.Strategy_ABI = self.Strategy_ABI
 	self.farmModel.PID = self.PID
-	self.farmModel.Token = self.Token
-	self.farmModel.TokenType = self.TokenType
-	self.farmModel.Strategy = self.Strategy
+	self.farmModel.Name = self.Name
+	self.farmModel.Token_Type = self.Token_Type
+	self.farmModel.Deposit_Token = self.Deposit_Token
 	self.farmModel.Masterchef = self.Masterchef
 	self.farmModel.Router = self.Router
 	self.farmModel.Stake = self.Stake
 	self.farmModel.Reward = self.Reward
-	self.farmModel.TokenPerBlock = self.TokenPerBlock
-	self.farmModel.StakePercentage = self.StakePercentage
-	self.farmModel.Token0Img = self.Token0Img
-	self.farmModel.Token1Img = self.Token1Img
+	self.farmModel.Token_Per_Block = self.Token_Per_Block
+	self.farmModel.Bonus_Multiplier = self.Bonus_Multiplier
+	self.farmModel.Token0 = self.Token0
+	self.farmModel.Token1 = self.Token1
 	self.farmModel.Status = "active"
 	self.farmModel.Created = time.Now()
 	self.farmModel.Modified = time.Now()

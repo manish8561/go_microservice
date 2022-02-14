@@ -66,3 +66,20 @@ func InitDB() {
 func GetDB() *mongo.Client {
 	return client
 }
+
+// common add Index function
+func AddIndex(dbName string, collection string, indexKeys interface{}) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := GetDB() // get clients of mongodb connection
+	serviceCollection := db.Database(dbName).Collection(collection)
+	indexName, err := serviceCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: indexKeys,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println(indexName)
+	return nil
+}

@@ -1,4 +1,3 @@
-
 import * as CryptoJS from 'crypto-js';
 import { NextFunction, Request, Response } from 'express';
 
@@ -20,6 +19,7 @@ function requestDecrypt(request: Request, response: Response, next: NextFunction
         next();
     }
 }
+
 function reqDeEncrypt(text: any) {
     const reqEncKey: any = process.env.ENCDECRYPTKEY;
     console.log(`"${reqEncKey}"`, 'test');

@@ -5,12 +5,10 @@ import morgan from "morgan";
 import * as rfs from "rotating-file-stream";
 import * as fs from "fs";
 import * as path from "path";
-import { CronJob } from 'cron';
-
+// import { CronJob } from 'cron';
 import swaggerUi from 'swagger-ui-express';
 import * as http from "http";
 import * as swaggerDocument from './swagger.json';
-
 // import * as config from "../src/config/";
 import { Controller } from "./interfaces";
 import { errorMiddleware } from "./middlewares";
@@ -26,14 +24,11 @@ class App {
         this.port = process.env.PORT ? process.env.PORT : 8082;
         //socket io code
         this.server = http.createServer(this.app);
-
         Helpers.MongodbHelper.connectMongoDB();
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
     }
-
-
 
     public listen() {
         // this.app.listen(this.port, () => {
@@ -45,7 +40,6 @@ class App {
                 }`
             );
         });
-
         return this.server;
     }
 
@@ -107,6 +101,6 @@ class App {
         // }, null, true, 'America/Los_Angeles');
         // job.start();
     }
-
 }
+
 export default App;

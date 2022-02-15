@@ -7,6 +7,8 @@ import (
 	"math/rand"
 	"os"
 	"time"
+	"io/ioutil"
+	"encoding/json"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
@@ -178,3 +180,35 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 }
 
 // ------- common middleware code end--------------------
+
+
+//---------------- get price start here ----------------------
+// 3rd party function for price coingeeko
+func GetPrice(Id string) float64 {
+	// struct to decode the code
+	type d struct {
+		Usd float64 `json:"usd"`
+	}
+	type Info map[string]d
+
+	str := "https://api.coingecko.com/api/v3/simple/price?ids=" + Id + "&vs_currencies=usd"
+	response, err := http.Get(str)
+
+	if err != nil {
+		fmt.Print(err.Error())
+		// os.Exit(1)
+		return 0
+	}
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+	var responseObject Info
+	json.Unmarshal(responseData, &responseObject)
+	// fmt.Println(string(responseData), responseObject["moon-rabbit"].Usd)
+
+	return responseObject[Id].Usd
+}
+//---------------get price end here ----------------

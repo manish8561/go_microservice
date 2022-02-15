@@ -10,6 +10,7 @@ import (
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/autocompound/docker_backend/farm/contracts"
 	"github.com/autocompound/docker_backend/farm/farms"
+	"github.com/autocompound/docker_backend/farm/pricefeeds"
 	// "github.com/go-bongo/bongo"
 )
 
@@ -31,14 +32,15 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
-func main() {
+func init(){
 	// initalize variable from config
 	common.InitVariables()
 
 	//init db function
 	common.InitDB()
+}
 
+func main() {
 	//create server
 	r := gin.Default()
 	r.Use(CORSMiddleware())
@@ -49,6 +51,7 @@ func main() {
 
 	v1.Use(common.AuthMiddleware(false))
 	farms.FarmsRegister(v1.Group("/farm"))
+	pricefeeds.FarmsRegister(v1.Group("/pricefeeds"))
 	contracts.ContractsRegister(v1.Group("/contract"))
 
 	testAuth := r.Group("/api/farm_service/ping")

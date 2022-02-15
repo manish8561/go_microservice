@@ -103,12 +103,12 @@ func FarmSave(c *gin.Context) {
 function to update single farm using put api
 */
 func FarmUpdate(c *gin.Context) {
-	farmModelValidator := NewFarmModelValidator()
-	if err := farmModelValidator.Bind(c); err != nil {
+	transactionValidator := NewTransactionValidator()
+	if err := transactionValidator.Bind(c); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	if err := UpdateOne(&(farmModelValidator.farmModel)); err != nil {
+	if err := TransactionUpdate(&(transactionValidator.farmModel)); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}

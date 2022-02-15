@@ -34,7 +34,7 @@ type FarmModel struct {
 	ID               primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created          time.Time          `bson:"_created" json:"_created"`
 	Modified         time.Time          `bson:"_modified" json:"_modified"`
-	Strategy_ABI     string             `bson:"strategy_abi" json:"strategy_abi"`
+	Transaction_Hash string             `bson:"transaction_hash" json:"transaction_hash"`
 	PID              int                `bson:"pid" json:"pid"`
 	Address          string             `bson:"address" json:"address"` //address field of strategy
 	Name             string             `bson:"name" json:"name"`
@@ -76,6 +76,11 @@ type FarmModel struct {
 	// PasswordHash string `json:"-"` // to hide filed in json
 }
 
+// init function runs first time
+func init() {
+	// common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"deposit_token", "text"}, {"name", "text"}})
+}
+
 // You could input an FarmModel which will be saved in database returning with error info
 // 	if err := SaveOne(&farmModel); err != nil { ... }
 func SaveOne(data *FarmModel) error {
@@ -97,7 +102,8 @@ func SaveOne(data *FarmModel) error {
 
 // You could input an FarmModel which will be updated in database returning with error info
 // 	if err := UpdateOne(&farmModel); err != nil { ... }
-func UpdateOne(data *FarmModel) error {
+func TransactionUpdate(data *FarmModel) error {
+	fmt.Println(data, "before")
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -105,7 +111,8 @@ func UpdateOne(data *FarmModel) error {
 	// to check for unique email address
 	opts := options.Update().SetUpsert(false)
 	// update := bson.D{{"$set", bson.D{{"token", "newemail@example.com"}}}}
-	update := bson.D{{"$set", data}}
+	// update := bson.D{{"$set", data}}
+	update := bson.M{"$set": bson.M{"transaction_hash": data.Transaction_Hash , "status": data.Status, "_modified": data.Modified}}
 
 	res, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
 	if err != nil {
@@ -151,7 +158,6 @@ func GetTotal(status string) int64 {
 	if status == "" {
 		query = bson.M{}
 	}
-
 	num, err := collection.CountDocuments(ctx, query)
 	if err != nil {
 		return 0
@@ -167,6 +173,7 @@ func GetAll(page int64, limit int64, status string) ([]*FarmModel, error) {
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.

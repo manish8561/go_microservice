@@ -26,7 +26,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	router.GET("/:id", FarmRetrieve)
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
-	router.PUT("", FarmUpdate)
+	router.PUT("/transaction", FarmTransactionUpdate)
 	// router.DELETE("/:username/follow", FarmUnfollow)
 }
 
@@ -92,23 +92,24 @@ func FarmSave(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	if err := SaveOne(&(farmModelValidator.farmModel)); err != nil {
+	insertID, err := SaveOne(&(farmModelValidator.farmModel)); 
+	 if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"message": "farm inserted", "success": true})
+	c.JSON(http.StatusCreated, gin.H{"message": "farm inserted", "insertId": insertID, "success": true})
 }
 
 /*
-function to update single farm using put api
+function to FarmTransactionUpdate single farm using put api
 */
-func FarmUpdate(c *gin.Context) {
-	transactionValidator := NewTransactionValidator()
-	if err := transactionValidator.Bind(c); err != nil {
+func FarmTransactionUpdate(c *gin.Context) {
+	farms := &FarmModel{}
+	if err := common.Bind(c, farms); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	if err := TransactionUpdate(&(transactionValidator.farmModel)); err != nil {
+	if err := TransactionUpdate(farms); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}

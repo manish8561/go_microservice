@@ -73,36 +73,3 @@ func NewFarmModelValidator() FarmModelValidator {
 	farmModelValidator := FarmModelValidator{}
 	return farmModelValidator
 }
-// update transaction validation
-type TransactionModelValidator struct {
-	ID               string `form:"_id" json:"_id"`
-	Transaction_Hash string    `form:"transaction_hash" json:"transaction_hash" binding:"required"`
-	
-	farmModel FarmModel `json:"-"`
-}
-
-// trancation validation function
-func (self *TransactionModelValidator) Bind(c *gin.Context) error {
-	err := common.Bind(c, self)
-	if err != nil {
-		return err
-	}
-	self.farmModel.Transaction_Hash = self.Transaction_Hash
-	self.farmModel.Status = "processing"
-	self.farmModel.Modified = time.Now()
-
-	// using _id to update row in db
-	if self.ID != "" {
-		objID, err := primitive.ObjectIDFromHex(self.ID)
-		if err != nil {
-			return err
-		}
-		self.farmModel.ID = objID
-	}
-	return nil
-}
-// You can put the default value of a Validator here
-func NewTransactionValidator() TransactionModelValidator {
-	t := TransactionModelValidator{}
-	return t
-}

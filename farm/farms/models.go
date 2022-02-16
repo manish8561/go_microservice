@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/autocompound/docker_backend/farm/common"
@@ -83,9 +84,10 @@ func init() {
 
 // You could input an FarmModel which will be saved in database returning with error info
 // 	if err := SaveOne(&farmModel); err != nil { ... }
-func SaveOne(data *FarmModel) error {
+func SaveOne(data *FarmModel) (string, error) {
 	client := common.GetDB()
 	person := &FarmModel{}
+	newID := ""
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -94,16 +96,20 @@ func SaveOne(data *FarmModel) error {
 	err := collection.FindOne(ctx, bson.M{"deposit_token": data.Deposit_Token}).Decode(&person)
 	if err != nil {
 		res, err := collection.InsertOne(ctx, data)
-		fmt.Println(res, "Inserted")
-		return err
+		fmt.Println(res.InsertedID, "Inserted")
+		// newID = res.InsertedID.(string)
+		newID = fmt.Sprintf("%s", res.InsertedID)
+		newID = strings.Replace(newID,"ObjectID(","",-1)
+		newID = strings.Replace(newID,`"`,"",-1)
+		newID = strings.Replace(newID,`)`,"",-1)
+		return newID, err
 	}
-	return errors.New("farm already exists!")
+	return newID, errors.New("farm already exists!")
 }
 
 // You could input an FarmModel which will be updated in database returning with error info
 // 	if err := UpdateOne(&farmModel); err != nil { ... }
 func TransactionUpdate(data *FarmModel) error {
-	fmt.Println(data, "before")
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -112,7 +118,14 @@ func TransactionUpdate(data *FarmModel) error {
 	opts := options.Update().SetUpsert(false)
 	// update := bson.D{{"$set", bson.D{{"token", "newemail@example.com"}}}}
 	// update := bson.D{{"$set", data}}
-	update := bson.M{"$set": bson.M{"transaction_hash": data.Transaction_Hash , "status": data.Status, "_modified": data.Modified}}
+	address := ""
+	status := "processing"
+	modified := time.Now()
+	if data.Address != "" {
+		address = data.Address
+		status = "active"
+	}
+	update := bson.M{"$set": bson.M{"transaction_hash": data.Transaction_Hash, "status": status, "_modified": modified, "address": address}}
 
 	res, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
 	if err != nil {

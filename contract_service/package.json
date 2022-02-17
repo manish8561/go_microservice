@@ -32,6 +32,7 @@
     "@sendgrid/mail": "^7.4.2",
     "@truffle/hdwallet-provider": "^1.2.5",
     "@types/mongoose": "^5.10.3",
+    "axios": "^0.26.0",
     "bcrypt": "^4.0.1",
     "cors": "^2.8.5",
     "cron": "^1.8.2",

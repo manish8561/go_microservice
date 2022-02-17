@@ -12,7 +12,7 @@ apiEndpoints:
   farms:
     paths: "/api/farm_service/*"
   contracts:
-    paths: "/api/contract_service/*"d
+    paths: "/api/contract_service/*"
 serviceEndpoints:
   httpbin:
     url: "https://httpbin.org"

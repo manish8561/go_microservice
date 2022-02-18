@@ -32,24 +32,25 @@ type Token struct {
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type FarmModel struct {
-	ID               primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created          time.Time          `bson:"_created" json:"_created"`
-	Modified         time.Time          `bson:"_modified" json:"_modified"`
-	Transaction_Hash string             `bson:"transaction_hash" json:"transaction_hash"`
-	PID              int                `bson:"pid" json:"pid"`
-	Address          string             `bson:"address" json:"address"` //address field of strategy
-	Name             string             `bson:"name" json:"name"`
-	Token_Type       string             `bson:"token_type" json:"token_type"`
-	Deposit_Token    string             `bson:"deposit_token" json:"deposit_token"`
-	Status           string             `bson:"status" json:"status"`
-	Masterchef       string             `bson:"masterchef" json:"masterchef"`
-	Router           string             `bson:"router" json:"router"`
-	Stake            string             `bson:"stake" json:"stake"`
-	Reward           string             `bson:"reward" json:"reward"`
-	Bonus_Multiplier int                `bson:"bonus_multiplier" json:"bonus_multiplier"`
-	Token_Per_Block  int                `bson:"token_per_block" json:"token_per_block"`
-	Source           string             `bson:"source" json:"source"`
-	Source_Link      string             `bson:"source_link" json:"source_link"`
+	ID                 primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created            time.Time          `bson:"_created" json:"_created"`
+	Modified           time.Time          `bson:"_modified" json:"_modified"`
+	Transaction_Hash   string             `bson:"transaction_hash" json:"transaction_hash"`
+	PID                int                `bson:"pid" json:"pid"`
+	Address            string             `bson:"address" json:"address"` //address field of strategy
+	Name               string             `bson:"name" json:"name"`
+	Token_Type         string             `bson:"token_type" json:"token_type"`
+	Deposit_Token      string             `bson:"deposit_token" json:"deposit_token"`
+	Status             string             `bson:"status" json:"status"`
+	Masterchef         string             `bson:"masterchef" json:"masterchef"`
+	Router             string             `bson:"router" json:"router"`
+	Stake              string             `bson:"stake" json:"stake"`
+	Reward             string             `bson:"reward" json:"reward"`
+	Bonus_Multiplier   int                `bson:"bonus_multiplier" json:"bonus_multiplier"`
+	Token_Per_Block    int                `bson:"token_per_block" json:"token_per_block"`
+	Source             string             `bson:"source" json:"source"`
+	Source_Link        string             `bson:"source_link" json:"source_link"`
+	Autocompound_Check bool               `bson: "autocompound_check" json:"autocompound_check"`
 
 	Tvl_Staked       int    `bson:"tvl_staked" json:"tvl_staked"`
 	Daily_APR        int    `bson:"daily_apr" json:"daily_apr"`
@@ -99,9 +100,9 @@ func SaveOne(data *FarmModel) (string, error) {
 		fmt.Println(res.InsertedID, "Inserted")
 		// newID = res.InsertedID.(string)
 		newID = fmt.Sprintf("%s", res.InsertedID)
-		newID = strings.Replace(newID,"ObjectID(","",-1)
-		newID = strings.Replace(newID,`"`,"",-1)
-		newID = strings.Replace(newID,`)`,"",-1)
+		newID = strings.Replace(newID, "ObjectID(", "", -1)
+		newID = strings.Replace(newID, `"`, "", -1)
+		newID = strings.Replace(newID, `)`, "", -1)
 		return newID, err
 	}
 	return newID, errors.New("farm already exists!")

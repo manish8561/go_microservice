@@ -50,7 +50,7 @@ type FarmModel struct {
 	Token_Per_Block    int                `bson:"token_per_block" json:"token_per_block"`
 	Source             string             `bson:"source" json:"source"`
 	Source_Link        string             `bson:"source_link" json:"source_link"`
-	Autocompound_Check bool               `bson: "autocompound_check" json:"autocompound_check"`
+	Autocompound_Check bool               `bson:"autocompound_check" json:"autocompound_check"`
 
 	Tvl_Staked       int    `bson:"tvl_staked" json:"tvl_staked"`
 	Daily_APR        int    `bson:"daily_apr" json:"daily_apr"`
@@ -127,6 +127,28 @@ func TransactionUpdate(data *FarmModel) error {
 		status = "active"
 	}
 	update := bson.M{"$set": bson.M{"transaction_hash": data.Transaction_Hash, "status": status, "_modified": modified, "address": address}}
+
+	res, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return err
+	}
+	fmt.Println(res, "Updated")
+	return err
+}
+
+// SetOperator for autocompound check
+func SetOperator(data *FarmModel) error {
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// to check for unique email address
+	opts := options.Update().SetUpsert(false)
+	// update := bson.D{{"$set", bson.D{{"token", "newemail@example.com"}}}}
+	// update := bson.D{{"$set", data}}
+
+	modified := time.Now()
+	update := bson.M{"$set": bson.M{"autocompound_check": data.Autocompound_Check, "_modified": modified}}
 
 	res, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
 	if err != nil {

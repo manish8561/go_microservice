@@ -27,6 +27,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
 	router.PUT("/transaction", FarmTransactionUpdate)
+	router.PUT("/setOperator", FarmSetOperator)
 	// router.DELETE("/:username/follow", FarmUnfollow)
 }
 
@@ -110,6 +111,21 @@ func FarmTransactionUpdate(c *gin.Context) {
 		return
 	}
 	if err := TransactionUpdate(farms); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "updated farm successfully", "success": true})
+}
+/*
+function to FarmSetOperator single farm using put api
+*/
+func FarmSetOperator(c *gin.Context) {
+	farms := &FarmModel{}
+	if err := common.Bind(c, farms); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	if err := SetOperator(farms); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}

@@ -21,9 +21,9 @@ func FarmsRegister(router *gin.RouterGroup) {
 	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
 	router.GET("", FarmList)
 	router.GET("/total", FarmTotal)
+	router.GET("/:id", FarmRetrieve)
 	router.Use(common.AuthMiddleware(true))
 
-	router.GET("/:id", FarmRetrieve)
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
 	router.PUT("/transaction", FarmTransactionUpdate)

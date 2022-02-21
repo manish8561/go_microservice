@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/autocompound/docker_backend/farm/common"
+	"github.com/robfig/cron"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -27,6 +29,59 @@ type PriceFeedModel struct {
 	Coingeeko_Id string             `bson:"coingeeko_id" json:"coingeeko_id"`
 	Symbol       string             `bson:"symbol" json:"symbol"` //address field of strategy
 	Price        float64            `bson:"price" json:"price"`
+	Status       string             `bson: "status" json: "status"`
+}
+
+// init func in go file
+func init() {
+	StartCall()
+}
+
+// cron func call
+func StartCall() {
+	c := cron.New()
+	c.AddFunc("0 */30 * * * *", func() {
+		fmt.Println("[Job 1]Every 30 minutes job\n")
+		r := UpdateAll()
+		fmt.Println("cron job return value", r)
+	})
+	// Start cron with one scheduled job
+	c.Start()
+}
+
+// Get All Symbols
+func UpdateAll() bool {
+	client := common.GetDB()
+	var records []*PriceFeedModel
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	opts := options.Find().SetSort(bson.D{{"_created", -1}})
+	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	query := bson.M{"status": "active"}
+
+	cursor, err := collection.Find(ctx, query, opts)
+	if err != nil {
+		return false
+	}
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
+		var r PriceFeedModel
+		cursor.Decode(&r)
+		rr, err := GetTokenPrice(r.Symbol, true)
+		if err != nil {
+			return false
+		}
+		fmt.Println(rr.Symbol, "after update")
+	}
+	err = cursor.All(ctx, &records)
+
+	return true
 }
 
 // You could input an PriceFeedModel which will be saved in database returning with error info
@@ -38,14 +93,18 @@ func SaveOne(data *PriceFeedModel) error {
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	//convert string to uppercase
+	data.Symbol = strings.ToUpper(data.Symbol)
 	// to check for unique email address
-	err := collection.FindOne(ctx, bson.M{}).Decode(&person)
+	err := collection.FindOne(ctx, bson.M{"symbol": data.Symbol}).Decode(&person)
 	if err != nil {
+		data.Created = time.Now()
+		data.Modified = time.Now()
 		res, err := collection.InsertOne(ctx, data)
 		fmt.Println(res, "Inserted")
 		return err
 	}
-	return errors.New("farm already exists!")
+	return errors.New("symbol already exists!")
 }
 
 // You could input an PriceFeedModel which will be updated in database returning with error info
@@ -102,17 +161,17 @@ func GetTokenPrice(symbol string, check bool) (PriceFeedModel, error) {
 	defer cancel()
 	//find record in db
 	err := collection.FindOne(ctx, bson.M{"symbol": symbol}).Decode(&record)
-	if(!check){
-		return	*record, err
+	if !check {
+		return *record, err
 	}
 	//get price from coingeeko
 	str := record.Coingeeko_Id
 	//calling from utils file
 	f := common.GetPrice(str)
-	fmt.Println(str,f)
+	fmt.Println(str, f)
 
 	opts := options.Update().SetUpsert(false)
-	record.Created = time.Now()
+	// record.Created = time.Now()
 	record.Modified = time.Now()
 	record.Price = f
 	//update price in collection
@@ -125,4 +184,68 @@ func GetTokenPrice(symbol string, check bool) (PriceFeedModel, error) {
 	fmt.Println(res, "Updated", f)
 
 	return *record, err
+}
+
+// Price Feed list api with page and limit
+func GetTotal(status string) int64 {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{}
+	num, err := collection.CountDocuments(ctx, query)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+// Price Feed list api with page and limit
+func GetAll(page int64, limit int64, status string) ([]*PriceFeedModel, error) {
+	client := common.GetDB()
+	var records []*PriceFeedModel
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
+	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+
+	query := bson.M{}
+
+	cursor, err := collection.Find(ctx, query, opts)
+	if err != nil {
+		return records, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return records, err
+}
+
+// delete record from collection
+func DeleteRecord(ID string) (bool, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return false, err
+	}
+	res, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objID})
+	if err != nil {
+		return false, err
+	}
+	fmt.Println(res, "Delete")
+	return true, err
 }

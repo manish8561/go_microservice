@@ -36,8 +36,12 @@ function to total farm counts
 */
 func FarmTotal(c *gin.Context) {
 	status := c.Query("status")
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = 4 //rinkeby
+	}
 
-	num := GetTotal(status)
+	num := GetTotal(status, chain_id)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
 }
@@ -62,13 +66,17 @@ func FarmList(c *gin.Context) {
 		limit = 10
 	}
 	status := c.Query("status")
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = 4 //rinkeby
+	}
 
-	farmModel, err := GetAll(page, limit, status)
+	records, err := GetAll(page, limit, status, chain_id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": farmModel})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
 }
 
 /*
@@ -76,12 +84,12 @@ function to retrive single farm using get api
 */
 func FarmRetrieve(c *gin.Context) {
 	id := c.Param("id")
-	farmModel, err := GetFarm(id)
+	record, err := GetFarm(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": farmModel, "success": true})
+	c.JSON(http.StatusOK, gin.H{"data": record, "success": true})
 }
 
 /*
@@ -93,8 +101,8 @@ func FarmSave(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
-	insertID, err := SaveOne(&(farmModelValidator.farmModel)); 
-	 if err != nil {
+	insertID, err := SaveOne(&(farmModelValidator.farmModel))
+	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
 	}
@@ -116,6 +124,7 @@ func FarmTransactionUpdate(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "updated farm successfully", "success": true})
 }
+
 /*
 function to FarmSetOperator single farm using put api
 */

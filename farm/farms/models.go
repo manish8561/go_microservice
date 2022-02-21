@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	// "github.com/robfig/cron"
 	"github.com/autocompound/docker_backend/farm/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"go.mongodb.org/mongo-driver/mongo/options"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 )
@@ -35,6 +35,7 @@ type FarmModel struct {
 	ID                 primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created            time.Time          `bson:"_created" json:"_created"`
 	Modified           time.Time          `bson:"_modified" json:"_modified"`
+	Chain_Id           int                `bson:"chain_id" json:"chain_id"`
 	Transaction_Hash   string             `bson:"transaction_hash" json:"transaction_hash"`
 	PID                int                `bson:"pid" json:"pid"`
 	Address            string             `bson:"address" json:"address"` //address field of strategy
@@ -183,16 +184,16 @@ func GetFarm(ID string) (FarmModel, error) {
 }
 
 // Farm list api with page and limit
-func GetTotal(status string) int64 {
+func GetTotal(status string, chain_id int64) int64 {
 	client := common.GetDB()
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	query := bson.M{"status": status}
+	query := bson.M{"status": status, "chain_id": chain_id}
 	if status == "" {
-		query = bson.M{}
+		query = bson.M{"chain_id": chain_id}
 	}
 	num, err := collection.CountDocuments(ctx, query)
 	if err != nil {
@@ -202,7 +203,7 @@ func GetTotal(status string) int64 {
 }
 
 // Farm list api with page and limit
-func GetAll(page int64, limit int64, status string) ([]*FarmModel, error) {
+func GetAll(page int64, limit int64, status string, chain_id int64) ([]*FarmModel, error) {
 	client := common.GetDB()
 	var farms []*FarmModel
 
@@ -215,9 +216,9 @@ func GetAll(page int64, limit int64, status string) ([]*FarmModel, error) {
 	// The first document in the sorted order will be returned.
 	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-	query := bson.M{"status": status}
+	query := bson.M{"status": status, "chain_id": chain_id}
 	if status == "" {
-		query = bson.M{}
+		query = bson.M{"chain_id": chain_id}
 	}
 
 	cursor, err := collection.Find(ctx, query, opts)

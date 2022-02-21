@@ -51,7 +51,7 @@ func main() {
 
 	v1.Use(common.AuthMiddleware(false))
 	farms.FarmsRegister(v1.Group("/farm"))
-	pricefeeds.FarmsRegister(v1.Group("/pricefeeds"))
+	pricefeeds.PriceFeedsRegister(v1.Group("/pricefeeds"))
 	contracts.ContractsRegister(v1.Group("/contract"))
 
 	testAuth := r.Group("/api/farm_service/ping")

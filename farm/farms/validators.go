@@ -14,6 +14,7 @@ import (
 // Then, you can just call model.save() after the data is ready in DataModel.
 type FarmModelValidator struct {
 	ID               string `form:"_id" json:"_id"`
+	Chain_Id         int    `form:"chain_id" json:"chain_id" binding:"required"`
 	PID              int    `form:"pid" json:"pid" binding:"required"`
 	Name             string `form:"name" json:"name" binding:"required,max=255"`
 	Token_Type       string `form:"token_type" json:"token_type" binding:"required,max=10"`
@@ -41,6 +42,7 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	self.farmModel.Chain_Id = self.Chain_Id
 	self.farmModel.PID = self.PID
 	self.farmModel.Name = self.Name
 	self.farmModel.Token_Type = self.Token_Type

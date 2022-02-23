@@ -4,17 +4,16 @@ import (
 	// "fmt"
 
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 
-	// "github.com/autocompound/docker_backend/farm/articles"
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/autocompound/docker_backend/farm/contracts"
 	"github.com/autocompound/docker_backend/farm/farms"
 	"github.com/autocompound/docker_backend/farm/pricefeeds"
-	// "github.com/go-bongo/bongo"
 )
 
-// cors common function for * n 
+// cors common function for * n
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
@@ -22,7 +21,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, authorization, accept, origin, Cache-Control, X-Requested-With")
 
-		c.Header("Access-Control-Allow-Methods", "POST,HEAD,PATCH, OPTIONS, GET, PUT")
+		c.Header("Access-Control-Allow-Methods", "POST, HEAD, PATCH, OPTIONS, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
 			// c.AbortWithStatus(204)
@@ -32,7 +31,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-func init(){
+func init() {
 	// initalize variable from config
 	common.InitVariables()
 
@@ -82,10 +81,9 @@ func main() {
 	//    UserModelID:userA.ID,
 	//}).First(&userAA)
 	//fmt.Println(userAA)
-	r.MaxMultipartMemory = 8 << 20  // 8 MiB
+	r.MaxMultipartMemory = 8 << 20 // 8 MiB
 	r.StaticFS("/api/farm_service/file", http.Dir("public"))
 	// r.StaticFS("/api/farm_service/file", http.Dir("/data/dvolumes/autocompound/public"))
-
 
 	r.Run() // listen and serve on 0.0.0.0:8080
 }

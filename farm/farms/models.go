@@ -79,6 +79,14 @@ type FarmModel struct {
 	// PasswordHash string `json:"-"` // to hide filed in json
 }
 
+//struct for filters
+type Filters struct {
+	Token_Type string `bson: "token_type", json:"token_type"`
+	Source     string `bson: "source", json:"source"`
+	Name       string `bson: "name", json:"name"`
+	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
+}
+
 // init function runs first time
 func init() {
 	// common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"deposit_token", "text"}, {"name", "text"}})
@@ -184,17 +192,24 @@ func GetFarm(ID string) (FarmModel, error) {
 }
 
 // Farm list api with page and limit
-func GetTotal(status string, chain_id int64) int64 {
+func GetTotal(status string, filters Filters) int64 {
 	client := common.GetDB()
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	query := bson.M{"status": status, "chain_id": chain_id}
-	if status == "" {
-		query = bson.M{"chain_id": chain_id}
+	query := bson.M{"chain_id": filters.Chain_Id}
+	if status != "" {
+		query["status"] = status
 	}
+	if filters.Token_Type != "" {
+		query["token_type"] = filters.Token_Type
+	}
+	if filters.Name != "" {
+		query["name"] = primitive.Regex{Pattern: "^"+filters.Name+"*", Options: "i"}
+	}
+
 	num, err := collection.CountDocuments(ctx, query)
 	if err != nil {
 		return 0
@@ -203,7 +218,7 @@ func GetTotal(status string, chain_id int64) int64 {
 }
 
 // Farm list api with page and limit
-func GetAll(page int64, limit int64, status string, chain_id int64) ([]*FarmModel, error) {
+func GetAll(page int64, limit int64, status string, filters Filters) ([]*FarmModel, error) {
 	client := common.GetDB()
 	var farms []*FarmModel
 
@@ -216,9 +231,15 @@ func GetAll(page int64, limit int64, status string, chain_id int64) ([]*FarmMode
 	// The first document in the sorted order will be returned.
 	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-	query := bson.M{"status": status, "chain_id": chain_id}
-	if status == "" {
-		query = bson.M{"chain_id": chain_id}
+	query := bson.M{"chain_id": filters.Chain_Id}
+	if status != "" {
+		query["status"] = status
+	}
+	if filters.Token_Type != "" {
+		query["token_type"] = filters.Token_Type
+	}
+	if filters.Name != "" {
+		query["name"] = primitive.Regex{Pattern: "^"+filters.Name+"*", Options: "i"}
 	}
 
 	cursor, err := collection.Find(ctx, query, opts)

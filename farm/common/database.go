@@ -22,9 +22,9 @@ func InitDB() {
 		Started: func(_ context.Context, e *event.CommandStartedEvent) {
 			fmt.Println(e.Command)
 		},
-		Succeeded: func(_ context.Context, e *event.CommandSucceededEvent) {
-			fmt.Println(e.Reply)
-		},
+		// Succeeded: func(_ context.Context, e *event.CommandSucceededEvent) {
+		// 	fmt.Println(e.Reply)
+		// },
 		Failed: func(_ context.Context, e *event.CommandFailedEvent) {
 			fmt.Println(e)
 		},

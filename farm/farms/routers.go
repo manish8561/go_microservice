@@ -36,12 +36,21 @@ function to total farm counts
 */
 func FarmTotal(c *gin.Context) {
 	status := c.Query("status")
+	source := c.Query("source")
+	token_type := c.Query("token_type")
+	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
+	filters := Filters{
+		Source:     source,
+		Token_Type: token_type,
+		Name:       name,
+		Chain_Id:   chain_id,
+	};
 
-	num := GetTotal(status, chain_id)
+	num := GetTotal(status, filters)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
 }
@@ -66,12 +75,21 @@ func FarmList(c *gin.Context) {
 		limit = 10
 	}
 	status := c.Query("status")
+	source := c.Query("source")
+	token_type := c.Query("token_type")
+	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
+	filters := Filters{
+		Source:     source,
+		Token_Type: token_type,
+		Name:       name,
+		Chain_Id:   chain_id,
+	};
 
-	records, err := GetAll(page, limit, status, chain_id)
+	records, err := GetAll(page, limit, status, filters)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return

@@ -23,6 +23,7 @@ type FarmModelValidator struct {
 	Router           string `form:"router" json:"router" binding:"required,alphanum,max=255"`
 	Reward           string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
 	Stake            string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
+	AC_Token            string `form:"ac_token" json:"ac_token" binding:"required,alphanum,max=255"`
 	Token0           Token  `form:"token0" json:"token0" binding:"required"`
 	Token1           Token  `form:"token1" json:"token1" `
 	Token_Per_Block  int    `form:"token_per_block" json:"token_per_block" binding:"required"`
@@ -50,6 +51,7 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	self.farmModel.Masterchef = self.Masterchef
 	self.farmModel.Router = self.Router
 	self.farmModel.Stake = self.Stake
+	self.farmModel.AC_Token = self.AC_Token
 	self.farmModel.Reward = self.Reward
 	self.farmModel.Token_Per_Block = self.Token_Per_Block
 	self.farmModel.Bonus_Multiplier = self.Bonus_Multiplier

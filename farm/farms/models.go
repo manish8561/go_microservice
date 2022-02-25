@@ -45,8 +45,9 @@ type FarmModel struct {
 	Status             string             `bson:"status" json:"status"`
 	Masterchef         string             `bson:"masterchef" json:"masterchef"`
 	Router             string             `bson:"router" json:"router"`
-	Stake              string             `bson:"stake" json:"stake"`
-	Reward             string             `bson:"reward" json:"reward"`
+	Stake              string             `bson:"stake" json:"stake"`       //staking contract address
+	AC_Token           string             `bson:"ac_token" json:"ac_token"` //autocompound token
+	Reward             string             `bson:"reward" json:"reward"`     //cake address
 	Bonus_Multiplier   int                `bson:"bonus_multiplier" json:"bonus_multiplier"`
 	Token_Per_Block    int                `bson:"token_per_block" json:"token_per_block"`
 	Source             string             `bson:"source" json:"source"`
@@ -207,7 +208,7 @@ func GetTotal(status string, filters Filters) int64 {
 		query["token_type"] = filters.Token_Type
 	}
 	if filters.Name != "" {
-		query["name"] = primitive.Regex{Pattern: "^"+filters.Name+"*", Options: "i"}
+		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
 
 	num, err := collection.CountDocuments(ctx, query)
@@ -218,7 +219,7 @@ func GetTotal(status string, filters Filters) int64 {
 }
 
 // Farm list api with page and limit
-func GetAll(page int64, limit int64, status string, filters Filters) ([]*FarmModel, error) {
+func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*FarmModel, error) {
 	client := common.GetDB()
 	var farms []*FarmModel
 
@@ -226,10 +227,24 @@ func GetAll(page int64, limit int64, status string, filters Filters) ([]*FarmMod
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	sorting := bson.D{{"_created", -1}}
+	if sort_by == "recent" {
+		sorting = bson.D{{"_created", -1}}
+	}
+	if sort_by == "apy" {
+		sorting = bson.D{{"daily_apy", -1}}
+	}
+	if sort_by == "tvl" {
+		sorting = bson.D{{"tvl_staked", -1}}
+	}
+	if sort_by == "yourTvl" {
+		sorting = bson.D{{"tvl_staked", -1}}
+	}
+
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
+	opts := options.Find().SetSort(sorting).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	query := bson.M{"chain_id": filters.Chain_Id}
 	if status != "" {
@@ -239,7 +254,7 @@ func GetAll(page int64, limit int64, status string, filters Filters) ([]*FarmMod
 		query["token_type"] = filters.Token_Type
 	}
 	if filters.Name != "" {
-		query["name"] = primitive.Regex{Pattern: "^"+filters.Name+"*", Options: "i"}
+		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
 
 	cursor, err := collection.Find(ctx, query, opts)

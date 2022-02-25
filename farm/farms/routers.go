@@ -43,12 +43,13 @@ func FarmTotal(c *gin.Context) {
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
+	// filtering
 	filters := Filters{
 		Source:     source,
 		Token_Type: token_type,
 		Name:       name,
 		Chain_Id:   chain_id,
-	};
+	}
 
 	num := GetTotal(status, filters)
 
@@ -74,6 +75,7 @@ func FarmList(c *gin.Context) {
 	if limit <= 0 {
 		limit = 10
 	}
+	// filtering
 	status := c.Query("status")
 	source := c.Query("source")
 	token_type := c.Query("token_type")
@@ -87,9 +89,14 @@ func FarmList(c *gin.Context) {
 		Token_Type: token_type,
 		Name:       name,
 		Chain_Id:   chain_id,
-	};
+	}
+	//sorting
+	sort_by := c.Query("sort_by")
+	if sort_by == "" {
+		sort_by = "tvl"
+	}
 
-	records, err := GetAll(page, limit, status, filters)
+	records, err := GetAll(page, limit, status, filters, sort_by)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return

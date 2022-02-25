@@ -304,3 +304,33 @@ func GetSource() ([]*Result, error) {
 
 	return records, err
 }
+
+// get total tvl from farms
+func GetTvl() int {
+	client := common.GetDB()
+
+	var results []struct {
+		Total int `bson:"total" json:"total"`
+	}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": "$tvl_staked"}}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &results)
+	
+	if err := cursor.Err(); err != nil {
+		fmt.Println(cursor,"manish")
+		return 0
+	}
+	return results[0].Total
+}

@@ -21,6 +21,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	// router.MaxMultipartMemory = 8 << 20  // 8 MiB
 	router.GET("", FarmList)
 	router.GET("/total", FarmTotal)
+	router.GET("/source",FarmSource)
 	router.GET("/:id", FarmRetrieve)
 	router.Use(common.AuthMiddleware(true))
 
@@ -97,6 +98,17 @@ func FarmList(c *gin.Context) {
 	}
 
 	records, err := GetAll(page, limit, status, filters, sort_by)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
+}
+/*
+function to sources from farm
+*/
+func FarmSource(c *gin.Context) {
+	records,err := GetSource()
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return

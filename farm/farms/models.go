@@ -269,3 +269,38 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	}
 	return farms, err
 }
+
+// struct for aggregate response
+type Result struct {
+	ID     string `bson:"_id" json:"_id"`
+	Source string `bson:"source" json:"source"`
+	Count  int    `bson:"count" json:"count"`
+}
+
+// get multiple tags of source from farms
+func GetSource() ([]*Result, error) {
+	client := common.GetDB()
+
+	var records []*Result
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{"$group": bson.M{"_id": "$source", "source": bson.M{"$first": "$source"}, "count": bson.M{"$sum": 1}}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return records, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return records, err
+}

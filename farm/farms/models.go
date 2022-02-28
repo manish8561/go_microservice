@@ -45,6 +45,7 @@ type FarmModel struct {
 	Status             string             `bson:"status" json:"status"`
 	Masterchef         string             `bson:"masterchef" json:"masterchef"`
 	Router             string             `bson:"router" json:"router"`
+	Weth               string             `bson:"weth" json:"weth"`
 	Stake              string             `bson:"stake" json:"stake"`       //staking contract address
 	AC_Token           string             `bson:"ac_token" json:"ac_token"` //autocompound token
 	Reward             string             `bson:"reward" json:"reward"`     //cake address
@@ -327,9 +328,9 @@ func GetTvl() int {
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &results)
-	
+
 	if err := cursor.Err(); err != nil {
-		fmt.Println(cursor,"manish")
+		fmt.Println(cursor, "manish")
 		return 0
 	}
 	return results[0].Total

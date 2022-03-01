@@ -22,6 +22,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	router.GET("", FarmList)
 	router.GET("/total", FarmTotal)
 	router.GET("/tvl", FarmTvl)
+	router.GET("/platform", FarmSource)
 	router.GET("/:id", FarmRetrieve)
 	router.Use(common.AuthMiddleware(true))
 
@@ -104,13 +105,22 @@ func FarmList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
 }
-
+/*
+function for platforms from farm
+*/
+func FarmSource(c *gin.Context) {
+	result,err := GetSource()
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": result})
+}
 /*
 function to tvl from farm
 */
 func FarmTvl(c *gin.Context) {
 	num := GetTvl()
-	fmt.Println(num, "before")
 	c.JSON(http.StatusOK, gin.H{"success": true, "total": num})
 }
 

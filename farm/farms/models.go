@@ -208,6 +208,9 @@ func GetTotal(status string, filters Filters) int64 {
 	if filters.Token_Type != "" {
 		query["token_type"] = filters.Token_Type
 	}
+	if filters.Source != "" {
+		query["source"] = filters.Source
+	}
 	if filters.Name != "" {
 		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
@@ -253,6 +256,9 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	}
 	if filters.Token_Type != "" {
 		query["token_type"] = filters.Token_Type
+	}
+	if filters.Source != "" {
+		query["source"] = filters.Source
 	}
 	if filters.Name != "" {
 		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}

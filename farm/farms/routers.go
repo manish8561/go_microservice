@@ -11,6 +11,7 @@ import (
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/gin-gonic/gin"
+
 )
 
 // controller file with routes
@@ -28,6 +29,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
+	router.PUT("", FarmUpdate)
 	router.PUT("/transaction", FarmTransactionUpdate)
 	router.PUT("/setOperator", FarmSetOperator)
 	// router.DELETE("/:username/follow", FarmUnfollow)
@@ -152,6 +154,22 @@ func FarmSave(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "farm inserted", "insertId": insertID, "success": true})
+}
+/*
+function to update farm in db
+*/
+func FarmUpdate(c *gin.Context) {
+	farms := &FarmModel{}
+	if err := common.Bind(c, farms); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	data, err := UpdateOne(farms)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "farm updated", "data": data, "success": true})
 }
 
 /*

@@ -12,6 +12,7 @@ import (
 	"github.com/autocompound/docker_backend/farm/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 )
@@ -98,14 +99,14 @@ func init() {
 // 	if err := SaveOne(&farmModel); err != nil { ... }
 func SaveOne(data *FarmModel) (string, error) {
 	client := common.GetDB()
-	person := &FarmModel{}
+	record := &FarmModel{}
 	newID := ""
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// to check for unique email address
-	err := collection.FindOne(ctx, bson.M{"deposit_token": data.Deposit_Token}).Decode(&person)
+	err := collection.FindOne(ctx, bson.M{"deposit_token": data.Deposit_Token}).Decode(&record)
 	if err != nil {
 		res, err := collection.InsertOne(ctx, data)
 		fmt.Println(res.InsertedID, "Inserted")
@@ -117,6 +118,129 @@ func SaveOne(data *FarmModel) (string, error) {
 		return newID, err
 	}
 	return newID, errors.New("farm already exists!")
+}
+
+// You could input an FarmModel which will be saved in database returning with error info
+// update the farm
+func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	res, err := primitive.ObjectIDFromHex("")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	if data.ID == res {
+		return nil, errors.New("Object ID is required field")
+	}
+	if data.Token_Type == "" {
+		return nil, errors.New("Token Type is required field")
+	}
+
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	modified := time.Now()
+	update := bson.M{"_modified": modified, "token_type":data.Token_Type}
+
+	fmt.Println("data", data.Address)
+
+	if data.Address != "" {
+		update["address"] = data.Address
+	}
+	if data.Status != "" {
+		update["status"] = data.Status
+	}
+	if data.Chain_Id > 0 {
+		update["chain_id"] = data.Chain_Id
+	}
+	if data.Transaction_Hash != "" {
+		update["transaction_hash"] = data.Transaction_Hash
+	}
+	if data.PID > 0 {
+		update["pid"] = data.PID
+	}
+	if data.Name != "" {
+		update["name"] = data.Name
+	}
+	
+	if data.Deposit_Token != "" {
+		update["deposit_token"] = data.Deposit_Token
+	}
+	if data.Masterchef != "" {
+		update["masterchef"] = data.Masterchef
+	}
+	if data.Router != "" {
+		update["router"] = data.Router
+	}
+	if data.Weth != "" {
+		update["weth"] = data.Weth
+	}
+	if data.Stake != "" {
+		update["stake"] = data.Stake
+	}
+	if data.AC_Token != "" {
+		update["ac_token"] = data.AC_Token
+	}
+	if data.Reward != "" {
+		update["reward"] = data.Reward
+	}
+	if data.Source != "" {
+		update["source"] = data.Source
+	}
+	if data.Source_Link != "" {
+		update["source"] = data.Source_Link
+	}
+	if data.Bonus_Multiplier > 1 {
+		update["bonus_multiplier"] = data.Bonus_Multiplier
+	}
+	if data.Token_Per_Block > 0 {
+		update["token_per_block"] = data.Token_Per_Block
+	}
+
+	if data.Tvl_Staked > 0 {
+		update["tvl_staked"] = data.Tvl_Staked
+	}
+	if data.Daily_APR > 0 {
+		update["daily_apr"] = data.Daily_APR
+	}
+	if data.Daily_APR > 0 {
+		update["daily_apr"] = data.Daily_APR
+	}
+	if data.Daily_APY > 0 {
+		update["daily_apy"] = data.Daily_APY
+	}
+	if data.Weekly_APY > 0 {
+		update["weekly_apy"] = data.Weekly_APY
+	}
+	if data.Yearly_APY > 0 {
+		update["yearly_apy"] = data.Yearly_APY
+	}
+	if data.Price_Pool_Token > 0 {
+		update["price_pool_token"] = data.Price_Pool_Token
+	}
+	if data.Yearly_Swap_Fees > 0 {
+		update["yearly_swap_fees"] = data.Yearly_Swap_Fees
+	}
+	// check struct for empty value
+	if (data.Token0 != Token{}) {
+		update["token0"] = data.Token0
+	}
+	if (data.Token1 != Token{}) {
+		update["token1"] = data.Token1
+	}
+	if data.Token_Type != "pair" {
+		update["token1"] = nil
+	}
+	update = bson.M{"$set": update}
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
 // You could input an FarmModel which will be updated in database returning with error info

@@ -56,13 +56,13 @@ type FarmModel struct {
 	Source_Link        string             `bson:"source_link" json:"source_link"`
 	Autocompound_Check bool               `bson:"autocompound_check" json:"autocompound_check"`
 
-	Tvl_Staked       int    `bson:"tvl_staked" json:"tvl_staked"`
-	Daily_APR        int    `bson:"daily_apr" json:"daily_apr"`
-	Daily_APY        int    `bson:"daily_apy" json:"daily_apy"`
-	Weekly_APY       int    `bson:"weekly_apy" json:"weekly_apy"`
-	Yearly_APY       int    `bson:"yearly_apy" json:"yearly_apy"`
-	Price_Pool_Token int    `bson:"price_pool_token" json:"price_pool_token"`
-	Yearly_Swap_Fees int    `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
+	Tvl_Staked       float64    `bson:"tvl_staked" json:"tvl_staked"`
+	Daily_APR        float64    `bson:"daily_apr" json:"daily_apr"`
+	Daily_APY        float64    `bson:"daily_apy" json:"daily_apy"`
+	Weekly_APY       float64    `bson:"weekly_apy" json:"weekly_apy"`
+	Yearly_APY       float64    `bson:"yearly_apy" json:"yearly_apy"`
+	Price_Pool_Token float64    `bson:"price_pool_token" json:"price_pool_token"`
+	Yearly_Swap_Fees float64    `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
 	Token0           Token  `bson:"token0" json:"token0"`
 	Token1           Token  `bson:"token1" json:"token1"`
 	Gauge_Info       string `bson:"gauge_info" json:"gauge_info"`

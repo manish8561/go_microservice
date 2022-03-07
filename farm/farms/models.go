@@ -20,13 +20,13 @@ import (
 const CollectionName = "farms"
 
 type Token struct {
-	Address  string `bson:"address" json:"address"`
-	Name     string `bson:"name" json:"name"`
-	Symbol   string `bson:"symbol" json:"symbol"`
-	Supply   int    `bson:"supply" json:"supply"`
-	Price    int    `bson:"price" json:"price"`
-	Decimals int    `bson:"decimals" json:"decimals"`
-	Img      string `bson:"img" json:"img"`
+	Address  string  `bson:"address" json:"address"`
+	Name     string  `bson:"name" json:"name"`
+	Symbol   string  `bson:"symbol" json:"symbol"`
+	Supply   int     `bson:"supply" json:"supply"`
+	Price    float64 `bson:"price" json:"price"`
+	Decimals int     `bson:"decimals" json:"decimals"`
+	Img      string  `bson:"img" json:"img"`
 }
 
 // Models should only be concerned with database schema, more strict checking should be put in validator.
@@ -55,17 +55,16 @@ type FarmModel struct {
 	Source             string             `bson:"source" json:"source"`
 	Source_Link        string             `bson:"source_link" json:"source_link"`
 	Autocompound_Check bool               `bson:"autocompound_check" json:"autocompound_check"`
-
-	Tvl_Staked       float64    `bson:"tvl_staked" json:"tvl_staked"`
-	Daily_APR        float64    `bson:"daily_apr" json:"daily_apr"`
-	Daily_APY        float64    `bson:"daily_apy" json:"daily_apy"`
-	Weekly_APY       float64    `bson:"weekly_apy" json:"weekly_apy"`
-	Yearly_APY       float64    `bson:"yearly_apy" json:"yearly_apy"`
-	Price_Pool_Token float64    `bson:"price_pool_token" json:"price_pool_token"`
-	Yearly_Swap_Fees float64    `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
-	Token0           Token  `bson:"token0" json:"token0"`
-	Token1           Token  `bson:"token1" json:"token1"`
-	Gauge_Info       string `bson:"gauge_info" json:"gauge_info"`
+	Tvl_Staked         float64            `bson:"tvl_staked" json:"tvl_staked"`
+	Daily_APR          float64            `bson:"daily_apr" json:"daily_apr"`
+	Daily_APY          float64            `bson:"daily_apy" json:"daily_apy"`
+	Weekly_APY         float64            `bson:"weekly_apy" json:"weekly_apy"`
+	Yearly_APY         float64            `bson:"yearly_apy" json:"yearly_apy"`
+	Price_Pool_Token   float64            `bson:"price_pool_token" json:"price_pool_token"`
+	Yearly_Swap_Fees   float64            `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
+	Token0             Token              `bson:"token0" json:"token0"`
+	Token1             Token              `bson:"token1" json:"token1"`
+	Gauge_Info         string             `bson:"gauge_info" json:"gauge_info"`
 
 	// "gaugeInfo": {
 	//     "address": "0x5d1E2Ad05A946Ac05f188dAa0BF8c9b010dE356d",
@@ -144,7 +143,7 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	opts := options.Update().SetUpsert(false)
 
 	modified := time.Now()
-	update := bson.M{"_modified": modified, "token_type":data.Token_Type}
+	update := bson.M{"_modified": modified, "token_type": data.Token_Type}
 
 	fmt.Println("data", data.Address)
 
@@ -166,7 +165,7 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if data.Name != "" {
 		update["name"] = data.Name
 	}
-	
+
 	if data.Deposit_Token != "" {
 		update["deposit_token"] = data.Deposit_Token
 	}

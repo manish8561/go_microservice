@@ -12,7 +12,8 @@ class farmModel extends BaseModel {
   }
   public async getAprValue(response: any) {
     try {
-      const farmData: any = await farms.find({})
+      const farmData: any = await farms.find({});
+
       const newArr: any = [];
       if (farmData.length > 0) {
         for (let it of farmData) {

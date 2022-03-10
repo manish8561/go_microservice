@@ -2,52 +2,29 @@ import web3Helper from "../../helpers/common/web3.helper";
 import pairContractABI from '../../bin/pairContractABI.json'
 import TokenABI from '../../bin/tokenContract.ABI.json'
 import MasterchefABI from '../../bin/masterChefContractABI.json'
-import pairStrategyABI from '../../bin/pairContractABI.json'
-import singleStrategyABI from '../../bin/strategy.singleABI.json'
-import { BigNumber } from "bignumber.js"
-
 import axios from "axios";
-// import _fetch from 'node-fetch';
-
 
 class MasterChef extends web3Helper {
   constructor() {
     super();
   }
 
-  public async calculateAPRValue(Abi: any, AbiAddress: string): Promise<string> {
+  public async calculateAPRValue(masterChefAddress: string, lp: string): Promise<string> {
     try {
-      const ACPrice = 12;
-
-      const lp = '0x496b384ee9Cf03Af7d5ED6f1EEbe2c2ba1415242'
-      const tokenPrice: any = await this.calPrice(lp);
-
-      const masterChefAddress: any = '0x8a69E9780700c0B42825ED5F5dDf8ca0B6A3B6e0';
-
+      const ACPrice: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
+      // const lp = '0x496b384ee9Cf03Af7d5ED6f1EEbe2c2ba1415242'
+      // const masterChefAddress: any = '0x8a69E9780700c0B42825ED5F5dDf8ca0B6A3B6e0';
       const totalAllcationPoint: any = await this.totalAllocationPoint(masterChefAddress);
-
       const allocationPoint: any = await this.allocationPoint(1, masterChefAddress);
-
       const acPerBlock: any = await this.acPerBlock(masterChefAddress);
-
-      // console.log("allocationPoint", allocationPoint)
-      // console.log("acPerBlock", acPerBlock)
       const liquidity: any = await this.handleLiquidity(lp, masterChefAddress)
-      console.log("liquidity", liquidity)
 
+      console.log("*****************************************************",
+      allocationPoint.allocPoint
+      )
       const apr: any = ((allocationPoint.allocPoint / totalAllcationPoint) * ((acPerBlock / 10 ** 18) * 28800 * 365 * 100 * ACPrice)) / liquidity;
-
-      console.log("********** allocationPoint ", allocationPoint.allocPoint);
-      console.log("********** totalAllcationPoint ", totalAllcationPoint)
-      console.log("********** acPerBlock ", acPerBlock)
-      console.log("********** ACPrice ", ACPrice)
-      console.log("********** liquidity ", liquidity)
-      console.log("********** APR ", apr)
-
-      // console.log("apr *****************", allocationPoint, totalAllcationPoint, acPerBlock, ACPrice, liquidity)
-
-      return acPerBlock;
-      // return contract;
+      console.log("apr", apr)
+      return apr;
     } catch (err) {
       throw err;
     }
@@ -57,12 +34,12 @@ class MasterChef extends web3Helper {
   public async handleLiquidity(tokenAddress: any, contractAddress: any): Promise<Number> {
     try {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
-        //UserInfo.amount
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress);
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}USDT`);
+        const respTokenOne = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=USDT`);
         if (respTokenOne.status === 200) {
           return d * respTokenOne.data.data.price
         }
+        else return 0
       }
       return 0
     } catch (error) {

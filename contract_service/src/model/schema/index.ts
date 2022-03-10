@@ -9,6 +9,8 @@ import WithdrawalBonus from './withdrawalBonus'
 import InvestmentRewardLog from './investmentRewardLog'
 import ManagementPoolRegistration from './managementPoolRegistration'
 import UserWithdrawalBonus from './userWithdrawalBonus'
+import farms from './farms'
+
 
 export {
     Accounts,
@@ -21,5 +23,6 @@ export {
     WithdrawalBonus,
     InvestmentRewardLog,
     ManagementPoolRegistration,
-    UserWithdrawalBonus
+    UserWithdrawalBonus,
+    farms
 };

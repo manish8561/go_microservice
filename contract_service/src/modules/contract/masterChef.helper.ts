@@ -11,19 +11,16 @@ class MasterChef extends web3Helper {
 
   public async calculateAPRValue(masterChefAddress: string, lp: string): Promise<string> {
     try {
-      const ACPrice: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
-      // const lp = '0x496b384ee9Cf03Af7d5ED6f1EEbe2c2ba1415242'
-      // const masterChefAddress: any = '0x8a69E9780700c0B42825ED5F5dDf8ca0B6A3B6e0';
+      const ACToken: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
+      let ACPrice = 0
+      if (ACToken.status = 200) {
+        ACPrice = ACToken.data.data.price
+      }
       const totalAllcationPoint: any = await this.totalAllocationPoint(masterChefAddress);
       const allocationPoint: any = await this.allocationPoint(1, masterChefAddress);
       const acPerBlock: any = await this.acPerBlock(masterChefAddress);
       const liquidity: any = await this.handleLiquidity(lp, masterChefAddress)
-
-      console.log("*****************************************************",
-      allocationPoint.allocPoint
-      )
       const apr: any = ((allocationPoint.allocPoint / totalAllcationPoint) * ((acPerBlock / 10 ** 18) * 28800 * 365 * 100 * ACPrice)) / liquidity;
-      console.log("apr", apr)
       return apr;
     } catch (err) {
       throw err;

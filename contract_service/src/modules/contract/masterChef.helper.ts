@@ -2,6 +2,11 @@ import web3Helper from "../../helpers/common/web3.helper";
 import pairContractABI from '../../bin/pairContractABI.json'
 import TokenABI from '../../bin/tokenContract.ABI.json'
 import MasterchefABI from '../../bin/masterChefContractABI.json'
+import PairABI from '../../bin/pairContractABI.json'
+
+// import tokenStrategyABI from '../../bin/strategy.singleABI.json'
+// import pairStrategyABI from '../../bin/strategy.pairABI.json'
+
 import axios from "axios";
 
 class MasterChef extends web3Helper {
@@ -9,13 +14,30 @@ class MasterChef extends web3Helper {
     super();
   }
 
+
+  public async calculateTVLValue(deposit_token: string, strategyAddress: string): Promise<string> {
+    try {
+
+      console.log("strategyAddress", strategyAddress)
+      console.log("deposit_token", deposit_token)
+
+
+      const contract: any = await this.callContract(PairABI, deposit_token);
+
+      let resp: any = await contract.methods.balanceOf(strategyAddress).call();
+      console.log("resp ---------", resp)
+
+      return 'bal'
+    } catch (err) {
+      throw err;
+    }
+  }
+
   public async calculateAPRValue(masterChefAddress: string, lp: string): Promise<string> {
     try {
       const ACToken: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
       let ACPrice = 0
-      if (ACToken.status = 200) {
-        ACPrice = ACToken.data.data.price
-      }
+      if (ACToken.status = 200) { ACPrice = ACToken.data.data.price }
       const totalAllcationPoint: any = await this.totalAllocationPoint(masterChefAddress);
       const allocationPoint: any = await this.allocationPoint(1, masterChefAddress);
       const acPerBlock: any = await this.acPerBlock(masterChefAddress);
@@ -136,7 +158,6 @@ class MasterChef extends web3Helper {
       let price = 0
       let priceTokenZero: any = 0;
       let priceTokenOne: any = 0;
-
       if (pairAddress === "0x0000000000000000000000000000000000000000") {
         return 0;
       }
@@ -181,6 +202,8 @@ class MasterChef extends web3Helper {
       throw err
     }
   }
+
+
 }
 
 export default new MasterChef();

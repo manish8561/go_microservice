@@ -12,19 +12,21 @@ class farmModel extends BaseModel {
   }
   public async getAprValue(response: any) {
     try {
-      const farmData: any = await farms.find({});
-
-      const newArr: any = [];
-      if (farmData.length > 0) {
-        for (let it of farmData) {
-          const { masterchef, deposit_token }: any = it;
-          const calApr: any = await masterChefHelper.calculateAPRValue(masterchef, deposit_token);
-          it.daily_apr = calApr
-          newArr.push(it)
+      const farmLength: any = await farms.count({});
+      if (farmLength > 0) {
+        for (let i = 0; i <= farmLength; i += 20) {
+          console.log(`************ ${i} ***************`)
+          const farmData: any = await farms.find().skip(i).limit(20);
+          for (let it of farmData) {
+            console.log(`************ time ***************`)
+            const { masterchef, deposit_token , token_type , address }: any = it;
+            const calApr: any = await masterChefHelper.calculateAPRValue(masterchef, deposit_token);
+            const calTvl: any = await masterChefHelper.calculateTVLValue(deposit_token , address);
+            it.daily_apr = calApr
+            it.save()
+          }
         }
-        await farms.insertMany(newArr, { ordered: false }).catch(err => {
-          console.error(err);
-        })
+        return {}
       }
     }
     catch (error) {

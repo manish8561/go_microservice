@@ -145,8 +145,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	modified := time.Now()
 	update := bson.M{"_modified": modified, "token_type": data.Token_Type}
 
-	fmt.Println("data", data.Address)
-
 	if data.Address != "" {
 		update["address"] = data.Address
 	}
@@ -242,6 +240,36 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	return result, nil
 }
 
+// You could input an FarmModel which will be saved in database returning with error info
+// update stake in the farm
+func UpdateStake(data *FarmModel) (*mongo.UpdateResult, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	res, err := primitive.ObjectIDFromHex("")
+
+	if data.ID == res {
+		return nil, errors.New("Object ID is required field")
+	}
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	modified := time.Now()
+	update := bson.M{"_modified": modified, "token_type": data.Token_Type}
+
+	if data.Stake != "" {
+		update["stake"] = data.Stake
+	}
+	update = bson.M{"$set": update}
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
 // You could input an FarmModel which will be updated in database returning with error info
 // 	if err := UpdateOne(&farmModel); err != nil { ... }
 func TransactionUpdate(data *FarmModel) error {

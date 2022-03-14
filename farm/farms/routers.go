@@ -11,7 +11,6 @@ import (
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/gin-gonic/gin"
-
 )
 
 // controller file with routes
@@ -30,6 +29,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
 	router.PUT("", FarmUpdate)
+	router.PUT("/stake", FarmStake)
 	router.PUT("/transaction", FarmTransactionUpdate)
 	router.PUT("/setOperator", FarmSetOperator)
 	// router.DELETE("/:username/follow", FarmUnfollow)
@@ -107,17 +107,19 @@ func FarmList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
 }
+
 /*
 function for platforms from farm
 */
 func FarmSource(c *gin.Context) {
-	result,err := GetSource()
+	result, err := GetSource()
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": result})
 }
+
 /*
 function to tvl from farm
 */
@@ -155,6 +157,7 @@ func FarmSave(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "farm inserted", "insertId": insertID, "success": true})
 }
+
 /*
 function to update farm in db
 */
@@ -170,6 +173,23 @@ func FarmUpdate(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "farm updated", "data": data, "success": true})
+}
+
+/*
+function to update stake farm in db
+*/
+func FarmStake(c *gin.Context) {
+	farms := &FarmModel{}
+	if err := common.Bind(c, farms); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	data, err := UpdateStake(farms)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "farm stake updated", "data": data, "success": true})
 }
 
 /*

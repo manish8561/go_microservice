@@ -1,5 +1,5 @@
 {
-  "name": "rabbitswap_backend",
+  "name": "autocompound_backend",
   "version": "1.0.0",
   "description": "backend api server",
   "main": "./src/server.ts",

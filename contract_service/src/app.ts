@@ -14,7 +14,7 @@ import { Controller } from "./interfaces";
 import { errorMiddleware } from "./middlewares";
 import * as Helpers from './helpers';
 
-// import {Contract} from './modules/contract/contract.model';
+import  farmsContact  from './modules/contract/contract.model';
 
 
 class App {
@@ -31,6 +31,7 @@ class App {
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
+        
     }
 
     public listen() {
@@ -51,12 +52,11 @@ class App {
         this.app.use(express.urlencoded());
         this.app.use(cors());
         this.app.use(helmet());
-
         // setup the logger
         this.saveLogs();
         //setting up swagger
         // this.useSwagger();
-        // this.startCron();
+        this.startCron();
     }
 
     private useSwagger() {
@@ -97,13 +97,13 @@ class App {
         }
     }
 
-    // private startCron() {
-    //     const job = new CronJob('0 */1 * * * *', function () {
-    //         console.log('You will see this message every 10 minute' + new Date());
-    //         // getAprValue.updateCurrency();
-    //     }, null, true, 'America/Los_Angeles');
-    //     job.start();
-    // }
+    private startCron() {
+        const job = new CronJob('0 0 1 * * *', function () {
+            console.log('You will see this message every 1:00 am' + new Date());
+            farmsContact.getFarmsValue();
+        }, null, true, 'Europe/London');
+        job.start();
+    }
 }
 
 export default App;

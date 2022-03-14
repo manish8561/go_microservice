@@ -26,8 +26,8 @@ class ContractController implements Interfaces.Controller {
 
     private async calApy(req: any, response: Response) {
         try {
-            const res: any = await farmModel.getAprValue(response);
-            return Responses.success(response, res);
+            const res: any = await farmModel.getFarmsValue();
+            return {};
         } catch (error) {
             return Responses.error(response, { message: error });
         }

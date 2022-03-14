@@ -13,21 +13,31 @@ class MasterChef extends web3Helper {
   constructor() {
     super();
   }
-
+    public async calculateAPY(deposit_token: string, strategyAddress: string): Promise<string> {
+      try {
+        /**
+        //  *
+        //  * @param interest {Number} APR as percentage (ie. 5.82)
+        //  * @param frequency {Number} Compounding frequency (times a year)
+        //  * @returns {Number} APY as percentage (ie. 6 for APR of 5.82%)
+        //  */
+        const interest: any = await this.calculateAPRValue(deposit_token , strategyAddress)
+        const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
+        const frequency = SECONDS_PER_YEAR / 14;
+        // const  frequency = /
+        const aprToApy: any =  ((1 + (interest / 100)) ** (1 / frequency) - 1) * frequency * 100;
+        return aprToApy
+      } catch (err) {
+        throw err;
+      }
+    }
 
   public async calculateTVLValue(deposit_token: string, strategyAddress: string): Promise<string> {
     try {
-
-      console.log("strategyAddress", strategyAddress)
-      console.log("deposit_token", deposit_token)
-
-
       const contract: any = await this.callContract(PairABI, deposit_token);
-
-      let resp: any = await contract.methods.balanceOf(strategyAddress).call();
-      console.log("resp ---------", resp)
-
-      return 'bal'
+      const resp: any = await contract.methods.balanceOf(strategyAddress).call();
+      console.log("resp", resp)
+      return resp
     } catch (err) {
       throw err;
     }
@@ -35,8 +45,13 @@ class MasterChef extends web3Helper {
 
   public async calculateAPRValue(masterChefAddress: string, lp: string): Promise<string> {
     try {
-      const ACToken: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
       let ACPrice = 0
+
+      console.log("ACTokenACTokenACTokenACToken", process.env.FARM_API_URL)
+
+
+      const ACToken: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
+
       if (ACToken.status = 200) { ACPrice = ACToken.data.data.price }
       const totalAllcationPoint: any = await this.totalAllocationPoint(masterChefAddress);
       const allocationPoint: any = await this.allocationPoint(1, masterChefAddress);

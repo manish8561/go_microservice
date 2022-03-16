@@ -129,7 +129,6 @@ class MasterChef extends web3Helper {
     try {
       const contract: any = await this.callContract(pairContractABI, pairAddress);
 
-      console.log("contract methodss", contract.methods)
       return await contract.methods.token1().call();
     } catch (error) {
       throw error;
@@ -168,21 +167,31 @@ class MasterChef extends web3Helper {
       let price = 0
       let priceTokenZero: any = 0;
       let priceTokenOne: any = 0;
-      if (pairAddress === "0x0000000000000000000000000000000000000000") {
+      let tokenZero: any;
+      console.log("pairAddresspairAddress", pairAddress)
+      if (pairAddress === "") {
         return 0;
       }
       console.log("******************** 1 ***********************")
-      const tokenZero: any = await this.getTokenZero(pairAddress);
+      try {
+         tokenZero = await this.getTokenZero(pairAddress);
+      } catch (err) {
+        console.log('not a pair error', err);
+        const symbolSingle = await this.getSymbol(pairAddress);
+        const respTokenOne = await axios(`${process.env.FARM_API_URL}${symbolSingle}`);
+        if (respTokenOne.status === 200) {
+            return Number(respTokenOne.data.data.price)
+        }
+        return 0;
+      }
 
       if (tokenZero === '0x0000000000000000000000000000000000000000') {
         const symbolSingle = await this.getSymbol(pairAddress);
         const respTokenOne = await axios(`${process.env.FARM_API_URL}${symbolSingle}`);
         if (respTokenOne.status === 200) {
-          if (respTokenOne.data.data.symbol === symbolSingle) {
-            return respTokenOne.data.data.price
-          }
+            return Number(respTokenOne.data.data.price)
         }
-        return 0
+        return 0;
       } else {
         console.log("******************** 2 ***********************", pairAddress)
 
@@ -213,11 +222,11 @@ class MasterChef extends web3Helper {
         }
         console.log("******************** 5 ***********************")
 
-        price = priceTokenZero + priceTokenOne
+        price = Number(priceTokenZero + priceTokenOne)
         return price
       }
     } catch (err) {
-      throw err
+      throw err;
     }
   }
 }

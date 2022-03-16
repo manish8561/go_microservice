@@ -55,12 +55,24 @@ class MongoHelper {
         //     };
         // }
 
-        mongoose.connect(url, options).then(() => {
-            console.log('mongoDB: Connected Successfully.!!');
-        }).catch((err) => {
-            console.log(err);
-            console.log('mongoDb: Failed To Connect.!!');
-        });
+        await (async function() {
+            try {
+                await mongoose.connect(url, options);
+                console.log("Server connected successfully");
+              } catch (err) {
+                console.log("Server is not connected");
+              }
+        }
+        )();
+
+        // const connection = async () => {
+        //   try {
+        //     await mongoose.connect(url, options);
+        //     console.log("Server connected successfully");
+        //   } catch (err) {
+        //     console.log("Server is not connected");
+        //   }
+        // };
 
         if (this.env !== 'prod') {
             mongoose.set('debug', true);

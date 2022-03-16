@@ -23,10 +23,10 @@ class Web3Helper {
         }
     };
     /* dynamically call the contract instance */
-    public async callContract(contractAbi: any, contractAddress: string, ): Promise<string> {
+    public async callContract(contractAbi: any, contractAddress: string): Promise<string> {
         try {
             if (this.contractObj && this.contractAddress === contractAddress.toLowerCase()) {
-                return this.contractObj
+                return this.contractObj;
             }
             this.contractAddress = contractAddress.toLowerCase();
             this.contractObj = new this.web3Obj.eth.Contract(contractAbi, contractAddress);
@@ -35,6 +35,17 @@ class Web3Helper {
             throw error;
         }
     };
+    /* dynamically call the pair contract instance */
+    public async callPairContract(contractAbi: any, contractAddress: string): Promise<string> {
+        try {
+            this.contractAddress = contractAddress.toLowerCase();
+            this.contractObj = new this.web3Obj.eth.Contract(contractAbi, contractAddress);
+            return this.contractObj
+        } catch (error) {
+            throw error;
+        }
+    };
+
 }
 
 export default Web3Helper;

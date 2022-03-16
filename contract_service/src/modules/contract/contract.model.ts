@@ -1,10 +1,6 @@
 import BaseModel from "../../model/base.model";
 import masterChefHelper from "./masterChef.helper";
 import farms from "../../model/schema/farms";
-// import { Responses } from "../../helpers";
-// import axios from "axios";
-// import { initParams } from "request-promise";
-
 
 class farmModel extends BaseModel {
   constructor() {
@@ -17,8 +13,7 @@ class farmModel extends BaseModel {
       const farmLength: any = await farms.count({});
       if (farmLength > 0) {
         for (let i = 0; i < farmLength; i += 20) {
-          console.log(i, 'before second loop')
-          const farmData: any = await farms.find().skip(i).limit(20);
+          const farmData: any = await farms.find({ status: 'active' }).skip(i).limit(20);
           for (let it of farmData) {
             const { masterchef, deposit_token, token_type, address }: any = it;
             const calApr: any = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, token_type);
@@ -38,7 +33,6 @@ class farmModel extends BaseModel {
     }
     catch (error) {
       console.log("err", error)
-      // throw Responses.error(response, { message: error });
     }
   }
 }

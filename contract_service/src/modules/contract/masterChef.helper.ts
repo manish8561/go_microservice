@@ -4,31 +4,23 @@ import TokenABI from '../../bin/tokenContract.ABI.json';
 import MasterchefABI from '../../bin/masterChefContractABI.json';
 import StrategyPair from '../../bin/strategy.pairABI.json';
 import StrategyToken from '../../bin/strategy.singleABI.json';
-
-// import Erc20ABI from '../../bin/tokenContract.ABI.json';
-
 import axios from "axios";
-
-// var BigNumber = require('big-number');
 
 
 class MasterChef extends web3Helper {
   constructor() {
     super();
   }
-
-
-  public async calculateAPY(calApy: any): Promise<string> {
+  
+  public async calculateAPY(apr: any): Promise<string> {
     try {
-      //  *
       //  * @param interest {Number} APR as percentage (ie. 5.82)
       //  * @param frequency {Number} Compounding frequency (times a year)
       //  * @returns {Number} APY as percentage (ie. 6 for APR of 5.82%)
-      //  */
-      const interest: any = calApy
-      const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
-      const frequency = SECONDS_PER_YEAR / 14;
-      const aprToApy: any = ((1 + (interest / 100)) ** (1 / frequency) - 1) * frequency * 100;
+      const interest: any = apr
+      // const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
+      const BLOCKS_IN_A_YEAR = 28800
+      const aprToApy: any = ((1 + (interest / 100)) ** (1 / BLOCKS_IN_A_YEAR) - 1) * BLOCKS_IN_A_YEAR * 100;
       return aprToApy
     } catch (err) {
       throw err;
@@ -47,7 +39,6 @@ class MasterChef extends web3Helper {
       let tvl: any = await contract.methods.totalDeposits().call();
       const decimalVal: any = await contract.methods.decimals().call();
       const dollerPrice: any = await this.calPrice2(deposit_token);
-      console.log("HEYYYYYYYYYYY", dollerPrice, tvl)
       tvl = (tvl / 10 ** decimalVal) * Number(dollerPrice);
       return tvl.toFixed(2);
     } catch (err) {
@@ -77,14 +68,6 @@ class MasterChef extends web3Helper {
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress);
         let tokenPrice: any = await this.calPrice(tokenAddress)
         return d * tokenPrice
-        // console.log("tokenPricetokenPricetokenPrice", tokenPrice.toFixed(4))
-
-        // const respTokenOne = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=USDT`);
-
-        // if (respTokenOne.status === 200) {
-        //   return d * respTokenOne.data.data.price
-        // }
-        // else return 0
       }
       return 0
     } catch (error) {
@@ -177,7 +160,6 @@ class MasterChef extends web3Helper {
     }
   };
 
-
   public async getDecimal(pairAddress: any): Promise<string> {
     try {
       const contract: any = await this.callContract(TokenABI, pairAddress);
@@ -222,9 +204,6 @@ class MasterChef extends web3Helper {
         const symbolOne: any = await this.getSymbol(tokenOne);
         const decimalZero: any = await this.getDecimal(tokenZero);
         const decimalOne: any = await this.getDecimal(tokenOne);
-
-        console.log("decimalss", decimalOne, decimalZero)
-
         // fetching data from Api for token zero...
         const respTokenZero = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolZero}`);
         if (respTokenZero.status === 200) {
@@ -232,7 +211,6 @@ class MasterChef extends web3Helper {
             priceTokenZero = respTokenZero.data.data.price * reserve[0] / 10 ** decimalZero;
           }
         }
-
         // fetching data from Api for token one...
         const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolOne}`);
         if (respTokenOne.status === 200) {
@@ -240,13 +218,7 @@ class MasterChef extends web3Helper {
             priceTokenOne = respTokenOne.data.data.price * reserve[1] / 10 ** decimalOne
           }
         }
-
-        // console.log("fffffff", priceTokenZero, priceTokenOne)
-
         price = priceTokenZero + priceTokenOne
-        // var x = new BigNumber(price, 10);
-        // console.log(x.toString(), 'jjjjjjjjjjjjjjjjj')
-
         return price
       }
     } catch (err) {
@@ -293,7 +265,6 @@ class MasterChef extends web3Helper {
             priceTokenZero = respTokenZero.data.data.price;
           }
         }
-
         // fetching data from Api for token one...
         const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolOne}`);
         if (respTokenOne.status === 200) {
@@ -301,13 +272,7 @@ class MasterChef extends web3Helper {
             priceTokenOne = respTokenOne.data.data.price;
           }
         }
-
-        // console.log("fffffff", priceTokenZero, priceTokenOne)
-
         price = priceTokenZero + priceTokenOne
-        // var x = new BigNumber(price, 10);
-        // console.log(x.toString(), 'jjjjjjjjjjjjjjjjj')
-
         return price
       }
     } catch (err) {

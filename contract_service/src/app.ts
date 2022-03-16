@@ -14,8 +14,7 @@ import { Controller } from "./interfaces";
 import { errorMiddleware } from "./middlewares";
 import * as Helpers from './helpers';
 
-import  farmsContact  from './modules/contract/contract.model';
-
+import farmsContact from './modules/contract/contract.model';
 
 class App {
     public app: express.Application;
@@ -31,13 +30,10 @@ class App {
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
-        
+
     }
 
     public listen() {
-        // this.app.listen(this.port, () => {
-        //     console.log("Running server on port %s", this.port);
-        // });
         this.server.listen(this.port, () => {
             console.log(
                 `-- App listening on the port ${this.port

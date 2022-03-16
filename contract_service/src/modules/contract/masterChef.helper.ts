@@ -6,12 +6,11 @@ import StrategyPair from '../../bin/strategy.pairABI.json';
 import StrategyToken from '../../bin/strategy.singleABI.json';
 import axios from "axios";
 
-
 class MasterChef extends web3Helper {
   constructor() {
     super();
   }
-  
+
   public async calculateAPY(apr: any): Promise<string> {
     try {
       //  * @param interest {Number} APR as percentage (ie. 5.82)
@@ -181,7 +180,7 @@ class MasterChef extends web3Helper {
       try {
         tokenZero = await this.getTokenZero(pairAddress);
       } catch (err) {
-        console.log('not a pair error', err);
+        // console.log('not a pair error', err);
         const symbolSingle = await this.getSymbol(pairAddress);
         const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolSingle}`);
         if (respTokenOne.status === 200) {
@@ -238,7 +237,7 @@ class MasterChef extends web3Helper {
       try {
         tokenZero = await this.getTokenZero(pairAddress);
       } catch (err) {
-        console.log('not a pair error', err);
+        // console.log('not a pair error', err);
         const symbolSingle = await this.getSymbol(pairAddress);
         const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolSingle}`);
         if (respTokenOne.status === 200) {

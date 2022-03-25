@@ -3,14 +3,12 @@ package main
 import (
 	"context"
 	"log"
-	"net"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 
 	pb "github.com/autocompound/docker_backend/user/helloworld"
-	"google.golang.org/grpc"
+	// "google.golang.org/grpc"
 
 	// "github.com/autocompound/docker_backend/user/articles"
 	"github.com/autocompound/docker_backend/user/common"
@@ -55,24 +53,24 @@ func main() {
 	common.InitDB()
 	// defer conn.Session.Close()
 
-	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
-	if(!ok){
-		endpoint = ":3001"
-	}
+	// endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
+	// if(!ok){
+	// 	endpoint = ":3001"
+	// }
 
 	// grpc server as user
 	// grpc start
-	lis, err := net.Listen("tcp", endpoint)
-	if err != nil {
-		log.Println("ERROR:", err.Error())
-	}
+	// lis, err := net.Listen("tcp", endpoint)
+	// if err != nil {
+	// 	log.Println("ERROR:", err.Error())
+	// }
 	
-	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
-	log.Printf("server listening at %v", lis.Addr())
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	// s := grpc.NewServer()
+	// pb.RegisterGreeterServer(s, &server{})
+	// log.Printf("server listening at %v", lis.Addr())
+	// if err := s.Serve(lis); err != nil {
+	// 	log.Fatalf("failed to serve: %v", err)
+	// }
 	// grpc end
 
 	//create server

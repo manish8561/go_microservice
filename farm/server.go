@@ -1,21 +1,16 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/autocompound/docker_backend/farm/contracts"
 	"github.com/autocompound/docker_backend/farm/farms"
-	pb "github.com/autocompound/docker_backend/farm/helloworld"
 	"github.com/autocompound/docker_backend/farm/pricefeeds"
-	"google.golang.org/grpc"
+	
+	// pb "github.com/autocompound/docker_backend/farm/helloworld"
 )
 
 // cors common function for * n
@@ -50,27 +45,26 @@ func init() {
 func main() {
 	// Set up a connection to the grpc client for user .
 	// grpc start
+	// endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
+	// if(!ok){
+	// 	log.Fatalf("end point not found to connect")
+	// }
+	// conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalf("did not connect: %v", err)
+	// }
 
-	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
-	if(!ok){
-		log.Fatalf("end point not found to connect")
-	}
-	conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-
-	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
-	fmt.Printf("grpc", c)
-	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world"})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
-	}
-	log.Printf("Greeting: %s", rr.GetMessage())
+	// defer conn.Close()
+	// c := pb.NewGreeterClient(conn)
+	// fmt.Printf("grpc", c)
+	// // Contact the server and print out its response.
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// defer cancel()
+	// rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world"})
+	// if err != nil {
+	// 	log.Fatalf("could not greet: %v", err)
+	// }
+	// log.Printf("Greeting: %s", rr.GetMessage())
 	// grpc end
 
 

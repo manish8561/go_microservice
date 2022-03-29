@@ -1,16 +1,9 @@
 package main
 
 import (
-	"context"
-	"log"
-	"net"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-
-	pb "github.com/autocompound/docker_backend/user/helloworld"
-	"google.golang.org/grpc"
 
 	// "github.com/autocompound/docker_backend/user/articles"
 	"github.com/autocompound/docker_backend/user/common"
@@ -36,16 +29,6 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
-// server is used to implement helloworld.GreeterServer.(grpc)
-type server struct {
-	pb.UnimplementedGreeterServer
-}
-
-// SayHello implements helloworld.GreeterServer(grpc)
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	log.Printf("Received: %v", in.GetName())
-	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
-}
 
 // main func server
 func main() {
@@ -54,26 +37,9 @@ func main() {
 	// call db init function
 	common.InitDB()
 	// defer conn.Session.Close()
-	// grpc server as user
-	// grpc start
-	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
-	if(!ok){
-		endpoint = ":3001"
-	}
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
-	log.Printf("server listening at %v", lis.Addr())
-	
-	go func() {
-        if err := s.Serve(lis); err != nil {
-            log.Fatalf("could not start grpc server: %v", err)
-        }
-    }()
-	// grpc end
+
+	//creating grpc server function
+	common.Call_GRPC_Server()
 
 	//create server
 	r := gin.Default()
@@ -123,9 +89,5 @@ func main() {
 	//}).First(&userAA)
 	//fmt.Println(userAA)
 	// r.Run() // listen and serve on 0.0.0.0:8080
-	r.Run()
-	
-	
-	
-	log.Printf("manish", endpoint)
+	r.Run()	
 }

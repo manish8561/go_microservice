@@ -63,7 +63,7 @@ services:
     hostname: contract_service
     ports:
       - "0.0.0.0:3003:3003"
-    container_name: user_service
+    container_name: contract_service
     restart: always
     build: ./contract_service
     env_file: ./config/contract.env

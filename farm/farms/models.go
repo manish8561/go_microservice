@@ -189,7 +189,7 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 		update["source"] = data.Source
 	}
 	if data.Source_Link != "" {
-		update["source"] = data.Source_Link
+		update["source_link"] = data.Source_Link
 	}
 	if data.Bonus_Multiplier > 1 {
 		update["bonus_multiplier"] = data.Bonus_Multiplier

@@ -23,7 +23,7 @@ type Token struct {
 	Address  string  `bson:"address" json:"address"`
 	Name     string  `bson:"name" json:"name"`
 	Symbol   string  `bson:"symbol" json:"symbol"`
-	Supply   int     `bson:"supply" json:"supply"`
+	Supply   float64     `bson:"supply" json:"supply"`
 	Price    float64 `bson:"price" json:"price"`
 	Decimals int     `bson:"decimals" json:"decimals"`
 	Img      string  `bson:"img" json:"img"`

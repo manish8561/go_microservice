@@ -64,7 +64,7 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	self.farmModel.Source = self.Source
 	self.farmModel.Source_Link = self.Source_Link
 
-	self.farmModel.Status = "pending"
+	self.farmModel.Status = "active"
 	self.farmModel.Created = time.Now()
 	self.farmModel.Modified = time.Now()
 

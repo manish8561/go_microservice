@@ -9,6 +9,7 @@ import (
 	"github.com/autocompound/docker_backend/farm/contracts"
 	"github.com/autocompound/docker_backend/farm/farms"
 	"github.com/autocompound/docker_backend/farm/pricefeeds"
+	"github.com/autocompound/docker_backend/farm/stakes"
 )
 
 // cors common function for * n
@@ -54,6 +55,7 @@ func main() {
 
 	v1.Use(common.AuthMiddleware(false))
 	farms.FarmsRegister(v1.Group("/farm"))
+	stakes.StakesRegister(v1.Group("/stake"))
 	pricefeeds.PriceFeedsRegister(v1.Group("/pricefeeds"))
 	contracts.ContractsRegister(v1.Group("/contract"))
 

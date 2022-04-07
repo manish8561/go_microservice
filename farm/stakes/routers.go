@@ -17,6 +17,7 @@ func StakesRegister(router *gin.RouterGroup) {
 	router.GET("", StakeList)
 	router.GET("/total", StakeTotal)
 	router.GET("/:id", StakeRetrieve)
+	router.GET("/chainId/:chain_id", StakeFromChainId)
 
 	// enable authentication for below routes
 	router.Use(common.AuthMiddleware(true))
@@ -95,7 +96,21 @@ func StakeRetrieve(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": record, "success": true})
 }
-
+/*
+function to retrive single record using get api
+*/
+func StakeFromChainId(c *gin.Context) {
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = 4 //rinkeby
+	}
+	record, err := GetStakeFromChainId(chain_id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": record, "success": true})
+}
 /*
 function to save record in db
 */

@@ -3,6 +3,16 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_WETH",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_acStakeContract",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_autoCompoundToken",
         "type": "address"
       },
@@ -18,7 +28,7 @@
       },
       {
         "internalType": "address",
-        "name": "_stakingContract",
+        "name": "_masterChefContract",
         "type": "address"
       },
       {
@@ -34,11 +44,6 @@
       {
         "internalType": "uint256",
         "name": "_autoCompoundTokenPerBlock",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_startBlock",
         "type": "uint256"
       }
     ],
@@ -410,6 +415,32 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "WETH",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "acStakingContract",
+    "outputs": [
+      {
+        "internalType": "contract StakingIERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -698,25 +729,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "pendingAutocompoundTokens",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "owner",
         "type": "address"
       },
@@ -764,7 +776,7 @@
         "type": "uint256"
       }
     ],
-    "name": "recoverCake",
+    "name": "recoverBNB",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -848,6 +860,19 @@
   {
     "inputs": [],
     "name": "setAllowances",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_stakingContract",
+        "type": "address"
+      }
+    ],
+    "name": "setStakingContract",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1049,13 +1074,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "updatePool",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1111,5 +1129,9 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]

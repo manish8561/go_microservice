@@ -23,17 +23,17 @@ const CollectionName = "stakes"
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type StakeModel struct {
-	ID                 primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created            time.Time          `bson:"_created" json:"_created"`
-	Modified           time.Time          `bson:"_modified" json:"_modified"`
-	Chain_Id           int                `bson:"chain_id" json:"chain_id"`
-	Address            string             `bson:"address" json:"address"` //address field of strategy
-	Status             string             `bson:"status" json:"status"`
+	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created  time.Time          `bson:"_created" json:"_created"`
+	Modified time.Time          `bson:"_modified" json:"_modified"`
+	Chain_Id int                `bson:"chain_id" json:"chain_id"`
+	Address  string             `bson:"address" json:"address"` //address field of strategy
+	Status   string             `bson:"status" json:"status"`
 }
 
 //struct for filters
 type Filters struct {
-	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
+	Chain_Id int64 `bson: "chain_id", json:"chain_id"`
 }
 
 // init function runs first time
@@ -104,6 +104,7 @@ func UpdateOne(data *StakeModel) (*mongo.UpdateResult, error) {
 	}
 	return result, nil
 }
+
 // You could input string which will be saved in database returning with error info
 // 	if err := FindOne(&stakeModel); err != nil { ... }
 func GetRecord(ID string) (StakeModel, error) {
@@ -124,6 +125,20 @@ func GetRecord(ID string) (StakeModel, error) {
 	// The first document in the sorted order will be returned.
 	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&record)
+
+	return *record, err
+}
+
+//GetStakeFromChainId
+func GetStakeFromChainId(chain_id int64) (StakeModel, error) {
+	client := common.GetDB()
+	record := &StakeModel{}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// findone by chain_id
+	err := collection.FindOne(ctx, bson.M{"chain_id": chain_id}).Decode(&record)
 
 	return *record, err
 }
@@ -180,6 +195,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	}
 	return records, err
 }
+
 // Record delete function
 func DeleteRecord(ID string) (bool, error) {
 	client := common.GetDB()

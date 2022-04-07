@@ -30,9 +30,11 @@ class MasterChef extends web3Helper {
     try {
       let ABI: any;
       if (token_type === 'pair') {
-        ABI = StrategyPair
+        ABI = StrategyPair;
+      } else if(token_type === 'native'){
+        ABI = StrategyPair;
       } else {
-        ABI = StrategyToken
+        ABI = StrategyToken;
       }
       const contract: any = await this.callPairContract(ABI, strategyAddress);
       let tvl: any = await contract.methods.totalDeposits().call();
@@ -45,7 +47,7 @@ class MasterChef extends web3Helper {
     }
   }
 
-  public async calculateAPRValue(masterChefAddress: string, lp: string, token_type: string): Promise<string> {
+  public async calculateAPRValue(masterChefAddress: string, lp: string): Promise<string> {
     try {
       let ACPrice = 0
       const ACToken: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
@@ -53,7 +55,7 @@ class MasterChef extends web3Helper {
       const totalAllcationPoint: any = await this.totalAllocationPoint(masterChefAddress);
       const allocationPoint: any = await this.allocationPoint(1, masterChefAddress);
       const acPerBlock: any = await this.acPerBlock(masterChefAddress);
-      const liquidity: any = await this.handleLiquidity(lp, masterChefAddress, token_type)
+      const liquidity: any = await this.handleLiquidity(lp, masterChefAddress)
       const apr: any = ((allocationPoint.allocPoint / totalAllcationPoint) * ((acPerBlock / 10 ** 18) * 28800 * 365 * 100 * ACPrice)) / liquidity;
       return apr.toFixed(4);
     } catch (err) {
@@ -61,7 +63,7 @@ class MasterChef extends web3Helper {
     }
   }
 
-  public async handleLiquidity(tokenAddress: any, contractAddress: any, token_type: string): Promise<Number> {
+  public async handleLiquidity(tokenAddress: any, contractAddress: any): Promise<Number> {
     try {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress);

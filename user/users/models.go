@@ -19,6 +19,7 @@ import (
 
 const CollectionName = "users"
 
+// var UserModel= common.UserModel
 // Models should only be concerned with database schema, more strict checking should be put in validator.
 //
 // HINT: If you want to split null and "", you should use *string instead of string.

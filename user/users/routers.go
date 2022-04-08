@@ -20,20 +20,19 @@ func UsersRegister(router *gin.RouterGroup) {
 // 	router.GET("/", UserRetrieve)
 // 	router.PUT("/", UserUpdate)
 // }
-
+// register the user profile route
 func ProfileRegister(router *gin.RouterGroup) {
 	router.GET("", ProfileRetrieve)
 	// router.POST("/:username/follow", ProfileFollow)
 	// router.DELETE("/:username/follow", ProfileUnfollow)
 }
-
+// get user profile from middleware
 func ProfileRetrieve(c *gin.Context) {
-	my_user_id, _ := c.Get("my_user_id")
-	userModel, err := GetProfile(my_user_id.(string))
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": err.Error()})
-		return
-	}
+	userModel, _ := c.Get("user")
+	// if err != nil {
+	// 	c.JSON(http.StatusNotFound, gin.H{"success": false, "error": err.Error()})
+	// 	return
+	// }
 	c.JSON(http.StatusOK, gin.H{"profile": userModel, "success": true})
 }
 

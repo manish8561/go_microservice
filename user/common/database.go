@@ -9,6 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 var client *mongo.Client
@@ -65,4 +68,43 @@ func InitDB() {
 // Using this function to get a connection, you can create your connection pool here.
 func GetDB() *mongo.Client {
 	return client
+}
+
+type UserModel struct {
+	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created   time.Time          `bson:"_created" json:"_created"`
+	Modified  time.Time          `bson:"_modified" json:"_modified"`
+	Firstname string
+	Lastname  string
+	Status    string
+	Username  string
+	Email     string
+	Role      string
+	// Image              *string
+	PasswordHash string `json:"-"` // to hide filed in json
+}
+
+// You could input string which will be saved in database returning with error info
+// 	if err := FindOne(&userModel); err != nil { ... }
+func GetUserProfile(ID string) (UserModel, error) {
+	client := GetDB()
+	person := &UserModel{}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("users")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	//convert string to objectid
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		// panic(err)
+		return *person, err
+	}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&person)
+
+	return *person, err
 }

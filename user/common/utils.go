@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	// "github.com/autocompound/docker_backend/user/users"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -134,9 +135,10 @@ var MyAuth2Extractor = &request.MultiExtractor{
 }
 
 // A helper to write user_id and user_model to the context
-func UpdateContextUserModel(c *gin.Context, my_user_id string) {
+func UpdateContextUserModel(c *gin.Context, my_user_id string, user *UserModel) {
 	if my_user_id != "" {
 		c.Set("my_user_id", my_user_id)
+		c.Set("user", user)
 	}
 	c.Next()
 }
@@ -169,8 +171,23 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 					return
 				}
 				my_user_id := claims["id"].(string)
+
+				user, err := GetUserProfile(my_user_id)
+				if err != nil {
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					return
+				}
 				fmt.Println(my_user_id, claims["id"])
-				UpdateContextUserModel(c, my_user_id)
+				fmt.Println("user in common middleware", user)
+
+				if err != nil {
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					return
+				}
+
+				UpdateContextUserModel(c, my_user_id, &user)
 			}
 		} else {
 			c.Next()

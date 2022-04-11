@@ -10,6 +10,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+var grpc_server_conn *grpc.ClientConn;
+
+//initial function to handle grpc connection
 func Call_GRPC_Server() {
 	// Set up a connection to the grpc client for user .
 	// grpc start
@@ -21,8 +24,9 @@ func Call_GRPC_Server() {
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+	grpc_server_conn = conn;
 
-	defer conn.Close()
+	// defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 	log.Printf("grpc", c)
 	// Contact the server and print out its response.
@@ -34,4 +38,8 @@ func Call_GRPC_Server() {
 	}
 	log.Printf("Greeting: %s", rr.GetMessage())
 	// grpc end
+}
+//get user details
+func Get_GRPC_Conn() *grpc.ClientConn {
+	return grpc_server_conn
 }

@@ -14,9 +14,12 @@
 
 syntax = "proto3";
 
-option go_package = "google.golang.org/grpc/examples/helloworld/helloworld";
+// import "google/protobuf/timestamp.proto";
+
+
+option go_package = "github.com/autocompound/docker_backend/user/helloworld/helloworld";
 option java_multiple_files = true;
-option java_package = "io.grpc.examples.helloworld";
+option java_package = "io.autocompound.user.helloworld";
 option java_outer_classname = "HelloWorldProto";
 
 package helloworld;
@@ -25,6 +28,7 @@ package helloworld;
 service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc GetUserDetails(UserRequest) returns (UserReply) {}
 }
 
 // The request message containing the user's name.
@@ -35,4 +39,19 @@ message HelloRequest {
 // The response message containing the greetings
 message HelloReply {
   string message = 1;
+}
+
+message UserRequest {
+  string id=1;
+}
+
+message UserReply {
+  string id=1;
+  string email=2;
+  string firstname=3;
+  string lastname=4;
+  string status=5;
+  string role=6;
+  string _created=7;
+  string _modified=8;
 }

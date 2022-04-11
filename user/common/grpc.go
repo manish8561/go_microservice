@@ -11,18 +11,37 @@ import (
 )
 
 // server is used to implement helloworld.GreeterServer.(grpc)
-type server struct {
+type Server struct {
 	pb.UnimplementedGreeterServer
 }
 
 // SayHello implements helloworld.GreeterServer(grpc)
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	log.Printf("Received: %v", in.GetName())
+func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	log.Printf("Received Handshake: %v", in.GetName())
 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
+//send user details
+func (s *Server) GetUserDetails(ctx context.Context, in *pb.UserRequest) (*pb.UserReply, error) {
+	// log.Printf("Received ID: %v", in.GetId())
+	user, err := GetUserProfile(in.GetId())
+	if err != nil {
+		return &pb.UserReply{}, err
+	}
+	// log.Printf("user from db:", user)
+	return &pb.UserReply{
+		Id:        in.GetId(),
+		Firstname: user.Firstname,
+		Lastname:  user.Lastname,
+		Status:    user.Status,
+		Role:      user.Role,
+		XCreated:  (user.Created).String(),
+		XModified: (user.Modified).String(),
+	}, nil
+}
+
 func Call_GRPC_Server() {
-	// grpc server as user
+	// grpc Server as user
 	// grpc start
 	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
 	if !ok {
@@ -33,7 +52,7 @@ func Call_GRPC_Server() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
+	pb.RegisterGreeterServer(s, &Server{})
 	log.Printf("server listening at %v", lis.Addr())
 
 	go func() {

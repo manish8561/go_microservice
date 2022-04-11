@@ -2,13 +2,14 @@
 package common
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
 	"time"
-	"io/ioutil"
-	"encoding/json"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
@@ -21,6 +22,8 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	pb "github.com/autocompound/docker_backend/farm/helloworld"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -135,9 +138,10 @@ var MyAuth2Extractor = &request.MultiExtractor{
 }
 
 // A helper to write user_id and user_model to the context
-func UpdateContextUserModel(c *gin.Context, my_user_id string) {
+func UpdateContextUserModel(c *gin.Context, my_user_id string, user *pb.UserReply) {
 	if my_user_id != "" {
 		c.Set("my_user_id", my_user_id)
+		c.Set("user", user)
 	}
 	c.Next()
 }
@@ -170,8 +174,24 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 					return
 				}
 				my_user_id := claims["id"].(string)
-				fmt.Println(my_user_id, claims["id"])
-				UpdateContextUserModel(c, my_user_id)
+
+				//requesting grpc request for user details with id
+				grpc_server_conn := Get_GRPC_Conn()
+				cc := pb.NewGreeterClient(grpc_server_conn)
+				// Contact the server and print out its response.
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				user, err := cc.GetUserDetails(ctx, &pb.UserRequest{Id: my_user_id})
+				if err != nil {
+					// log.Fatalf("could not greet: %v", err)
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "No user found!"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("No user found!"))
+					return
+				}
+				// response from user service 
+
+				// fmt.Println(my_user_id, claims["id"], user, "in the middleware")
+				UpdateContextUserModel(c, my_user_id, user)
 			}
 		} else {
 			c.Next()
@@ -180,7 +200,6 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 }
 
 // ------- common middleware code end--------------------
-
 
 //---------------- get price start here ----------------------
 // 3rd party function for price coingeeko
@@ -211,4 +230,5 @@ func GetPrice(Id string) float64 {
 
 	return responseObject[Id].Usd
 }
+
 //---------------get price end here ----------------

@@ -99,12 +99,6 @@ func GetUserProfile(ID string) (UserModel, error) {
 		// panic(err)
 		return *person, err
 	}
-
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	// The first document in the sorted order will be returned.
-	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&person)
-
 	return *person, err
 }

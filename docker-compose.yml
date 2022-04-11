@@ -94,6 +94,8 @@ services:
     env_file: ./config/farm.env
     volumes:
       - "/data/dvolumes/autocompound/public:/app/public:rw"
+    depends_on:
+      - user
     networks:
       my_network:
         ipv4_address: 20.10.11.4

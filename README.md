@@ -32,11 +32,15 @@ farm service
 ├── common
 │   ├── utils.go        //small tools function
 │   └── database.go     //DB connect manager
-├── users
+├── farms
 |   ├── models.go       //data models define & DB operation
 |   ├── routers.go      //business logic & router binding
 |   ├── middlewares.go  //put the before & after logic of handle request
 |   └── validators.go   //form/json checker
+├── pricefeeds  // get price from coingeeko
+├── stakes      // CRUD for staking contracts
+├── contracts // for contract call  
+├── helloworld // for grpc to get user data  
 ├── ...
 ...
 ```

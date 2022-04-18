@@ -1,6 +1,7 @@
 package stakes
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -100,7 +101,8 @@ func StakeRetrieve(c *gin.Context) {
 function to retrive single record using get api
 */
 func StakeFromChainId(c *gin.Context) {
-	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	chain_id, err := strconv.ParseInt(c.Param("chain_id"), 10, 64)
+	fmt.Printf("chainid", chain_id)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}

@@ -23,7 +23,7 @@ type Token struct {
 	Address  string  `bson:"address" json:"address"`
 	Name     string  `bson:"name" json:"name"`
 	Symbol   string  `bson:"symbol" json:"symbol"`
-	Supply   float64     `bson:"supply" json:"supply"`
+	Supply   float64 `bson:"supply" json:"supply"`
 	Price    float64 `bson:"price" json:"price"`
 	Decimals int     `bson:"decimals" json:"decimals"`
 	Img      string  `bson:"img" json:"img"`
@@ -229,7 +229,7 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if (data.Token1 != Token{}) {
 		update["token1"] = data.Token1
 	}
-	if data.Token_Type == "token" ||  data.Token_Type == "stable" {
+	if data.Token_Type == "token" || data.Token_Type == "stable" || data.Token_Type == "stable_pair" {
 		update["token1"] = nil
 	}
 	update = bson.M{"$set": update}
@@ -270,6 +270,7 @@ func UpdateStake(data *FarmModel) (*mongo.UpdateResult, error) {
 	}
 	return result, nil
 }
+
 // You could input an FarmModel which will be updated in database returning with error info
 // 	if err := UpdateOne(&farmModel); err != nil { ... }
 func TransactionUpdate(data *FarmModel) error {
@@ -358,6 +359,10 @@ func GetTotal(status string, filters Filters) int64 {
 	}
 	if filters.Token_Type != "" {
 		query["token_type"] = filters.Token_Type
+		// checking for the stable in token type
+		if strings.Contains(filters.Token_Type, "stable") {
+			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		}
 	}
 	if filters.Source != "" {
 		query["source"] = filters.Source
@@ -406,7 +411,11 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 		query["status"] = status
 	}
 	if filters.Token_Type != "" {
+		// checking for the stable in token type
 		query["token_type"] = filters.Token_Type
+		if strings.Contains(filters.Token_Type, "stable") {
+			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		}
 	}
 	if filters.Source != "" {
 		query["source"] = filters.Source

@@ -29,9 +29,7 @@ class MasterChef extends web3Helper {
   public async calculateTVLValue(deposit_token: string, strategyAddress: string, token_type: string): Promise<string> {
     try {
       let ABI: any;
-      if (token_type === 'pair') {
-        ABI = StrategyPair;
-      } else if(token_type === 'native'){
+      if (token_type === 'pair' || token_type === 'stable_pair' || token_type === 'native') {
         ABI = StrategyPair;
       } else {
         ABI = StrategyToken;

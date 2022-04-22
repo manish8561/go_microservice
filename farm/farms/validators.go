@@ -1,6 +1,7 @@
 package farms
 
 import (
+	"strings"
 	"time"
 
 	"github.com/autocompound/docker_backend/farm/common"
@@ -45,18 +46,18 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	self.farmModel.Address = self.Address
+	self.farmModel.Address = strings.ToLower(self.Address)
 	self.farmModel.Chain_Id = self.Chain_Id
 	self.farmModel.PID = self.PID
 	self.farmModel.Name = self.Name
 	self.farmModel.Token_Type = self.Token_Type
-	self.farmModel.Deposit_Token = self.Deposit_Token
-	self.farmModel.Masterchef = self.Masterchef
-	self.farmModel.Router = self.Router
-	self.farmModel.Weth = self.Weth
-	self.farmModel.Stake = self.Stake
-	self.farmModel.AC_Token = self.AC_Token
-	self.farmModel.Reward = self.Reward
+	self.farmModel.Deposit_Token = strings.ToLower(self.Deposit_Token)
+	self.farmModel.Masterchef = strings.ToLower(self.Masterchef)
+	self.farmModel.Router = strings.ToLower(self.Router)
+	self.farmModel.Weth = strings.ToLower(self.Weth)
+	self.farmModel.Stake = strings.ToLower(self.Stake)
+	self.farmModel.AC_Token = strings.ToLower(self.AC_Token)
+	self.farmModel.Reward = strings.ToLower(self.Reward)
 	self.farmModel.Token_Per_Block = self.Token_Per_Block
 	self.farmModel.Bonus_Multiplier = self.Bonus_Multiplier
 	self.farmModel.Token0 = self.Token0

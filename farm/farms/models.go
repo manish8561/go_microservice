@@ -146,7 +146,7 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	update := bson.M{"_modified": modified, "token_type": data.Token_Type}
 
 	if data.Address != "" {
-		update["address"] = data.Address
+		update["address"] = strings.ToLower(data.Address)
 	}
 	if data.Status != "" {
 		update["status"] = data.Status
@@ -165,25 +165,25 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	}
 
 	if data.Deposit_Token != "" {
-		update["deposit_token"] = data.Deposit_Token
+		update["deposit_token"] = strings.ToLower(data.Deposit_Token)
 	}
 	if data.Masterchef != "" {
-		update["masterchef"] = data.Masterchef
+		update["masterchef"] = strings.ToLower(data.Masterchef)
 	}
 	if data.Router != "" {
-		update["router"] = data.Router
+		update["router"] = strings.ToLower(data.Router)
 	}
 	if data.Weth != "" {
-		update["weth"] = data.Weth
+		update["weth"] = strings.ToLower(data.Weth)
 	}
 	if data.Stake != "" {
-		update["stake"] = data.Stake
+		update["stake"] = strings.ToLower(data.Stake)
 	}
 	if data.AC_Token != "" {
-		update["ac_token"] = data.AC_Token
+		update["ac_token"] = strings.ToLower(data.AC_Token)
 	}
 	if data.Reward != "" {
-		update["reward"] = data.Reward
+		update["reward"] = strings.ToLower(data.Reward)
 	}
 	if data.Source != "" {
 		update["source"] = data.Source
@@ -286,7 +286,7 @@ func TransactionUpdate(data *FarmModel) error {
 	status := "processing"
 	modified := time.Now()
 	if data.Address != "" {
-		address = data.Address
+		address = strings.ToLower(data.Address)
 		status = "active"
 	}
 	update := bson.M{"$set": bson.M{"transaction_hash": data.Transaction_Hash, "status": status, "_modified": modified, "address": address}}

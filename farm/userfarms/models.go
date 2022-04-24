@@ -14,7 +14,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
+	ethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const CollectionName = "user_farms"
@@ -130,6 +133,8 @@ func GetRecord(ID string) (UserFarmsModel, error) {
 	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&record)
 
+	go UpdateRecordStatusBackground(ID, record.Transaction_Hash, record.Chain_Id)
+	// fmt.Println("Transaction Status", txStatus)
 	return *record, err
 }
 
@@ -211,4 +216,84 @@ func DeleteRecord(ID string) (bool, error) {
 	}
 
 	return record, err
+}
+
+// go background function to update the transaction status
+func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id int) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx := context.Background()
+
+	//convert string to objectid
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		fmt.Printf("error %v", err)
+		return
+	}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	modified := time.Now()
+	update := bson.M{"_modified": modified}
+
+	txStatus := GetTransaction(transaction_hash, chain_id, 0)
+	fmt.Println("Transaction Status", txStatus)
+
+	update["status"] = "reverted"
+	// checking for success
+
+	if txStatus == 1 {
+		update["status"] = "success"
+	}
+	if txStatus == -1 {
+		update["status"] = "processing"
+	}
+
+	update = bson.M{"$set": update}
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update, opts)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("updated: %v", result)
+}
+
+// Recurrsive function to get Transaction details
+func GetTransaction(transaction_hash string, chain_id int, counter int) int {
+	//get rpc from common file
+	rpc := common.Get_RPC_ChainId(chain_id)
+	//create eth client object
+	conn, err := ethclient.Dial(rpc)
+	if err != nil {
+		fmt.Println("Failed to connect to the Ethereum client: %v", err)
+	}
+
+	//convert transaction string to hash
+	hash := ethcommon.HexToHash(transaction_hash)
+
+	//get transaction data
+	tx, err := conn.TransactionReceipt(context.Background(), hash)
+	if err != nil {
+		counter = counter + 1
+		//after 10 minutes
+		if counter >= 100 {
+			return -1
+		}
+		fmt.Println("----------------------------------counter:", counter)
+		time.Sleep(6 * time.Second)
+		fmt.Printf("no transaction found: %v", err)
+		return GetTransaction(transaction_hash, chain_id, counter)
+	}
+	fmt.Println("Token balance:", tx.Status, "-------------------------")
+	fmt.Println("tx status:", tx.Status, tx.BlockNumber)
+
+	return (int)(tx.Status)
 }

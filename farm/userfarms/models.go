@@ -66,6 +66,10 @@ func SaveOne(data *UserFarmsModel) (string, error) {
 		newID = strings.Replace(newID, "ObjectID(", "", -1)
 		newID = strings.Replace(newID, `"`, "", -1)
 		newID = strings.Replace(newID, `)`, "", -1)
+
+		// update transaction status in the record
+		go UpdateRecordStatusBackground(newID, data.Transaction_Hash, data.Chain_Id)
+
 		return newID, err
 	}
 	//sending old record ID
@@ -287,13 +291,12 @@ func GetTransaction(transaction_hash string, chain_id int, counter int) int {
 		if counter >= 100 {
 			return -1
 		}
-		fmt.Println("----------------------------------counter:", counter)
 		time.Sleep(6 * time.Second)
 		fmt.Printf("no transaction found: %v", err)
 		return GetTransaction(transaction_hash, chain_id, counter)
 	}
-	fmt.Println("Token balance:", tx.Status, "-------------------------")
-	fmt.Println("tx status:", tx.Status, tx.BlockNumber)
+	// fmt.Println("Token balance:", tx.Status, "-------------------------")
+	// fmt.Println("tx status:", tx.Status, tx.BlockNumber)
 
 	return (int)(tx.Status)
 }

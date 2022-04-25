@@ -18,6 +18,8 @@ import (
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	FarmsModule "github.com/autocompound/docker_backend/farm/farms"
 )
 
 const CollectionName = "user_farms"
@@ -38,7 +40,22 @@ type UserFarmsModel struct {
 
 //struct for filters
 type Filters struct {
-	Chain_Id int64 `bson: "chain_id", json:"chain_id"`
+	User       string `bson: "user", json:"user"`
+	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
+	Token_Type string `bson: "token_type", json:"token_type"`
+	Source     string `bson: "source", json:"source"`
+	Name       string `bson: "name", json:"name"`
+}
+
+// struct for aggregate result
+type UserFarmsAggregateModel struct {
+	ID       primitive.ObjectID    `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created  time.Time             `bson:"_created" json:"_created"`
+	Modified time.Time             `bson:"_modified" json:"_modified"`
+	Chain_Id int                   `bson:"chain_id" json:"chain_id"`
+	User     string                `bson:"user" json:"user"`         //address field of user wallet
+	Strategy string                `bson:"strategy" json:"strategy"` //address
+	Farms    FarmsModule.FarmModel `bson:"farms" json:"farms"`
 }
 
 // init function runs first time
@@ -145,44 +162,127 @@ func GetRecord(ID string) (UserFarmsModel, error) {
 // Record list api with page and limit
 func GetTotal(status string, filters Filters) int64 {
 	client := common.GetDB()
+	var records []bson.M
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	query := bson.M{"chain_id": filters.Chain_Id}
-	if status != "" {
-		query["status"] = status
+	//filters on farms
+	query := bson.M{}
+	if filters.Token_Type != "" {
+		query["farms.token_type"] = filters.Token_Type
+		// checking for the stable in token type
+		if strings.Contains(filters.Token_Type, "stable") {
+			query["farms.token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		}
+	}
+	if filters.Source != "" {
+		query["farms.source"] = filters.Source
+	}
+	if filters.Name != "" {
+		query["farms.name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
 
-	num, err := collection.CountDocuments(ctx, query)
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$match": bson.M{"status": status, "chain_id": filters.Chain_Id, "user": filters.User}},
+		{"$lookup": bson.M{"from": "farms", "localField": "strategy", "foreignField": "address", "as": "farmsData"}},
+		{"$project": bson.M{
+			"chain_id":  1,
+			"user":      1,
+			"strategy":  1,
+			"_created":  1,
+			"_modified": 1,
+			"farms": bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
+		{"$match": query},
+		{"$group": bson.M{"_id": "$user", "count": bson.M{"$sum": 1}}},
+	}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+
 	if err != nil {
 		return 0
 	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+	
+	if records == nil {
+		return 0
+	}
+	
+	//convert int32
+	num := int64((records[0]["count"]).(int32))
+	// n := int64(num)
 	return num
 }
 
 // Record list api with page and limit
-func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*UserFarmsModel, error) {
+func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*UserFarmsAggregateModel, error) {
 	client := common.GetDB()
-	var records []*UserFarmsModel
+	var records []*UserFarmsAggregateModel
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	sorting := bson.D{{"_created", -1}}
-
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(sorting).SetSkip((page - 1) * limit).SetLimit(limit)
-	query := bson.M{"chain_id": filters.Chain_Id}
-	if status != "" {
-		query["status"] = status
+	//filters on farms
+	query := bson.M{}
+	if filters.Token_Type != "" {
+		query["farms.token_type"] = filters.Token_Type
+		// checking for the stable in token type
+		if strings.Contains(filters.Token_Type, "stable") {
+			query["farms.token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		}
+	}
+	if filters.Source != "" {
+		query["farms.source"] = filters.Source
+	}
+	if filters.Name != "" {
+		query["farms.name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
 
-	cursor, err := collection.Find(ctx, query, opts)
+	//sorting from userfarms
+	sorting := bson.M{"_created": -1}
+	if sort_by == "recent" {
+		sorting = bson.M{"_created": -1}
+	}
+	if sort_by == "apy" {
+		sorting = bson.M{"farms.daily_apy": -1}
+	}
+	if sort_by == "tvl" {
+		sorting = bson.M{"farms.tvl_staked": -1}
+	}
+	if sort_by == "yourTvl" {
+		sorting = bson.M{"farms.tvl_staked": -1}
+	}
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$match": bson.M{"status": status, "chain_id": filters.Chain_Id, "user": filters.User}},
+		{"$lookup": bson.M{"from": "farms", "localField": "strategy", "foreignField": "address", "as": "farmsData"}},
+		{"$project": bson.M{
+			"chain_id":  1,
+			"user":      1,
+			"strategy":  1,
+			"_created":  1,
+			"_modified": 1,
+			"farms": bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
+		{"$match": query},
+		{"$sort": sorting},
+		{"$skip": ((page - 1) * limit)},
+		{"$limit": limit},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
 		return records, err
 	}

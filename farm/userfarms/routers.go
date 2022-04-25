@@ -29,14 +29,27 @@ func UserFarmsRegister(router *gin.RouterGroup) {
 function to total record counts
 */
 func UserFarmTotal(c *gin.Context) {
+	user := c.Query("user")
+	if user == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No user found", "success": false})
+		return
+	}
 	status := c.Query("status")
+	source := c.Query("source")
+	token_type := c.Query("token_type")
+	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
 	// filtering
 	filters := Filters{
-		Chain_Id: chain_id,
+		User:       user,
+		Source:     source,
+		Token_Type: token_type,
+		Name:       name,
+		Chain_Id:   chain_id,
 	}
 
 	num := GetTotal(status, filters)
@@ -64,13 +77,26 @@ func UserFarmList(c *gin.Context) {
 		limit = 10
 	}
 	// filtering
+	user := c.Query("user")
+	if user == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No user found", "success": false})
+		return
+	}
+
 	status := c.Query("status")
+	source := c.Query("source")
+	token_type := c.Query("token_type")
+	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
 	filters := Filters{
-		Chain_Id: chain_id,
+		User:       user,
+		Source:     source,
+		Token_Type: token_type,
+		Name:       name,
+		Chain_Id:   chain_id,
 	}
 	//sorting
 	sort_by := c.Query("sort_by")

@@ -3,6 +3,7 @@ package userfarms
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/autocompound/docker_backend/farm/common"
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func UserFarmsRegister(router *gin.RouterGroup) {
 function to total record counts
 */
 func UserFarmTotal(c *gin.Context) {
-	user := c.Query("user")
+	user := strings.ToLower(c.Query("user"))
 	if user == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No user found", "success": false})
 		return
@@ -77,7 +78,7 @@ func UserFarmList(c *gin.Context) {
 		limit = 10
 	}
 	// filtering
-	user := c.Query("user")
+	user := strings.ToLower(c.Query("user"))
 	if user == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No user found", "success": false})
 		return

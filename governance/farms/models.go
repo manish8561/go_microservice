@@ -229,7 +229,7 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if (data.Token1 != Token{}) {
 		update["token1"] = data.Token1
 	}
-	if data.Token_Type == "token" || data.Token_Type == "stable" {
+	if data.Token_Type == "token" || data.Token_Type == "stable" || data.Token_Type == "stable_pair" {
 		update["token1"] = nil
 	}
 	update = bson.M{"$set": update}

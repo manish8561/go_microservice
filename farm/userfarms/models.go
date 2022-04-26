@@ -2,7 +2,6 @@ package userfarms
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -12,20 +11,19 @@ import (
 	"github.com/autocompound/docker_backend/farm/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	//implementation of other module struct (directly)
 	FarmsModule "github.com/autocompound/docker_backend/farm/farms"
 )
 
 const CollectionName = "user_farms"
 
 // Models should only be concerned with database schema, more strict checking should be put in validator.
-//
 // HINT: If you want to split null and "", you should use *string instead of string.
 type UserFarmsModel struct {
 	ID               primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
@@ -59,9 +57,7 @@ type UserFarmsAggregateModel struct {
 }
 
 // init function runs first time
-func init() {
-	// common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"deposit_token", "text"}, {"name", "text"}})
-}
+func init() {}
 
 // You could input an UserFarmsModel which will be saved in database returning with error info
 // 	if err := SaveOne(&stakeModel); err != nil { ... }
@@ -95,42 +91,6 @@ func SaveOne(data *UserFarmsModel) (string, error) {
 	newID = strings.Replace(newID, `"`, "", -1)
 	newID = strings.Replace(newID, `)`, "", -1)
 	return newID, nil
-}
-
-// You could input an UserFarmsModel which will be saved in database returning with error info
-// update the farm
-func UpdateOne(data *UserFarmsModel) (*mongo.UpdateResult, error) {
-	client := common.GetDB()
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	res, err := primitive.ObjectIDFromHex("")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	if data.ID == res {
-		return nil, errors.New("Object ID is required field")
-	}
-	// options for update
-	opts := options.Update().SetUpsert(false)
-
-	modified := time.Now()
-	update := bson.M{"_modified": modified}
-
-	if data.Status != "" {
-		update["status"] = data.Status
-	}
-	if data.Chain_Id > 0 {
-		update["chain_id"] = data.Chain_Id
-	}
-	update = bson.M{"$set": update}
-	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
 }
 
 // You could input string which will be saved in database returning with error info
@@ -195,7 +155,7 @@ func GetTotal(status string, filters Filters) int64 {
 			"strategy":  1,
 			"_created":  1,
 			"_modified": 1,
-			"farms": bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
+			"farms":     bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
 		{"$match": query},
 		{"$group": bson.M{"_id": "$user", "count": bson.M{"$sum": 1}}},
 	}
@@ -211,11 +171,11 @@ func GetTotal(status string, filters Filters) int64 {
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
-	
+
 	if records == nil {
 		return 0
 	}
-	
+
 	//convert int32
 	num := int64((records[0]["count"]).(int32))
 	// n := int64(num)
@@ -272,7 +232,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 			"strategy":  1,
 			"_created":  1,
 			"_modified": 1,
-			"farms": bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
+			"farms":     bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
 		{"$match": query},
 		{"$sort": sorting},
 		{"$skip": ((page - 1) * limit)},
@@ -293,33 +253,6 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 		return nil, err
 	}
 	return records, err
-}
-
-// Record delete function
-func DeleteRecord(ID string) (bool, error) {
-	client := common.GetDB()
-	record := false
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	//convert string to objectid
-	objID, err := primitive.ObjectIDFromHex(ID)
-	if err != nil {
-		return false, err
-	}
-
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	// The first document in the sorted order will be returned.
-	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-	res, err := collection.DeleteOne(ctx, bson.M{"_id": objID})
-
-	if res != nil {
-		record = true
-	}
-
-	return record, err
 }
 
 // go background function to update the transaction status

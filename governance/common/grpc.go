@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	pb "github.com/autocompound/docker_backend/farm/helloworld"
+	pb "github.com/autocompound/docker_backend/governance/helloworld"
 	"google.golang.org/grpc"
 )
 

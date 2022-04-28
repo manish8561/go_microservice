@@ -183,9 +183,9 @@ func GetTotal(status string, filters Filters) int64 {
 }
 
 // Record list api with page and limit
-func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*UserFarmsAggregateModel, error) {
+func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*FarmsModule.FarmModel, error) {
 	client := common.GetDB()
-	var records []*UserFarmsAggregateModel
+	var records []*FarmsModule.FarmModel
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -194,17 +194,17 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	//filters on farms
 	query := bson.M{}
 	if filters.Token_Type != "" {
-		query["farms.token_type"] = filters.Token_Type
+		query["token_type"] = filters.Token_Type
 		// checking for the stable in token type
 		if strings.Contains(filters.Token_Type, "stable") {
-			query["farms.token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
 		}
 	}
 	if filters.Source != "" {
-		query["farms.source"] = filters.Source
+		query["source"] = filters.Source
 	}
 	if filters.Name != "" {
-		query["farms.name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
+		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
 
 	//sorting from userfarms
@@ -213,13 +213,13 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 		sorting = bson.M{"_created": -1}
 	}
 	if sort_by == "apy" {
-		sorting = bson.M{"farms.daily_apy": -1}
+		sorting = bson.M{"daily_apy": -1}
 	}
 	if sort_by == "tvl" {
-		sorting = bson.M{"farms.tvl_staked": -1}
+		sorting = bson.M{"tvl_staked": -1}
 	}
 	if sort_by == "yourTvl" {
-		sorting = bson.M{"farms.tvl_staked": -1}
+		sorting = bson.M{"tvl_staked": -1}
 	}
 	// Specify a pipeline that will return the number of times each name appears
 	// in the collection.
@@ -227,12 +227,42 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 		{"$match": bson.M{"status": status, "chain_id": filters.Chain_Id, "user": filters.User}},
 		{"$lookup": bson.M{"from": "farms", "localField": "strategy", "foreignField": "address", "as": "farmsData"}},
 		{"$project": bson.M{
-			"chain_id":  1,
-			"user":      1,
-			"strategy":  1,
-			"_created":  1,
-			"_modified": 1,
-			"farms":     bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}}},
+			"_id":   0,
+			"user":  1,
+			"farms": bson.M{"$arrayElemAt": bson.A{"$farmsData", 0}}},
+		},
+		{"$project": bson.M{
+			"user":               1,
+			"_created":           "$farms._created",
+			"_modified":          "$farms._modified",
+			"chain_id":           "$farms.chain_id",
+			"pid":                "$farms.pid",
+			"address":            "$farms.address",
+			"name":               "$farms.name",
+			"token_type":         "$farms.token_type",
+			"deposit_token":      "$farms.deposit_token",
+			"status":             "$farms.status",
+			"masterchef":         "$farms.masterchef",
+			"router":             "$farms.router",
+			"weth":               "$farms.weth",
+			"stake":              "$farms.stake",
+			"ac_token":           "$farms.ac_token",
+			"reward":             "$farms.reward",
+			"bonus_multiplier":   "$farms.bonus_multiplier",
+			"token_per_block":    "$farms.token_per_block",
+			"source":             "$farms.source",
+			"source_link":        "$farms.source_link",
+			"autocompound_check": "$farms.autocompound_check",
+			"tvl_staked":         "$farms.tvl_staked",
+			"daily_apr":          "$farms.daily_apr",
+			"daily_apy":          "$farms.daily_apy",
+			"weekly_apy":         "$farms.weekly_apy",
+			"yearly_apy":         "$farms.yearly_apy",
+			"price_pool_token":   "$farms.price_pool_token",
+			"yearly_swap_fees":   "$farms.yearly_swap_fees",
+			"token0":             "$farms.token0",
+			"token1":             "$farms.token1",
+		}},
 		{"$match": query},
 		{"$sort": sorting},
 		{"$skip": ((page - 1) * limit)},

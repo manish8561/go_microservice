@@ -1,0 +1,248 @@
+package proposal
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	// "github.com/robfig/cron"
+	"github.com/autocompound/docker_backend/governance/common"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	// "go.mongodb.org/mongo-driver/mongo/readpref"
+)
+
+const CollectionName = "proposals"
+
+// Models should only be concerned with database schema, more strict checking should be put in validator.
+//
+// HINT: If you want to split null and "", you should use *string instead of string.
+type ProposalModel struct {
+	ID               primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created          time.Time          `bson:"_created" json:"_created"`
+	Modified         time.Time          `bson:"_modified" json:"_modified"`
+	Chain_Id         int                `bson:"chain_id" json:"chain_id"`
+	Proposal_Type    string             `bson:"proposal_type" json:"proposal_type"`
+	Transaction_Hash string             `bson:"transaction_hash" 
+	json:"transaction_hash"`
+	Block_Number  int     `bson:"block_number" json:"block_number"`
+	User          string  `bson:"user" json:"user"` //address field of strategy
+	Status        string  `bson:"status" json:"status"`
+	Proposal_Id   string  `bson:"proposal_id" json:"proposal_id"`
+	Proposer      string  `bson:"proposer" json:"proposer"`
+	Eta           int     `bson:"eta" json:"eta"`
+	Start_Time    int     `bson:"start_time" json:"start_time`
+	End_Time      int     `bson:"end_time" json:"end_time`
+	Description   string  `bson:"description" json:"description`
+	Voting_Period int     `bson:"voting_period" json:"voting_period` // in days
+	For_Votes     float64 `bson:"for_votes" json:"for_votes"`
+	Against_Votes float64 `bson:"against_votes" json:"against_votes"`
+	Canceled      bool    `bson:"canceled" json:"canceled"`
+	Executed      bool    `bson:"executed" json:"executed"`
+	Title         string  `bson:"title" json:"title"`
+}
+
+//struct for filters
+type Filters struct {
+	Token_Type string `bson: "token_type", json:"token_type"`
+	Source     string `bson: "source", json:"source"`
+	Name       string `bson: "name", json:"name"`
+	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
+}
+
+// init function runs first time
+func init() {}
+
+// You could input an ProposalModel which will be saved in database returning with error info
+// 	if err := SaveOne(&proposalModel); err != nil { ... }
+func SaveOne(data *ProposalModel) (string, error) {
+	client := common.GetDB()
+	record := &ProposalModel{}
+	newID := ""
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// to check for unique email address
+	err := collection.FindOne(ctx, bson.M{"deposit_token": data.Transaction_Hash}).Decode(&record)
+	if err != nil {
+		res, err := collection.InsertOne(ctx, data)
+		fmt.Println(res.InsertedID, "Inserted")
+		// newID = res.InsertedID.(string)
+		newID = fmt.Sprintf("%s", res.InsertedID)
+		newID = strings.Replace(newID, "ObjectID(", "", -1)
+		newID = strings.Replace(newID, `"`, "", -1)
+		newID = strings.Replace(newID, `)`, "", -1)
+		return newID, err
+	}
+	return newID, errors.New("proposal already exists!")
+}
+
+// You could input an ProposalModel which will be saved in database returning with error info
+// update the proposal
+func UpdateOne(data *ProposalModel) (*mongo.UpdateResult, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	res, err := primitive.ObjectIDFromHex("")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	if data.ID == res {
+		return nil, errors.New("Object ID is required field")
+	}
+
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	modified := time.Now()
+	update := bson.M{"_modified": modified}
+
+	if data.Status != "" {
+		update["status"] = data.Status
+	}
+	if data.Chain_Id > 0 {
+		update["chain_id"] = data.Chain_Id
+	}
+	if data.Transaction_Hash != "" {
+		update["transaction_hash"] = data.Transaction_Hash
+	}
+
+	update = bson.M{"$set": update}
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// You could input string which will be saved in database returning with error info
+// 	if err := FindOne(&proposalModel); err != nil { ... }
+func GetRecord(ID string) (ProposalModel, error) {
+	client := common.GetDB()
+	record := &ProposalModel{}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	//convert string to objectid
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return *record, err
+	}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&record)
+
+	return *record, err
+}
+
+// Farm list api with page and limit
+func GetTotal(status string, filters Filters) int64 {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"chain_id": filters.Chain_Id}
+	if status != "" {
+		query["status"] = status
+	}
+	if filters.Token_Type != "" {
+		query["token_type"] = filters.Token_Type
+		// checking for the stable in token type
+		if strings.Contains(filters.Token_Type, "stable") {
+			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		}
+	}
+	if filters.Source != "" {
+		query["source"] = filters.Source
+	}
+	if filters.Name != "" {
+		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
+	}
+
+	num, err := collection.CountDocuments(ctx, query)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+// Farm list api with page and limit
+func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*ProposalModel, error) {
+	client := common.GetDB()
+	var records []*ProposalModel
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	sorting := bson.D{{"_created", -1}}
+	if sort_by == "recent" {
+		sorting = bson.D{{"_created", -1}}
+	}
+	if sort_by == "apy" {
+		sorting = bson.D{{"daily_apy", -1}}
+	}
+	if sort_by == "tvl" {
+		sorting = bson.D{{"tvl_staked", -1}}
+	}
+	if sort_by == "yourTvl" {
+		sorting = bson.D{{"tvl_staked", -1}}
+	}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	opts := options.Find().SetSort(sorting).SetSkip((page - 1) * limit).SetLimit(limit)
+	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	query := bson.M{"chain_id": filters.Chain_Id}
+	if status != "" {
+		query["status"] = status
+	}
+	if filters.Token_Type != "" {
+		// checking for the stable in token type
+		query["token_type"] = filters.Token_Type
+		if strings.Contains(filters.Token_Type, "stable") {
+			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		}
+	}
+	if filters.Source != "" {
+		query["source"] = filters.Source
+	}
+	if filters.Name != "" {
+		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
+	}
+
+	cursor, err := collection.Find(ctx, query, opts)
+	if err != nil {
+		return records, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return records, err
+}
+
+// struct for aggregate response
+type Result struct {
+	ID     string `bson:"_id" json:"_id"`
+	Source string `bson:"source" json:"source"`
+	Count  int    `bson:"count" json:"count"`
+}

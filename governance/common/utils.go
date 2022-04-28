@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"strings"
 
-	pb "github.com/autocompound/docker_backend/farm/helloworld"
+	pb "github.com/autocompound/docker_backend/governance/helloworld"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")

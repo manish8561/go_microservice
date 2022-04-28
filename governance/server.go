@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/autocompound/docker_backend/farm/common"
-	"github.com/autocompound/docker_backend/farm/farms"
+	"github.com/autocompound/docker_backend/governance/common"
+	"github.com/autocompound/docker_backend/governance/proposal"
 
 )
 
@@ -41,19 +41,18 @@ func init() {
 // main function
 func main() {
 	//calling grpc common server
-	common.Call_GRPC_Server()
+	// common.Call_GRPC_Server()
 
 	//create server
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 
 	v1 := r.Group("/api/governance_service")
-	// farms.UsersRegister(v1.Group("/users"))
-	// v1.Use(farms.AuthMiddleware(false))
+
+	// v1.Use(proposals.AuthMiddleware(false))
 
 	v1.Use(common.AuthMiddleware(false))
-	farms.FarmsRegister(v1.Group("/farm"))
-
+	proposal.ProposalsRegister(v1.Group("/propsal"))
 
 	testAuth := r.Group("/api/governance_service/ping")
 

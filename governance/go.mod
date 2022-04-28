@@ -1,4 +1,4 @@
-module github.com/autocompound/docker_backend/farm
+module github.com/autocompound/docker_backend/governance
 
 go 1.17
 

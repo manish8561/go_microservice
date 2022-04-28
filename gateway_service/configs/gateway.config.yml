@@ -13,6 +13,8 @@ apiEndpoints:
     paths: "/api/farm_service/*"
   contracts:
     paths: "/api/contract_service/*"
+  governance:
+    paths: "/api/governance_service/*"
 serviceEndpoints:
   httpbin:
     url: "https://httpbin.org"
@@ -22,6 +24,8 @@ serviceEndpoints:
     url: "http://20.10.11.4:3002"
   contracts:
     url: "http://20.10.11.5:3003"
+  governance:
+    url: "http://20.10.11.4:3004"
 policies:
   - basic-auth
   - cors
@@ -63,4 +67,11 @@ pipelines:
         - proxy:
             - action:
                 serviceEndpoint: contracts
+  governance:
+      apiEndpoints:
+        - governance
+      policies:
+        - proxy:
+            - action:
+                serviceEndpoint: governance
 

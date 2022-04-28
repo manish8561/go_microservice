@@ -1,7 +1,6 @@
 package proposal
 
 import (
-	"strings"
 	"time"
 
 	"github.com/autocompound/docker_backend/governance/common"
@@ -14,11 +13,9 @@ import (
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
 type ProposalModelValidator struct {
-	ID               string `form:"_id" json:"_id"`
-	Address			string `form:"address" json:"address" binding:"required"`
-	Chain_Id         int    `form:"chain_id" json:"chain_id" binding:"required"`
+	ID       string `form:"_id" json:"_id"`
+	Chain_Id int    `form:"chain_id" json:"chain_id" binding:"required"`
 
-	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	proposalModel ProposalModel `json:"-"`
 }
 
@@ -30,9 +27,8 @@ func (self *ProposalModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	self.proposalModel.Address = strings.ToLower(self.Address)
 	self.proposalModel.Chain_Id = self.Chain_Id
-	
+
 	self.proposalModel.Status = "active"
 	self.proposalModel.Created = time.Now()
 	self.proposalModel.Modified = time.Now()

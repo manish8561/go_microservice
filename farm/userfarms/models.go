@@ -45,17 +45,6 @@ type Filters struct {
 	Name       string `bson: "name", json:"name"`
 }
 
-// struct for aggregate result
-type UserFarmsAggregateModel struct {
-	ID       primitive.ObjectID    `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created  time.Time             `bson:"_created" json:"_created"`
-	Modified time.Time             `bson:"_modified" json:"_modified"`
-	Chain_Id int                   `bson:"chain_id" json:"chain_id"`
-	User     string                `bson:"user" json:"user"`         //address field of user wallet
-	Strategy string                `bson:"strategy" json:"strategy"` //address
-	Farms    FarmsModule.FarmModel `bson:"farms" json:"farms"`
-}
-
 // init function runs first time
 func init() {}
 

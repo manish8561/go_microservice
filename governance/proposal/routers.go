@@ -15,9 +15,9 @@ func ProposalsRegister(router *gin.RouterGroup) {
 	router.GET("", ProposalList)
 	router.GET("/total", ProposalTotal)
 	router.GET("/:id", ProposalRetrieve)
-	router.Use(common.AuthMiddleware(true))
-
+	
 	router.POST("", ProposalSave)
+	router.Use(common.AuthMiddleware(true))
 	router.PUT("", ProposalUpdate)
 
 	// router.DELETE("/:username/follow", ProposalUnfollow)

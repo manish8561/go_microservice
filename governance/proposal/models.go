@@ -14,7 +14,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	// "go.mongodb.org/mongo-driver/mongo/readpref"
+
+	// ethcommon "github.com/ethereum/go-ethereum/common"
+	// "github.com/ethereum/go-ethereum/ethclient"
 )
 
 const CollectionName = "proposals"
@@ -27,24 +29,23 @@ type ProposalModel struct {
 	Created          time.Time          `bson:"_created" json:"_created"`
 	Modified         time.Time          `bson:"_modified" json:"_modified"`
 	Chain_Id         int                `bson:"chain_id" json:"chain_id"`
-	Proposal_Type    string             `bson:"proposal_type" json:"proposal_type"`
-	Transaction_Hash string             `bson:"transaction_hash" 
-	json:"transaction_hash"`
-	Block_Number  int     `bson:"block_number" json:"block_number"`
-	User          string  `bson:"user" json:"user"` //address field of strategy
-	Status        string  `bson:"status" json:"status"`
-	Proposal_Id   string  `bson:"proposal_id" json:"proposal_id"`
-	Proposer      string  `bson:"proposer" json:"proposer"`
-	Eta           int     `bson:"eta" json:"eta"`
-	Start_Time    int     `bson:"start_time" json:"start_time`
-	End_Time      int     `bson:"end_time" json:"end_time`
-	Description   string  `bson:"description" json:"description`
-	Voting_Period int     `bson:"voting_period" json:"voting_period` // in days
-	For_Votes     float64 `bson:"for_votes" json:"for_votes"`
-	Against_Votes float64 `bson:"against_votes" json:"against_votes"`
-	Canceled      bool    `bson:"canceled" json:"canceled"`
-	Executed      bool    `bson:"executed" json:"executed"`
-	Title         string  `bson:"title" json:"title"`
+	Transaction_Hash string             `bson:"transaction_hash" json:"transaction_hash"`
+	// Proposal_Type    string             `bson:"proposal_type" json:"proposal_type"`
+	Block_Number   int     `bson:"block_number" json:"block_number"`
+	Status         string  `bson:"status" json:"status"`
+	Proposal_Id    string  `bson:"proposal_id" json:"proposal_id"`
+	Proposer       string  `bson:"proposer" json:"proposer"`
+	Eta            int     `bson:"eta" json:"eta"`
+	Start_Time     int     `bson:"start_time" json:"start_time`
+	End_Time       int     `bson:"end_time" json:"end_time`
+	Description    string  `bson:"description" json:"description`
+	Voting_Period  int     `bson:"voting_period" json:"voting_period` // in days
+	For_Votes      float64 `bson:"for_votes" json:"for_votes"`
+	Against_Votes  float64 `bson:"against_votes" json:"against_votes"`
+	Canceled       bool    `bson:"canceled" json:"canceled"`
+	Executed       bool    `bson:"executed" json:"executed"`
+	Title          string  `bson:"title" json:"title"`
+	Db_Description string  `bson:"db_description" json:"db_description"`
 }
 
 //struct for filters
@@ -69,7 +70,7 @@ func SaveOne(data *ProposalModel) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// to check for unique email address
-	err := collection.FindOne(ctx, bson.M{"deposit_token": data.Transaction_Hash}).Decode(&record)
+	err := collection.FindOne(ctx, bson.M{"transaction_hash": data.Transaction_Hash}).Decode(&record)
 	if err != nil {
 		res, err := collection.InsertOne(ctx, data)
 		fmt.Println(res.InsertedID, "Inserted")
@@ -78,6 +79,9 @@ func SaveOne(data *ProposalModel) (string, error) {
 		newID = strings.Replace(newID, "ObjectID(", "", -1)
 		newID = strings.Replace(newID, `"`, "", -1)
 		newID = strings.Replace(newID, `)`, "", -1)
+
+		// get transaction data
+		go UpdateRecordStatusBackground(newID, data.Transaction_Hash, data.Chain_Id)
 		return newID, err
 	}
 	return newID, errors.New("proposal already exists!")
@@ -245,4 +249,48 @@ type Result struct {
 	ID     string `bson:"_id" json:"_id"`
 	Source string `bson:"source" json:"source"`
 	Count  int    `bson:"count" json:"count"`
+}
+
+// go background function to update the transaction status
+func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id int) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx := context.Background()
+
+	//convert string to objectid
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		fmt.Printf("error %v", err)
+		return
+	}
+
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	modified := time.Now()
+	update := bson.M{"_modified": modified}
+
+	txStatus, block_number := common.GetTransaction(transaction_hash, chain_id, 0)
+	fmt.Println("Transaction Status", txStatus)
+
+	update["status"] = "reverted"
+	update["block_number"]=block_number
+	// checking for success
+
+	if txStatus == 1 {
+		update["status"] = "active"
+	}
+	if txStatus == -1 {
+		update["status"] = "processing"
+	}
+
+	update = bson.M{"$set": update}
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update, opts)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("updated: %v", result)
 }

@@ -304,10 +304,10 @@ func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id i
 	fmt.Println("Transaction Status", txStatus)
 
 	update["status"] = "reverted"
-	// checking for success
 
+	// checking for success
 	if txStatus == 1 {
-		update["status"] = "success"
+		update["status"] = "active"
 	}
 	if txStatus == -1 {
 		update["status"] = "processing"
@@ -325,13 +325,7 @@ func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id i
 // Recurrsive function to get Transaction details
 func GetTransaction(transaction_hash string, chain_id int, counter int) int {
 	//get rpc from common file
-	rpc := common.Get_RPC_ChainId(chain_id)
-	//create eth client object
-	conn, err := ethclient.Dial(rpc)
-	if err != nil {
-		fmt.Println("Failed to connect to the Ethereum client: %v", err)
-	}
-
+	conn := common.Get_Eth_Connection(chain_id)
 	//convert transaction string to hash
 	hash := ethcommon.HexToHash(transaction_hash)
 
@@ -347,7 +341,6 @@ func GetTransaction(transaction_hash string, chain_id int, counter int) int {
 		fmt.Printf("no transaction found: %v", err)
 		return GetTransaction(transaction_hash, chain_id, counter)
 	}
-	// fmt.Println("Token balance:", tx.Status, "-------------------------")
 	// fmt.Println("tx status:", tx.Status, tx.BlockNumber)
 
 	return (int)(tx.Status)

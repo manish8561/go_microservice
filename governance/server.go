@@ -52,7 +52,7 @@ func main() {
 	// v1.Use(proposals.AuthMiddleware(false))
 
 	v1.Use(common.AuthMiddleware(false))
-	proposal.ProposalsRegister(v1.Group("/propsal"))
+	proposal.ProposalsRegister(v1.Group("/proposal"))
 
 	testAuth := r.Group("/api/governance_service/ping")
 

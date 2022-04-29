@@ -15,7 +15,7 @@ import (
 
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	// "github.com/ethereum/go-ethereum/ethclient"
 
 	//implementation of other module struct (directly)
 	FarmsModule "github.com/autocompound/docker_backend/farm/farms"

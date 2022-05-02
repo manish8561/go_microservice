@@ -25,7 +25,7 @@ serviceEndpoints:
   contracts:
     url: "http://20.10.11.5:3003"
   governance:
-    url: "http://20.10.11.4:3004"
+    url: "http://20.10.11.6:3004"
 policies:
   - basic-auth
   - cors

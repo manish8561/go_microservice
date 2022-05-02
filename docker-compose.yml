@@ -109,7 +109,7 @@ services:
     env_file: ./config/governance.env
     networks:
       my_network:
-        ipv4_address: 20.10.11.5
+        ipv4_address: 20.10.11.6
   gateway_service:
     hostname: gateway_service
     ports:

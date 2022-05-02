@@ -106,7 +106,8 @@ services:
     container_name: governance
     restart: always
     build: ./governance
-    env_file: ./config/governance.env
+    env_file: 
+      - ./config/governance.env
     networks:
       my_network:
         ipv4_address: 20.10.11.6

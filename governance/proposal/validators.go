@@ -17,12 +17,12 @@ type ProposalModelValidator struct {
 	Chain_Id         int    `form:"chain_id" json:"chain_id" binding:"required"`
 	Transaction_Hash string `form:"transaction_hash" 
 	json:"transaction_hash" binding:"required"`
-	Block_Number   int           `form:"block_number" json:"block_number" binding:"required"`
 	Proposer       string        `form:"proposer" json:"proposer" binding:"required"`
 	Voting_Period  int           `form:"voting_period" json:"voting_period binding:"required"` // in days
 	Title          string        `form:"title" json:"title" binding:"required"`
 	Description    string        `form:"description" json:"description" binding:"required"`
 	Db_Description string        `form:"db_description" json:"db_description" binding:"required"`
+	Proposal_Type  int        `form:"proposal_type" json:"proposal_type" binding:"required"`
 	proposalModel  ProposalModel `json:"-"`
 }
 
@@ -37,12 +37,14 @@ func (self *ProposalModelValidator) Bind(c *gin.Context) error {
 	self.proposalModel.Chain_Id = self.Chain_Id
 	self.proposalModel.Title = self.Title
 	self.proposalModel.Transaction_Hash = self.Transaction_Hash
-	self.proposalModel.Description = self.Description
+	self.proposalModel.Description = self.Description //ipfs hash
 	self.proposalModel.Db_Description = self.Db_Description
 	self.proposalModel.Proposer = self.Proposer
 	self.proposalModel.Voting_Period = self.Voting_Period
 
+	self.proposalModel.Proposal_Type = self.Proposal_Type
 	self.proposalModel.Status = "pending"
+	self.proposalModel.Cron_Status = "pending"
 	self.proposalModel.Created = time.Now()
 	self.proposalModel.Modified = time.Now()
 	self.proposalModel.For_Votes = 0

@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
 	// ethcommon "github.com/ethereum/go-ethereum/common"
 	// "github.com/ethereum/go-ethereum/ethclient"
 )
@@ -46,6 +45,8 @@ type ProposalModel struct {
 	Executed       bool    `bson:"executed" json:"executed"`
 	Title          string  `bson:"title" json:"title"`
 	Db_Description string  `bson:"db_description" json:"db_description"`
+	Proposal_Type  int     `bson:"proposal_type" json:"proposal_type"` //1 for core 2 for community
+	Cron_Status    string  `bson:"cron_status" json:"cron_status"`
 }
 
 //struct for filters
@@ -276,7 +277,7 @@ func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id i
 	fmt.Println("Transaction Status", txStatus)
 
 	update["status"] = "reverted"
-	update["block_number"]=block_number
+	update["block_number"] = block_number
 	// checking for success
 
 	if txStatus == 1 {

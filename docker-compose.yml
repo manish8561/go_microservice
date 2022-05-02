@@ -20,6 +20,19 @@ services:
   #     - "/data/dvolumes/autocompound/docker_rabbit:/var/lib/rabbitmq"
   #   networks:
   #     - my_network
+  event_service:
+    hostname: event_service
+    ports:
+      - "0.0.0.0:3005:3005"
+    container_name: event_service
+    restart: always
+    build: ./event_service
+    env_file: ./config/event.env
+    environment:
+      - NODE_ENV=dev
+    networks:
+      my_network:
+        ipv4_address: 20.10.11.7
   governance:
     hostname: governance
     ports:

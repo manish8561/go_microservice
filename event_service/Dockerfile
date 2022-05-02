@@ -1,6 +1,6 @@
 FROM node:14
 # Create app directory
-WORKDIR /contract_service/src/app
+WORKDIR /event_service/src/app
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)

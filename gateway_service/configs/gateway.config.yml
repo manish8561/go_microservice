@@ -15,6 +15,8 @@ apiEndpoints:
     paths: "/api/contract_service/*"
   governance:
     paths: "/api/governance_service/*"
+  events:
+    paths: "/api/event_service/*"
 serviceEndpoints:
   httpbin:
     url: "https://httpbin.org"
@@ -26,6 +28,8 @@ serviceEndpoints:
     url: "http://20.10.11.5:3003"
   governance:
     url: "http://20.10.11.6:3004"
+  events:
+    url: "http://20.10.11.7:3005"
 policies:
   - basic-auth
   - cors
@@ -74,4 +78,10 @@ pipelines:
         - proxy:
             - action:
                 serviceEndpoint: governance
-
+  events:
+      apiEndpoints:
+        - events
+      policies:
+        - proxy:
+            - action:
+                serviceEndpoint: events

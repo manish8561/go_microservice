@@ -26,7 +26,7 @@ class farmsSchema extends Schema {
             ac_token: { type: String },
             reward: { type: String },
             bonus_multiplier: { type: Number },
-            token_per_block: { type: Number }, 
+            token_per_block: { type: Number },
             source: { type: String },
             source_link: { type: String },
             autocompound_check: { type: Boolean },
@@ -44,7 +44,7 @@ class farmsSchema extends Schema {
             gauge_info: { type: String }
         }, { timestamps: false, strict: false });
 
-        this.objectSchema.index({ address: 1, status: 1 });
+        this.objectSchema.index({ address: 1, status: 1, chain_id: 1, name: 1 });
     }
 }
 

@@ -58,9 +58,9 @@ class MongoHelper {
         await (async function() {
             try {
                 await mongoose.connect(url, options);
-                console.log("Server connected successfully");
+                console.log("MongoDB connected successfully");
               } catch (err) {
-                console.log("Server is not connected");
+                console.log("MongoDB is not connected");
               }
         }
         )();

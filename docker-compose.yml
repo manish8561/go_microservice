@@ -20,45 +20,17 @@ services:
   #     - "/data/dvolumes/autocompound/docker_rabbit:/var/lib/rabbitmq"
   #   networks:
   #     - my_network
-  # message_service:
-  #   hostname: message_service
-  #   ports:
-  #     - "0.0.0.0:7000:7000"
-  #   container_name: message_service
-  #   restart: always
-  #   build: ./message_service
-  #   env_file: ./config/message.env
-  #   environment:
-  #     - NODE_ENV=dev
-  #   networks:
-  #     my_network:
-  #       ipv4_address: 20.10.11.6
-  # post_service:
-  #   hostname: post_service
-  #   ports:
-  #     - "0.0.0.0:3003:3003"
-  #   container_name: post_service
-  #   restart: always
-  #   build: ./post_service
-  #   env_file: ./config/post.env
-  #   environment:
-  #     - NODE_ENV=dev
-  #   networks:
-  #     my_network:
-  #       ipv4_address: 20.10.11.5
-  # wallet_service:
-  #   hostname: wallet_service
-  #   ports:
-  #     - "0.0.0.0:3002:3002"
-  #   container_name: wallet_service
-  #   restart: always
-  #   build: ./wallet_service
-  #   env_file: ./config/wallet.env
-  #   environment:
-  #     - NODE_ENV=dev
-  #   networks:
-  #     my_network:
-  #       ipv4_address: 20.10.11.4
+  governance:
+    hostname: governance
+    ports:
+      - "0.0.0.0:3004:3004"
+    container_name: governance
+    restart: always
+    build: ./governance
+    env_file: ./config/governance.env
+    networks:
+      my_network:
+        ipv4_address: 20.10.11.6
   contract_service:
     hostname: contract_service
     ports:
@@ -72,18 +44,6 @@ services:
     networks:
       my_network:
         ipv4_address: 20.10.11.5
-  user:
-    hostname: user
-    ports:
-      - "0.0.0.0:3001:3001"
-      - "0.0.0.0:50051:50051"
-    container_name: user
-    restart: always
-    build: ./user
-    env_file: ./config/user.env
-    networks:
-      my_network:
-        ipv4_address: 20.10.11.3
   farm:
     hostname: farm
     ports:
@@ -99,18 +59,18 @@ services:
     networks:
       my_network:
         ipv4_address: 20.10.11.4
-  governance:
-    hostname: governance
+  user:
+    hostname: user
     ports:
-      - "0.0.0.0:3004:3004"
-    container_name: governance
+      - "0.0.0.0:3001:3001"
+      - "0.0.0.0:50051:50051"
+    container_name: user
     restart: always
-    build: ./governance
-    env_file: 
-      - ./config/governance.env
+    build: ./user
+    env_file: ./config/user.env
     networks:
       my_network:
-        ipv4_address: 20.10.11.6
+        ipv4_address: 20.10.11.3
   gateway_service:
     hostname: gateway_service
     ports:

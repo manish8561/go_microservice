@@ -14,7 +14,7 @@ import { Controller } from "./interfaces";
 import { errorMiddleware } from "./middlewares";
 import * as Helpers from './helpers';
 
-import farmsContact from './modules/event/event.model';
+import EventModel from './modules/event/event.model';
 
 class App {
     public app: express.Application;
@@ -30,7 +30,7 @@ class App {
         this.initializeMiddlewares();
         this.initializeControllers(controllers);
         this.initializeErrorHandling();
-
+        this.initializeData();
     }
 
     public listen() {
@@ -42,8 +42,10 @@ class App {
         });
         return this.server;
     }
-
-    private initializeMiddlewares() {
+    /**
+     * initialize middleware
+     */
+    private async initializeMiddlewares() {
         this.app.use(express.json());
         this.app.use(express.urlencoded());
         this.app.use(cors());
@@ -53,9 +55,19 @@ class App {
         //setting up swagger
         // this.useSwagger();
         this.startCron();
+
+    }
+    /**
+     * initialize data in collections
+     */
+    private async initializeData() {
+        EventModel.initialize();
     }
 
-    private useSwagger() {
+    /**
+     * implementation of swagger for api
+     */
+    private async useSwagger() {
         const enable_swagger = process.env.ENABLE_SWAGGER == 'true' ? true : false;
         if (enable_swagger) {
             this.app.use('/explorer', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -63,7 +75,10 @@ class App {
             // this.app.get('/explorer', swaggerUi.setup(swaggerDocument));
         }
     }
-
+    /**
+     * initialize controllers
+     * @param  {Controller[]} controllers
+     */
     private initializeControllers(controllers: Controller[]) {
         controllers.forEach(controller => {
             this.app.use("/api/event_service", controller.router);
@@ -72,10 +87,16 @@ class App {
             return res.status(200).send({ status: "success" });
         });
     }
-    private initializeErrorHandling() {
+    /**
+     * intialize error handling
+     */
+    private async initializeErrorHandling() {
         this.app.use(errorMiddleware);
     }
-    private saveLogs() {
+    /**
+     * save the logs
+     */
+    private async saveLogs() {
         console.log('\n inside savelogs ------ ');
         const logDirectory = path.join(__dirname, "log");
         // ensure log directory exists
@@ -92,11 +113,13 @@ class App {
             this.app.use(morgan("combined", { stream: accessLogStream }));
         }
     }
-
-    private startCron() {
-        const job = new CronJob('0 */59 * * * *', function () {
-            console.log('You will see this message every 1:00 am' + new Date());
-            farmsContact.getFarmsValue();
+    /**
+     * start the cron
+     */
+    private async startCron() {
+        const job = new CronJob('0 1/2 * * * *', async () => {
+            console.log('You will see this message every minute' + new Date());
+            await EventModel.getLogs();
         }, null, true, 'Europe/London');
         job.start();
     }

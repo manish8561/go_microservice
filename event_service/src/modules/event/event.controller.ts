@@ -11,19 +11,23 @@ class EventController implements Interfaces.Controller {
     constructor() {
         this.initializeRoutes();
     }
-
+    /**
+     */
     private async initializeRoutes() {
         this.router
             .all(`${this.path}/*`)
             .get(
-                this.path + "/getapr",
-                this.calApy
+                this.path + "/check",
+                this.check
             );
     }
-
-    private async calApy(req: any, response: Response) {
+    /**
+     * @param  {any} req
+     * @param  {Response} response
+     */
+    private async check(req: any, response: Response) {
         try {
-            const res: any = await EventModel.getFarmsValue();
+            const res: any = await EventModel.check();
             return Responses.success(response, { message: res });;
         } catch (error) {
             return Responses.error(response, { message: error });

@@ -20,7 +20,7 @@ class ProposalQueuedSchema extends Schema {
             contractName: { type: String, required: true },
             contract: { type: String, required: true },
 
-            id: { type: Number },
+            proposalId: { type: Number },
             eta: { type: Number, default: 0 },
         }, { timestamps: false, strict: false });
 

@@ -61,10 +61,6 @@ class ProposalSchema extends Schema {
         }, { timestamps: false, strict: false });
 
         this.objectSchema.index({ contract: 1, chainId: 1, blockNumber: -1, });
-
-        this.objectSchema.post('save', async (doc: any) => {
-
-        });
     }
 }
 

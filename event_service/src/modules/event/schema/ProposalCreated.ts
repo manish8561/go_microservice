@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import eventModel from '../event.model';
 class ProposalCreatedSchema extends Schema {
     public objectSchema: any;
 
@@ -53,7 +54,7 @@ class ProposalCreatedSchema extends Schema {
             lastBlockNumber: { type: Number, default: 0 },
             contractName: { type: String, required: true },
             contract: { type: String, required: true },
-            id: { type: Number },// proposal id in contract
+            proposalId: { type: Number },// proposal id in contract
             proposer: { type: String },
             targets: { type: [String], default: [] },
             values: { type: [String], default: [] },
@@ -68,6 +69,11 @@ class ProposalCreatedSchema extends Schema {
         }, { timestamps: false, strict: false });
 
         this.objectSchema.index({ contract: 1, chainId: 1, blockNumber: -1, });
+
+        this.objectSchema.post('insertMany', async (docs: any) => {
+            // calling common function on save
+            eventModel.updateProposalStatus(docs, 'ProposalCreated');
+        });
     }
 }
 

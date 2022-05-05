@@ -20,7 +20,7 @@ class ProposalExecutedSchema extends Schema {
             contractName: { type: String, required: true },
             contract: { type: String, required: true },
 
-            id: { type: Number },
+            proposalId: { type: Number },
         }, { timestamps: false, strict: false });
 
         this.objectSchema.index({ contract: 1, chainId: 1, blockNumber: -1, });

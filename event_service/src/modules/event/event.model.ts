@@ -96,66 +96,6 @@ class EventModel extends BaseModel {
       console.log(error, '============================================');
     }
   }
-
-  /**
-   * delete the duplicates
-   * @param  {string} d
-   */
-  private async callingDelete(d: string, obModel: any) {
-    let query: any = [];
-
-    switch (d) {
-      // case "ManagementPoolRegistration":
-      //   query = [
-      //     {
-      //       $group: {
-      //         _id: {
-      //           "chainId":"$chainId",
-      //           transactionHash: "$transactionHash",
-      //           user: "$user",
-      //           poolType: "$poolType",
-      //         },
-      //         dups: { $addToSet: "$_id" },
-      //         count: { $sum: 1 },
-      //       },
-      //     },
-      //     { $match: { count: { $gt: 1 } } },
-      //   ];
-      //   break;
-
-      case "ProposalCreated":
-        query = [
-          {
-            $group: {
-              _id: {
-                chainId: "$chainId",
-                transactionHash: "$transactionHash",
-              },
-              dups: { $addToSet: "$_id" },
-              count: { $sum: 1 },
-            },
-          },
-          { $match: { count: { $gt: 1 } } },
-        ];
-        break;
-    }
-
-    if (query.length > 0) {
-      try {
-        const result = await obModel
-          .aggregate(query);
-        if (result.length > 0) {
-          result.forEach(async (doc: any) => {
-            doc.dups.shift();
-            await obModel.deleteMany({ _id: { $in: doc.dups } });
-          });
-        }
-      } catch (error) {
-        throw error;
-      }
-    }
-  }
-
   /**
    * get cronlogs
    * @param  {Number} chainId
@@ -221,6 +161,68 @@ class EventModel extends BaseModel {
       throw error;
     }
   }
+
+  /**
+   * delete the duplicates
+   * @param  {string} d
+   */
+  private async callingDelete(d: string, obModel: any) {
+    let query: any = [];
+
+    switch (d) {
+      // case "ManagementPoolRegistration":
+      //   query = [
+      //     {
+      //       $group: {
+      //         _id: {
+      //           "chainId":"$chainId",
+      //           transactionHash: "$transactionHash",
+      //           user: "$user",
+      //           poolType: "$poolType",
+      //         },
+      //         dups: { $addToSet: "$_id" },
+      //         count: { $sum: 1 },
+      //       },
+      //     },
+      //     { $match: { count: { $gt: 1 } } },
+      //   ];
+      //   break;
+
+      case "ProposalCreated":
+      case 'ProposalCanceled':
+
+        query = [
+          {
+            $group: {
+              _id: {
+                chainId: "$chainId",
+                transactionHash: "$transactionHash",
+              },
+              dups: { $addToSet: "$_id" },
+              count: { $sum: 1 },
+            },
+          },
+          { $match: { count: { $gt: 1 } } },
+        ];
+        break;
+    }
+
+    if (query.length > 0) {
+      try {
+        const result = await obModel
+          .aggregate(query);
+        if (result.length > 0) {
+          result.forEach(async (doc: any) => {
+            doc.dups.shift();
+            await obModel.deleteMany({ _id: { $in: doc.dups } });
+          });
+        }
+      } catch (error) {
+        throw error;
+      }
+    }
+  }
+
   /**
    * filter array object properties
    * @param  {any} obj
@@ -249,7 +251,9 @@ class EventModel extends BaseModel {
         returnValues.description = obj.returnValues.description;
         returnValues.proposalType = Number(obj.returnValues.proposalType);
         break;
-
+      case 'ProposalCanceled':
+        returnValues.proposalId = Number(obj.returnValues.proposalId);
+        break;
       // case 'InvestmentRewardLog':
       //   returnValues.user = obj.returnValues.user.toLowerCase();
       //   returnValues.time = Number(obj.returnValues.time);
@@ -259,6 +263,14 @@ class EventModel extends BaseModel {
       //   break;
     }
     return returnValues;
+  }
+  /**
+   * updateProposalStatus
+   * @param  {Number} proposalId
+   * @returns Promise
+   */
+  public async updateProposalStatus(proposalId: Number): Promise<void> {
+    console.log(proposalId, 'calling common function')
   }
 }
 

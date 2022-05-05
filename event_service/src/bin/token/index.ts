@@ -2,7 +2,7 @@
 //chainId supported
 export const chainIdArr = [4];
 
-export const blockDiff = 20;
+export const blockDiff = 50;
 
 //tokens according to chainId
 // export const tokens = {

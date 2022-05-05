@@ -117,7 +117,7 @@ class App {
      * start the cron
      */
     private async startCron() {
-        const job = new CronJob('0 1/2 * * * *', async () => {
+        const job = new CronJob('1/5 * * * * *', async () => {
             console.log('You will see this message every minute' + new Date());
             await EventModel.getLogs();
         }, null, true, 'Europe/London');

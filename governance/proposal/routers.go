@@ -15,7 +15,8 @@ func ProposalsRegister(router *gin.RouterGroup) {
 	router.GET("", ProposalList)
 	router.GET("/total", ProposalTotal)
 	router.GET("/:id", ProposalRetrieve)
-	
+	router.GET("/votecast/", VoteCast)
+
 	router.POST("", ProposalSave)
 	router.Use(common.AuthMiddleware(true))
 	router.PUT("", ProposalUpdate)
@@ -141,4 +142,40 @@ func ProposalUpdate(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "proposal updated", "data": data, "success": true})
+}
+
+/*
+function to total vote cast for proposal
+*/
+func VoteCast(c *gin.Context) {
+	support_query := c.Query("support")
+	if support_query == "" {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Support is required", "success": false})
+		return
+	}
+	support := true
+	if support_query == "true"  {
+		support = true
+	} else {
+		support = false
+	}
+	proposalId, err := strconv.ParseInt(c.Query("proposalId"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Proposal ID is required", "success": false})
+		return
+	}
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = 4 //rinkeby
+	}
+	// filtering
+	filters := VoteCast_Filters{
+		Support:    support,
+		ProposalId: proposalId,
+		ChainId:    chain_id,
+	}
+
+	num := GetVoteCastTotal(filters)
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
 }

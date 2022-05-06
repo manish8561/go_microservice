@@ -300,8 +300,7 @@ class EventModel extends BaseModel {
             record.proposer = d.proposer;
             record.description = d.decription;
             record.proposal_type = d.proposalType;
-            await record.save()
-
+            await record.save();
           } else {
             //insert proposal if not found.
             const record: any = new Proposal();
@@ -323,10 +322,10 @@ class EventModel extends BaseModel {
             record.title = '';
             record.db_description = '';
             record.status = "Pending";
-            record._created = new Date(),
-              record._modified = new Date(),
+            record._created = new Date();
+            record._modified = new Date();
 
-              await record.save();
+            await record.save();
           }
         }
         break;

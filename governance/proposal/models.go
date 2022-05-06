@@ -281,10 +281,10 @@ func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id i
 	// checking for success
 
 	if txStatus == 1 {
-		update["status"] = "active"
+		update["status"] = "Active"
 	}
 	if txStatus == -1 {
-		update["status"] = "processing"
+		update["status"] = "Processing"
 	}
 
 	update = bson.M{"$set": update}

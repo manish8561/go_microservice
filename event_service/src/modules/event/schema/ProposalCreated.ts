@@ -71,7 +71,7 @@ class ProposalCreatedSchema extends Schema {
         this.objectSchema.index({ contract: 1, chainId: 1, blockNumber: -1, });
 
         this.objectSchema.post('insertMany', async (docs: any) => {
-            // calling common function on save
+            // calling common function on save for proposal
             eventModel.updateProposalStatus(docs, 'ProposalCreated');
         });
     }

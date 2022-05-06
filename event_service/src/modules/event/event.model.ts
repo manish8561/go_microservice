@@ -45,7 +45,7 @@ class EventModel extends BaseModel {
       try {
         const ob = (await import(`./schema/${event}`)).default;
         const count = await ob.countDocuments({});
-        console.log(count, event, "==================");
+        // console.log(count, event, "==================");
         if (count === 0) {
           console.log("zero")
           const initialData = initial[event];
@@ -89,9 +89,12 @@ class EventModel extends BaseModel {
    */
   public async getLogs() {
     try {
+      let a: any = [];
       for (let chainId of chainIdArr) {
-        await this.getCronLogs(chainId);
+        a = [...a, this.getCronLogs(chainId)];
       }
+      //calling function in parallel with chain id
+      await Promise.all(a);
     } catch (error) {
       console.log(error, '============================================');
     }
@@ -104,64 +107,76 @@ class EventModel extends BaseModel {
     try {
       //getting the current block number
       const currentBlockNumber = await Helpers.Web3Helper.getBlockNumber(chainId);
+      let start = Date.now();
+      let a: any = [];
       for (let event of eventsArr) {
-        const ob = (await import(`./schema/${event}`)).default;
-        const row: any = await this.getLastRecord(ob, chainId);
-        if (row) {
-          let abi = governanceAbi;
-          if (row.contractName === "governance") {
-            abi = governanceAbi;
-          }
-          const contractObj = await Helpers.Web3Helper.callContract(row.chainId, abi, row.contract);
-          const d = {
-            contractObj,
-            event,
-            fromBlock: row.lastBlockNumber
-          };
-          console.log(d.fromBlock, d.event, 'before event')
-          let eventData = await Helpers.Web3Helper.getEvents(d);
-          let filterData: any = [];
-
-          if (eventData && eventData.length === 0) {
-            let l = row.lastBlockNumber + blockDiff;
-            if (l >= currentBlockNumber) {
-              l = currentBlockNumber;
-            }
-            row.lastBlockNumber = l;
-            await row.save();
-            continue;
-          } else {
-            if (eventData.length === 1 && row.blockNumber === eventData[0].blockNumber) {
-              let l = row.lastBlockNumber + blockDiff;
-              if (l >= currentBlockNumber) {
-                l = currentBlockNumber;
-              }
-              row.lastBlockNumber = l;
-              await row.save();
-              continue;
-            }
-            console.log('hi')
-            if (eventData.length > 0 && row.blockNumber === eventData[0].blockNumber) {
-              eventData = eventData.slice(1);
-            }
-            //filterTheArray
-            for (let d of eventData) {
-              d = await this.filterObjectValues(d, row, event);
-              filterData = [...filterData, d];
-            }
-            //adding the data
-            let r = await this.addData(ob, filterData);
-            r = await this.callingDelete(event, ob);
-            console.log("inserted", r)
-          }
-          // console.log(eventData, filterData, "in loop")
-        }
+        a = [...a, this.getEventLogs(event, chainId, currentBlockNumber)]
       }
+      // parallel call for each event
+      await Promise.all(a);
+      console.log((Date.now() - start) / 1000, "after promise all: ");
+
     } catch (error) {
       throw error;
     }
   }
+  /**
+   * @param  {string} event
+   * @param  {Number} chainId
+   * @returns Promise
+   */
+  private async getEventLogs(event: string, chainId: Number, currentBlockNumber: Number): Promise<void> {
+    const ob = (await import(`./schema/${event}`)).default;
+    const row: any = await this.getLastRecord(ob, chainId);
+    if (row) {
+      let abi = governanceAbi;
+      if (row.contractName === "governance") {
+        abi = governanceAbi;
+      }
+      const contractObj = await Helpers.Web3Helper.callContract(row.chainId, abi, row.contract);
+      const d = {
+        contractObj,
+        event,
+        fromBlock: row.lastBlockNumber
+      };
+      let eventData = await Helpers.Web3Helper.getEvents(d);
+      let filterData: any = [];
 
+      if (eventData && eventData.length === 0) {
+        let l = row.lastBlockNumber + blockDiff;
+        if (l >= currentBlockNumber) {
+          l = currentBlockNumber;
+        }
+        row.lastBlockNumber = l;
+        await row.save();
+
+        return;
+      } else {
+        if (eventData.length === 1 && row.blockNumber === eventData[0].blockNumber) {
+          let l = row.lastBlockNumber + blockDiff;
+          if (l >= currentBlockNumber) {
+            l = currentBlockNumber;
+          }
+          row.lastBlockNumber = l;
+          await row.save();
+          return;
+        }
+        if (eventData.length > 0 && row.blockNumber === eventData[0].blockNumber) {
+          eventData = eventData.slice(1);
+        }
+        //filterTheArray
+        for (let d of eventData) {
+          d = await this.filterObjectValues(d, row, event);
+          filterData = [...filterData, d];
+        }
+        //adding the data
+        let r = await this.addData(ob, filterData);
+        r = await this.callingDelete(event, ob);
+        console.log("inserted", r)
+      }
+      // console.log(eventData, filterData, "in loop")
+    }
+  }
   /**
    * delete the duplicates
    * @param  {string} d
@@ -308,11 +323,11 @@ class EventModel extends BaseModel {
             record.executed = false;
             record.title = '';
             record.db_description = '';
-            record.status="pending";
+            record.status = "Pending";
             record._created = new Date(),
-            record._modified = new Date(),
+              record._modified = new Date(),
 
-            await record.save();
+              await record.save();
           }
         }
         break;
@@ -320,7 +335,7 @@ class EventModel extends BaseModel {
       case "ProposalCanceled":
       case "ProposalExecuted":
         for (let d of docs) {
-          const record: any = await Proposal.findOne({ chain_id: d.chainId, transaction_hash: d.transactionHash, proposal_id: d.proposalId });
+          const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
           if (record) {
             const status = await this.getProposalState(d);
             // update the proposal if found
@@ -331,7 +346,7 @@ class EventModel extends BaseModel {
         break;
       case "ProposalQueued":
         for (let d of docs) {
-          const record: any = await Proposal.findOne({ chain_id: d.chainId, transaction_hash: d.transactionHash, proposal_id: d.proposalId });
+          const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
           if (record) {
             const status = await this.getProposalState(d);
             // update the proposal if found

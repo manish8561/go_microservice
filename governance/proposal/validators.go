@@ -43,7 +43,7 @@ func (self *ProposalModelValidator) Bind(c *gin.Context) error {
 	self.proposalModel.Voting_Period = self.Voting_Period
 
 	self.proposalModel.Proposal_Type = self.Proposal_Type
-	self.proposalModel.Status = "pending"
+	self.proposalModel.Status = "Pending"
 	self.proposalModel.Cron_Status = "pending"
 	self.proposalModel.Created = time.Now()
 	self.proposalModel.Modified = time.Now()

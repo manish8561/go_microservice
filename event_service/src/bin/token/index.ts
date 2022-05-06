@@ -2,31 +2,8 @@
 //chainId supported
 export const chainIdArr = [4];
 
-export const blockDiff = 50;
+export const blockDiff = 200;
 
-//tokens according to chainId
-// export const tokens = {
-//     1: {
-//         governance: {
-//             address: "0x86fC708e761Ab76B761e5d64F3e91Ffe781EA4e4",
-//             abi: governanceAbi
-//         },
-//         staking: {
-//             address: "0xc0c7eC10F5B957A221926F348218e46EF34a611d",
-//             abi: governanceAbi
-//         }
-//     },
-//     4: {
-//         governance: {
-//             address: "0x86fC708e761Ab76B761e5d64F3e91Ffe781EA4e4",
-//             abi: governanceAbi
-//         },
-//         staking: {
-//             address: "0xc0c7eC10F5B957A221926F348218e46EF34a611d",
-//             abi: governanceAbi
-//         }
-//     },
-// };
 //events to be 
 export const eventsArr = [
     "ProposalCreated",

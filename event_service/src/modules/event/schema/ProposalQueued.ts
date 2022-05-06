@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import eventModel from '../event.model';
 class ProposalQueuedSchema extends Schema {
     public objectSchema: any;
 
@@ -25,6 +26,11 @@ class ProposalQueuedSchema extends Schema {
         }, { timestamps: false, strict: false });
 
         this.objectSchema.index({ contract: 1, chainId: 1, blockNumber: -1, });
+
+        this.objectSchema.post('insertMany', async (docs: any) => {
+            // calling common function on save for proposal
+            eventModel.updateProposalStatus(docs, 'ProposalQueued');
+        });
     }
 }
 

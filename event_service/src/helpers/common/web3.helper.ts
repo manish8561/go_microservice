@@ -93,7 +93,7 @@ class Web3Helper {
                 fromBlock,
                 toBlock: (fromBlock + blockDiff)
             });
-            console.log("Event =========", eventData.length, event);
+            // console.log("Event =========", eventData.length, event);
             if (eventData.length > 0) {
                 return eventData;
             }

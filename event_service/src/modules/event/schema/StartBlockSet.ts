@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import eventModel from '../event.model';
 
 class StartBlockSetSchema extends Schema {
     public objectSchema: any;
@@ -26,6 +27,11 @@ class StartBlockSetSchema extends Schema {
         }, { timestamps: false, strict: false });
 
         this.objectSchema.index({ contract: 1, chainId: 1, blockNumber: -1, });
+
+        this.objectSchema.post('insertMany', async (docs: any) => {
+            // calling common function on save for proposal
+            eventModel.updateProposalStatus(docs, 'StartBlockSet');
+        });
     }
 }
 

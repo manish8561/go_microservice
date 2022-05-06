@@ -32,7 +32,7 @@ type ProposalModel struct {
 	// Proposal_Type    string             `bson:"proposal_type" json:"proposal_type"`
 	Block_Number   int     `bson:"block_number" json:"block_number"`
 	Status         string  `bson:"status" json:"status"`
-	Proposal_Id    string  `bson:"proposal_id" json:"proposal_id"`
+	Proposal_Id    int  `bson:"proposal_id" json:"proposal_id"`
 	Proposer       string  `bson:"proposer" json:"proposer"`
 	Eta            int     `bson:"eta" json:"eta"`
 	Start_Time     int     `bson:"start_time" json:"start_time`

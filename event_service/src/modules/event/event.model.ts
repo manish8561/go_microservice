@@ -272,13 +272,6 @@ class EventModel extends BaseModel {
         returnValues.support = obj.returnValues.support;
         returnValues.votes = Number(obj.returnValues.votes / 10 ** 18);
         break;
-      // case 'InvestmentRewardLog':
-      //   returnValues.user = obj.returnValues.user.toLowerCase();
-      //   returnValues.time = Number(obj.returnValues.time);
-      //   returnValues.investmentAmount = Number(obj.returnValues.investmentAmount / 10 ** 4);
-      //   returnValues.investmentToken = Number(obj.returnValues.investmentToken / 10 ** 22);
-      //   returnValues.planType = obj.returnValues.planType;
-      //   break;
     }
     return returnValues;
   }

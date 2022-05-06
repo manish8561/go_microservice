@@ -288,7 +288,6 @@ class EventModel extends BaseModel {
    * @returns Promise
    */
   public async updateProposalStatus(docs: any, event: string): Promise<void> {
-    console.log(docs, 'calling common function')
     // handle doc inserted in the event collections
     switch (event) {
       case "ProposalCreated":
@@ -356,13 +355,26 @@ class EventModel extends BaseModel {
           }
         }
         break;
+      case "VoteCast":
+        for (let d of docs) {
+          const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
+          if (record) {
+            const p = await this.getProposalContract(d);
+            if (p) {
+              // update the proposal if found
+              record.for_votes = (p.forVotes) / (10 ** 18);
+              record.against_votes = (p.againstVotes) / (10 ** 18);
+              await record.save();
+            }
+          }
+        }
+        break;
     }
   }
   /**
    * state proposal
    * @param  {any} doc
    * @returns Promise
-   * 
    *    Pending,
         Active,
         Canceled,
@@ -373,14 +385,14 @@ class EventModel extends BaseModel {
         Executed
 
    */
-  public async getProposalState(doc: any): Promise<any> {
+  public async getProposalState(doc: any): Promise<string> {
     let abi = governanceAbi;
     if (doc.contractName === "governance") {
       abi = governanceAbi;
     }
     const contractObj: any = await Helpers.Web3Helper.callContract(doc.chainId, abi, doc.contract);
     const r = await contractObj.methods.state(doc.proposalId).call();
-    console.log(r, 'state')
+    // console.log(r, 'state')
     let state = 'Pending';
     switch (Number(r)) {
       case 0:
@@ -410,6 +422,24 @@ class EventModel extends BaseModel {
     }
 
     return state;
+  }
+  /**
+   * get proposal struct
+   * @param  {any} doc
+   * @returns Promise
+   */
+  public async getProposalContract(doc: any): Promise<any> {
+    let abi = governanceAbi;
+    if (doc.contractName === "governance") {
+      abi = governanceAbi;
+    }
+    try {
+      const contractObj: any = await Helpers.Web3Helper.callContract(doc.chainId, abi, doc.contract);
+      return await contractObj.methods.proposals(doc.proposalId).call();
+    } catch (error) {
+      throw error;
+    }
+
   }
 }
 

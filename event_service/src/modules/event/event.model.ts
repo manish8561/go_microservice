@@ -323,7 +323,28 @@ class EventModel extends BaseModel {
         }
         break;
       case "StartBlockSet":
+        for (let d of docs) {
+          const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
+          if (record) {
+            const status = await this.getProposalState(d);
+            // update the proposal if found
+            record.status = status;
+            await record.save();
+          }
+        }
+        break;
       case "ProposalCanceled":
+        for (let d of docs) {
+          const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
+          if (record) {
+            const status = await this.getProposalState(d);
+            // update the proposal if found
+            record.canceled = true;
+            record.status = status;
+            await record.save();
+          }
+        }
+        break;
       case "ProposalExecuted":
         for (let d of docs) {
           const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
@@ -331,6 +352,7 @@ class EventModel extends BaseModel {
             const status = await this.getProposalState(d);
             // update the proposal if found
             record.status = status;
+            record.executed = true;
             await record.save();
           }
         }

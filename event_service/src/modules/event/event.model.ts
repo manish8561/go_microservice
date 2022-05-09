@@ -253,7 +253,7 @@ class EventModel extends BaseModel {
         returnValues.proposalType = Number(obj.returnValues.proposalType);
         break;
       case 'ProposalCanceled':
-        returnValues.proposalId = Number(obj.returnValues.proposalId);
+        returnValues.proposalId = Number(obj.returnValues.id);
         break;
       case 'ProposalExecuted':
         returnValues.proposalId = Number(obj.returnValues.id);

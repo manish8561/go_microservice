@@ -404,36 +404,37 @@ class EventModel extends BaseModel {
       abi = governanceAbi;
     }
     const contractObj: any = await Helpers.Web3Helper.callContract(doc.chainId, abi, doc.contract);
-    const r = await contractObj.methods.state(doc.proposalId).call();
-    // console.log(r, 'state')
     let state = 'Pending';
-    switch (Number(r)) {
-      case 0:
-        state = "Pending";
-        break;
-      case 1:
-        state = "Active";
-        break;
-      case 2:
-        state = "Canceled";
-        break;
-      case 3:
-        state = "Defeated";
-        break;
-      case 4:
-        state = "Succeeded";
-        break;
-      case 5:
-        state = "Queued";
-        break;
-      case 6:
-        state = "Expired";
-        break;
-      case 7:
-        state = "Executed";
-        break;
+    if (doc.proposal_id > 0) {
+      const r = await contractObj.methods.state(doc.proposalId).call();
+      // console.log(r, 'state')
+      switch (Number(r)) {
+        case 0:
+          state = "Pending";
+          break;
+        case 1:
+          state = "Active";
+          break;
+        case 2:
+          state = "Canceled";
+          break;
+        case 3:
+          state = "Defeated";
+          break;
+        case 4:
+          state = "Succeeded";
+          break;
+        case 5:
+          state = "Queued";
+          break;
+        case 6:
+          state = "Expired";
+          break;
+        case 7:
+          state = "Executed";
+          break;
+      }
     }
-
     return state;
   }
   /**

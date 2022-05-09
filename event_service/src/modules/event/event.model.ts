@@ -337,10 +337,9 @@ class EventModel extends BaseModel {
         for (let d of docs) {
           const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
           if (record) {
-            const status = await this.getProposalState(d);
             // update the proposal if found
             record.canceled = true;
-            record.status = status;
+            record.status = 'Canceled';
             await record.save();
           }
         }
@@ -349,9 +348,8 @@ class EventModel extends BaseModel {
         for (let d of docs) {
           const record: any = await Proposal.findOne({ chain_id: d.chainId, proposal_id: d.proposalId });
           if (record) {
-            const status = await this.getProposalState(d);
             // update the proposal if found
-            record.status = status;
+            record.status = 'Executed';
             record.executed = true;
             await record.save();
           }

@@ -397,7 +397,6 @@ class EventModel extends BaseModel {
         Queued,
         Expired,
         Executed
-
    */
   public async getProposalState(doc: any): Promise<string> {
     let abi = governanceAbi;

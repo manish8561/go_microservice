@@ -32,13 +32,13 @@ type ProposalModel struct {
 	// Proposal_Type    string             `bson:"proposal_type" json:"proposal_type"`
 	Block_Number   int     `bson:"block_number" json:"block_number"`
 	Status         string  `bson:"status" json:"status"`
-	Proposal_Id    int  `bson:"proposal_id" json:"proposal_id"`
+	Proposal_Id    int     `bson:"proposal_id" json:"proposal_id"`
 	Proposer       string  `bson:"proposer" json:"proposer"`
 	Eta            int     `bson:"eta" json:"eta"`
-	Start_Time     int     `bson:"start_time" json:"start_time`
-	End_Time       int     `bson:"end_time" json:"end_time`
-	Description    string  `bson:"description" json:"description`
-	Voting_Period  int     `bson:"voting_period" json:"voting_period` // in days
+	Start_Time     int     `bson:"start_time" json:"start_time"`
+	End_Time       int     `bson:"end_time" json:"end_time"`
+	Description    string  `bson:"description" json:"description"`
+	Voting_Period  int     `bson:"voting_period" json:"voting_period"` // in days
 	For_Votes      float64 `bson:"for_votes" json:"for_votes"`
 	Against_Votes  float64 `bson:"against_votes" json:"against_votes"`
 	Canceled       bool    `bson:"canceled" json:"canceled"`

@@ -16,22 +16,22 @@ export const eventsArr = [
 // intial values for events in the collections
 export const initial: any = {
     "ProposalCreated": [
-        { chainId: 4, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for rinkeby
-        { chainId: 1, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for mainnet
+        { chainId: 4, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for rinkeby
+        { chainId: 1, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for mainnet
     ],
     "StartBlockSet": [
-        { chainId: 4, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for rinkeby
+        { chainId: 4, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for rinkeby
     ],
     "VoteCast": [
-        { chainId: 4, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for rinkeby
+        { chainId: 4, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for rinkeby
     ],
     "ProposalCanceled": [
-        { chainId: 4, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for rinkeby
+        { chainId: 4, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for rinkeby
     ],
     "ProposalQueued": [
-        { chainId: 4, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for rinkeby
+        { chainId: 4, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for rinkeby
     ],
     "ProposalExecuted": [
-        { chainId: 4, transactionHash: "", blockNumber: 10645509, lastBlockNumber: 10645509, contractName: "governance", contract: "0x551a6eA97Fcd0cb9AB5E806D330dd5Db47eFAe74" },// for rinkeby
+        { chainId: 4, transactionHash: "", blockNumber: 10651529, lastBlockNumber: 10651529, contractName: "governance", contract: "0x02F6A4bf2326ca24b164e790cf1D97a192fdb35A" },// for rinkeby
     ],
 }

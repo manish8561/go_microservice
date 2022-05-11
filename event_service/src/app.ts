@@ -1,20 +1,20 @@
-import cors from "cors";
-import express from "express";
-import helmet from "helmet";
-import morgan from "morgan";
-import * as rfs from "rotating-file-stream";
-import * as fs from "fs";
-import * as path from "path";
-import { CronJob } from 'cron';
-import swaggerUi from 'swagger-ui-express';
-import * as http from "http";
-import * as swaggerDocument from './swagger.json';
-// import * as config from "../src/config/";
-import { Controller } from "./interfaces";
-import { errorMiddleware } from "./middlewares";
-import * as Helpers from './helpers';
+import cors from "cors"
+import express from "express"
+import helmet from "helmet"
+import morgan from "morgan"
+import * as rfs from "rotating-file-stream"
+import * as fs from "fs"
+import * as path from "path"
+import swaggerUi from 'swagger-ui-express'
+import * as http from "http"
+import * as swaggerDocument from './swagger.json'
+// import * as config from "../src/config/"
+import { Controller } from "./interfaces"
+import { errorMiddleware } from "./middlewares"
+import * as Helpers from './helpers'
+import * as schedule from "node-schedule"
 
-import EventModel from './modules/event/event.model';
+import EventModel from './modules/event/event.model'
 
 class App {
     public app: express.Application;
@@ -117,11 +117,10 @@ class App {
      * start the cron
      */
     private async startCron() {
-        const job = new CronJob('0 */5 * * * *', async () => {
-            console.log('You will see this message every minute' + new Date());
+        const job = schedule.scheduleJob("0 */2 * * * *", async () => {
+            console.log('You will see this message every minute 2 ', new Date());
             await EventModel.getLogs();
-        }, null, true, 'Europe/London');
-        job.start();
+        });
     }
 }
 

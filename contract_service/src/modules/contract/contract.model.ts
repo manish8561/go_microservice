@@ -17,6 +17,7 @@ class farmModel extends BaseModel {
           for (let it of farmData) {
             const { masterchef, deposit_token, token_type, address }: any = it;
             const calApr: any = await masterChefHelper.calculateAPRValue(masterchef, deposit_token);
+            console.log('hi', calApr)
             const calApy: any = await masterChefHelper.calculateAPY(calApr);
             const calTvl: any = await masterChefHelper.calculateTVLValue(deposit_token, address, token_type);
             it.daily_apr = calApr

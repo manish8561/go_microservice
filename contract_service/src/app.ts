@@ -94,9 +94,9 @@ class App {
     }
 
     private startCron() {
-        const job = new CronJob('0 */1 * * * *', function () {
+        const job = new CronJob('0 */15 * * * *', async () => {
             console.log('You will see this message every 1:00 am' + new Date());
-            farmsContact.getFarmsValue();
+            await farmsContact.getFarmsValue();
         }, null, true, 'Europe/London');
         job.start();
     }

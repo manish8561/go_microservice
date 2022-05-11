@@ -285,7 +285,7 @@ class EventModel extends BaseModel {
     switch (event) {
       case "ProposalCreated":
         for (let d of docs) {
-          const record: any = await Proposal.findOne({ chain_id: d.chainId, transaction_hash: d.transactionHash, proposal_id: d.proposalId });
+          const record: any = await Proposal.findOne({ chain_id: d.chainId, transaction_hash: d.transactionHash });
           if (record) {
             // update the proposal if found
             record.start_time = d.startTime;

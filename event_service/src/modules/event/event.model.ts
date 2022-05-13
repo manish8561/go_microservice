@@ -288,13 +288,25 @@ class EventModel extends BaseModel {
           const record: any = await Proposal.findOne({ chain_id: d.chainId, transaction_hash: d.transactionHash });
           if (record) {
             // update the proposal if found
+            record.proposal_id = d.proposalId;
             record.start_time = d.startTime;
             record.end_time = d.endTime;
             record.proposer = d.proposer;
-            record.description = d.decription;
+            record.description = d.description;
             record.proposal_type = d.proposalType;
             await record.save();
           } else {
+            let title = '', description = '';
+            
+            //get data from ipfs
+            if (d.description) {
+              const ipfsData: any = await Helpers.IPFSHelper.readFile(d.description);
+              if (ipfsData) {
+                title = ipfsData.title;
+                description = ipfsData.description;
+              }
+            }
+
             //insert proposal if not found.
             const record: any = new Proposal();
             record.chain_id = d.chainId;
@@ -312,8 +324,8 @@ class EventModel extends BaseModel {
             record.against_votes = 0;
             record.canceled = false;
             record.executed = false;
-            record.title = '';
-            record.db_description = '';
+            record.title = title;
+            record.db_description = description;
             record.status = "Pending";
             record._created = new Date();
             record._modified = new Date();

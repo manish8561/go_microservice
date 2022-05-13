@@ -117,6 +117,7 @@ class App {
      * start the cron
      */
     private async startCron() {
+        
         const job = schedule.scheduleJob("0 */2 * * * *", async () => {
             console.log('You will see this message every minute 2 ', new Date());
             await EventModel.getLogs();

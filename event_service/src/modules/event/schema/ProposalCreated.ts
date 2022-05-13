@@ -43,7 +43,6 @@ class ProposalCreatedSchema extends Schema {
 
         // @notice An event emitted when a proposal has been executed in the Timelock
         event ProposalExecuted(uint256 id);
-
     */
 
     private schema() {

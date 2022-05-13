@@ -196,18 +196,6 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	defer cancel()
 
 	sorting := bson.D{{"_created", -1}}
-	if sort_by == "recent" {
-		sorting = bson.D{{"_created", -1}}
-	}
-	if sort_by == "apy" {
-		sorting = bson.D{{"daily_apy", -1}}
-	}
-	if sort_by == "tvl" {
-		sorting = bson.D{{"tvl_staked", -1}}
-	}
-	if sort_by == "yourTvl" {
-		sorting = bson.D{{"tvl_staked", -1}}
-	}
 
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
@@ -217,20 +205,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	query := bson.M{"chain_id": filters.Chain_Id}
 	if status != "" {
 		query["status"] = status
-	}
-	if filters.Token_Type != "" {
-		// checking for the stable in token type
-		query["token_type"] = filters.Token_Type
-		if strings.Contains(filters.Token_Type, "stable") {
-			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
-		}
-	}
-	if filters.Source != "" {
-		query["source"] = filters.Source
-	}
-	if filters.Name != "" {
-		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
-	}
+	}	
 
 	cursor, err := collection.Find(ctx, query, opts)
 	if err != nil {

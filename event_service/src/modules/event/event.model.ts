@@ -28,6 +28,8 @@ class EventModel extends BaseModel {
       ob.values = ["test", "test2"];
       ob.signatures = ["test", "test2"];
       ob.calldatas = ["test", "test2"];
+      ob['_created'] = new Date();
+      ob['_modified'] = new Date();
       ob.startTime = (new Date()).getTime();
       ob.endTime = (new Date()).getTime();
       ob.description = "ipfs hash";
@@ -297,7 +299,7 @@ class EventModel extends BaseModel {
             await record.save();
           } else {
             let title = '', description = '';
-            
+
             //get data from ipfs
             if (d.description) {
               const ipfsData: any = await Helpers.IPFSHelper.readFile(d.description);

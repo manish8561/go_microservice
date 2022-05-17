@@ -16,6 +16,7 @@ func ProposalsRegister(router *gin.RouterGroup) {
 	router.GET("/total", ProposalTotal)
 	router.GET("/:id", ProposalRetrieve)
 	router.GET("/votecast/", VoteCast)
+	router.GET("/getVote/", VoteCast)
 
 	router.POST("", ProposalSave)
 	router.Use(common.AuthMiddleware(true))
@@ -29,22 +30,17 @@ function to total proposal counts
 */
 func ProposalTotal(c *gin.Context) {
 	status := c.Query("status")
-	source := c.Query("source")
-	token_type := c.Query("token_type")
-	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
 	// filtering
 	filters := Filters{
-		Source:     source,
-		Token_Type: token_type,
-		Name:       name,
+		Status: status,
 		Chain_Id:   chain_id,
 	}
 
-	num := GetTotal(status, filters)
+	num := GetTotal(filters)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
 }
@@ -70,17 +66,12 @@ func ProposalList(c *gin.Context) {
 	}
 	// filtering
 	status := c.Query("status")
-	source := c.Query("source")
-	token_type := c.Query("token_type")
-	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
 	filters := Filters{
-		Source:     source,
-		Token_Type: token_type,
-		Name:       name,
+		Status: status,
 		Chain_Id:   chain_id,
 	}
 	//sorting
@@ -89,7 +80,7 @@ func ProposalList(c *gin.Context) {
 		sort_by = "tvl"
 	}
 
-	records, err := GetAll(page, limit, status, filters, sort_by)
+	records, err := GetAll(page, limit, filters, sort_by)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return

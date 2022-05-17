@@ -37,6 +37,10 @@ type VoteCast_Filters struct {
 	ChainId    int64 `bson: "chainId" json:"chainId"`
 }
 
+type VotesResult struct {
+
+}
+
 // init function runs first time
 func init() {}
 
@@ -82,3 +86,21 @@ func GetVoteCastTotal(filters VoteCast_Filters) float64 {
 	}
 	return 0
 }
+
+/* 
+get vote cast result and total in single api
+db.getCollection('votecasts').aggregate([
+{$facet:{
+    total: [{"$match":{proposalId:2, chainId:4}},{"$count":"total"}],
+    records:[{"$match":{proposalId:2, chainId:4}}]
+    }},
+    {$project:{
+        total:{$cond: { if: { $gt: [ {$size:"$total"}, 0 ] }, then: {$first:"$total.total"}, else: 1 }},
+        records:1,
+        }
+    }
+    ])
+	
+*/
+
+func GetVotes(filters VoteCast_Filters){}

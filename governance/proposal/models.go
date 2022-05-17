@@ -51,9 +51,8 @@ type ProposalModel struct {
 
 //struct for filters
 type Filters struct {
-	Token_Type string `bson: "token_type", json:"token_type"`
-	Source     string `bson: "source", json:"source"`
-	Name       string `bson: "name", json:"name"`
+	// Token_Type string `bson: "token_type", json:"token_type"`
+	Status     string `bson: "source", json:"source"`
 	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
 }
 
@@ -154,7 +153,7 @@ func GetRecord(ID string) (ProposalModel, error) {
 }
 
 // Farm list api with page and limit
-func GetTotal(status string, filters Filters) int64 {
+func GetTotal(filters Filters) int64 {
 	client := common.GetDB()
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
@@ -162,21 +161,14 @@ func GetTotal(status string, filters Filters) int64 {
 	defer cancel()
 
 	query := bson.M{"chain_id": filters.Chain_Id}
-	if status != "" {
-		query["status"] = status
-	}
-	if filters.Token_Type != "" {
-		query["token_type"] = filters.Token_Type
-		// checking for the stable in token type
-		if strings.Contains(filters.Token_Type, "stable") {
-			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+	if filters.Status != "" {
+		if filters.Status == "active" {
+			t := time.Now()
+			// fmt.Println(t.Unix(),"time")
+			// get unix timestamp
+			query["end_time"] = bson.M{"$gte":t.Unix()}
+			query["start_time"] = bson.M{"$lt":t.Unix()}
 		}
-	}
-	if filters.Source != "" {
-		query["source"] = filters.Source
-	}
-	if filters.Name != "" {
-		query["name"] = primitive.Regex{Pattern: "^" + filters.Name + "*", Options: "i"}
 	}
 
 	num, err := collection.CountDocuments(ctx, query)
@@ -187,7 +179,7 @@ func GetTotal(status string, filters Filters) int64 {
 }
 
 // Farm list api with page and limit
-func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*ProposalModel, error) {
+func GetAll(page int64, limit int64, filters Filters, sort_by string) ([]*ProposalModel, error) {
 	client := common.GetDB()
 	var records []*ProposalModel
 
@@ -203,8 +195,14 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	opts := options.Find().SetSort(sorting).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	query := bson.M{"chain_id": filters.Chain_Id}
-	if status != "" {
-		query["status"] = status
+	if filters.Status != "" {
+		if filters.Status == "active" {
+			t := time.Now()
+			// fmt.Println(t.Unix(),"time")
+			// get unix timestamp
+			query["end_time"] = bson.M{"$gte":t.Unix()}
+			query["start_time"] = bson.M{"$lt":t.Unix()}
+		}
 	}	
 
 	cursor, err := collection.Find(ctx, query, opts)

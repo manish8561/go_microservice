@@ -122,7 +122,10 @@ func GetVotes(page int64, limit int64, filters VoteCast_Filters) (*VotesResult, 
 	// in the collection.
 	pipeline := []bson.M{
 		{"$facet": bson.M{
-			"total": []bson.M{{"$count": "total"}},
+			"total": []bson.M{
+				{"$match": query},
+				{"$count": "total"},
+			},
 			"records": []bson.M{
 				{"$match": query},
 				{"$skip": (page - 1) * limit},

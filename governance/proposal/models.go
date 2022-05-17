@@ -168,6 +168,7 @@ func GetTotal(filters Filters) int64 {
 			// get unix timestamp
 			query["end_time"] = bson.M{"$gte":t.Unix()}
 			query["start_time"] = bson.M{"$lt":t.Unix()}
+			query["canceled"] = false;
 		}
 	}
 
@@ -202,6 +203,7 @@ func GetAll(page int64, limit int64, filters Filters, sort_by string) ([]*Propos
 			// get unix timestamp
 			query["end_time"] = bson.M{"$gte":t.Unix()}
 			query["start_time"] = bson.M{"$lt":t.Unix()}
+			query["canceled"] = false;
 		}
 	}	
 

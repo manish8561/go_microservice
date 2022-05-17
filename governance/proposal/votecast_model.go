@@ -37,8 +37,10 @@ type VoteCast_Filters struct {
 	ChainId    int64 `bson: "chainId" json:"chainId"`
 }
 
+//struct for votes with total
 type VotesResult struct {
-
+	Total   int             `bson:"total" json:"total"`
+	Records []VoteCastModel `bson:"records" json:"records"`
 }
 
 // init function runs first time
@@ -46,7 +48,7 @@ func init() {}
 
 // Farm list api with page and limit
 func GetVoteCastTotal(filters VoteCast_Filters) float64 {
-	var records []struct {
+	var records []*struct {
 		ID    int     `bson: "_id"`
 		Count float64 `bson: "count"`
 	}
@@ -87,7 +89,7 @@ func GetVoteCastTotal(filters VoteCast_Filters) float64 {
 	return 0
 }
 
-/* 
+/*
 get vote cast result and total in single api
 db.getCollection('votecasts').aggregate([
 {$facet:{
@@ -100,7 +102,52 @@ db.getCollection('votecasts').aggregate([
         }
     }
     ])
-	
-*/
 
-func GetVotes(filters VoteCast_Filters){}
+*/
+func GetVotes(page int64, limit int64, filters VoteCast_Filters) (*VotesResult, error) {
+	var records []*VotesResult
+
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName2)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"chainId": filters.ChainId}
+
+	if filters.ProposalId > 0 {
+		query["proposalId"] = filters.ProposalId
+	}
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$facet": bson.M{
+			"total": []bson.M{{"$count": "total"}},
+			"records": []bson.M{
+				{"$match": query},
+				{"$skip": (page - 1) * limit},
+				{"$limit": limit},
+				{"$sort": bson.M{"blockNumber": -1}},
+			},
+		}},
+		{"$project": bson.M{
+			"total": bson.M{"$cond": bson.M{
+				"if": bson.M{"$gt": bson.A{bson.M{"$size": "$total"}, 0}}, "then": bson.M{"$first": "$total.total"}, "else": 0}}, "records": 1,
+		}},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		return records[0], err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+	if err != nil {
+		return records[0], err
+	}
+
+	return records[0], nil
+}

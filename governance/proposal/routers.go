@@ -15,8 +15,8 @@ func ProposalsRegister(router *gin.RouterGroup) {
 	router.GET("", ProposalList)
 	router.GET("/total", ProposalTotal)
 	router.GET("/:id", ProposalRetrieve)
-	router.GET("/votecast/", VoteCast)
-	router.GET("/getVote/", VoteCast)
+	router.GET("/votecast", VoteCast)
+	router.GET("/getvotes", ProposalVotes)
 
 	router.POST("", ProposalSave)
 	router.Use(common.AuthMiddleware(true))
@@ -36,8 +36,8 @@ func ProposalTotal(c *gin.Context) {
 	}
 	// filtering
 	filters := Filters{
-		Status: status,
-		Chain_Id:   chain_id,
+		Status:   status,
+		Chain_Id: chain_id,
 	}
 
 	num := GetTotal(filters)
@@ -71,8 +71,8 @@ func ProposalList(c *gin.Context) {
 		chain_id = 4 //rinkeby
 	}
 	filters := Filters{
-		Status: status,
-		Chain_Id:   chain_id,
+		Status:   status,
+		Chain_Id: chain_id,
 	}
 	//sorting
 	sort_by := c.Query("sort_by")
@@ -145,7 +145,7 @@ func VoteCast(c *gin.Context) {
 		return
 	}
 	support := true
-	if support_query == "true"  {
+	if support_query == "true" {
 		support = true
 	} else {
 		support = false
@@ -169,4 +169,46 @@ func VoteCast(c *gin.Context) {
 	num := GetVoteCastTotal(filters)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
+}
+
+/*
+function to votes from proposal and chainId
+*/
+func ProposalVotes(c *gin.Context) {
+	page, err := strconv.ParseInt(c.Query("page"), 10, 64)
+	if err != nil {
+		page = 1
+	}
+	if page <= 0 {
+		page = 1
+	}
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
+	if err != nil {
+		limit = 10
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	proposalId, err := strconv.ParseInt(c.Query("proposalId"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Proposal ID is required", "success": false})
+		return
+	}
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = 4 //rinkeby
+	}
+	// filtering
+	filters := VoteCast_Filters{
+		ProposalId: proposalId,
+		ChainId:    chain_id,
+	}
+
+	result, err := GetVotes(page, limit, filters)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Proposal ID is required", "success": false})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": result})
 }

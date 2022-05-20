@@ -1,6 +1,6 @@
 import BaseModel from "../../model/base.model";
 import masterChefHelper from "./masterChef.helper";
-import farms from "../../model/schema/farms";
+import Farm from "../../model/schema/farms";
 
 class farmModel extends BaseModel {
   constructor() {
@@ -11,11 +11,12 @@ class farmModel extends BaseModel {
    */
   public async getFarmsValue() {
     try {
-      const farmLength: any = await farms.countDocuments({ status: 'active' });
+      const farmLength: any = await Farm.countDocuments({ status: 'active' });
       let arr: any = [];
       if (farmLength > 0) {
         for (let i = 0; i < farmLength; i += 20) {
-          const farmData: any = await farms.find({ status: 'active' }).skip(i).limit(20);
+          const farmData: any = await Farm.find({ status: 'active' }).skip(i).limit(20);
+
           for (let it of farmData) {
             arr = [...arr, this.getFarm(it)];
           }
@@ -37,8 +38,8 @@ class farmModel extends BaseModel {
    */
   private async getFarm(it: any): Promise<void> {
     try {
-      const { masterchef, deposit_token, token_type, address, chain_id }: any = it;
-      const calApr: any = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, chain_id);
+      const { chain_id, pid, masterchef, deposit_token, token_type, address }: any = it;
+      const calApr: any = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, chain_id, pid);
       const calApy: any = await masterChefHelper.calculateAPY(calApr);
       const calTvl: any = await masterChefHelper.calculateTVLValue(deposit_token, address, token_type, chain_id);
       it.daily_apr = calApr

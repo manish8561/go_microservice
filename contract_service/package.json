@@ -13,7 +13,8 @@
     "watch": "nodemon --inspect -e ts -w ./src -x npm run watch:serve",
     "watch:serve": "NODE_ENV=dev ts-node -r ./src/server.ts",
     "dev:debug": "nodemon --inspect ./src/server.ts",
-    "local": "NODE_ENV=local ts-node ./src/server.ts"
+    "local": "NODE_ENV=local ts-node ./src/server.ts",
+    "lint": "eslint src/**/*.ts"
   },
   "repository": {
     "type": "git",
@@ -40,7 +41,6 @@
     "crypto-js": "^4.0.0",
     "dotenv": "^8.2.0",
     "ejs": "^3.1.8",
-    "eslint": "^8.15.0",
     "express": "^4.18.1",
     "express-fileupload": "^1.2.0",
     "helmet": "^3.23.3",
@@ -77,9 +77,12 @@
     "@types/request-promise": "^4.1.47",
     "@types/swagger-ui-express": "^4.1.2",
     "@types/uniqid": "^5.3.0",
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint": "^8.15.0",
     "nodemon": "^2.0.16",
     "swagger-ui-express": "^4.4.0",
     "ts-node": "^8.10.2",
-    "typescript": "^3.9.9"
+    "typescript": "^3.9.10"
   }
 }

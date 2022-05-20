@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-class farmsSchema extends Schema {
+class FarmSchema extends Schema {
     public objectSchema: any;
 
     constructor() {
@@ -11,7 +11,7 @@ class farmsSchema extends Schema {
         this.objectSchema = new Schema({
             _created: { type: Date },
             _modified: { type: Date },
-            chain_Id: { type: Number },
+            chain_id: { type: Number },
             transaction_hash: { type: String },
             pid: { type: Number },
             address: { type: String },
@@ -48,4 +48,4 @@ class farmsSchema extends Schema {
     }
 }
 
-export default mongoose.model('farms', (new farmsSchema()).objectSchema);
+export default mongoose.model('farms', (new FarmSchema()).objectSchema);

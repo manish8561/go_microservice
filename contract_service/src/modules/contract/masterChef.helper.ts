@@ -46,7 +46,7 @@ class MasterChef {
       } else {
         ABI = StrategyToken;
       }
-      const contract: any = await Helpers.Web3Helper.callPairContract(strategyAddress, chainId);
+      const contract: any = await Helpers.Web3Helper.callContract(chainId, ABI, strategyAddress);
       let tvl: any = await contract.methods.totalDeposits().call();
       const decimalVal: any = await contract.methods.decimals().call();
       const dollerPrice: any = await this.calPrice2(deposit_token, chainId);
@@ -56,6 +56,18 @@ class MasterChef {
       throw err;
     }
   }
+  public async getTokenPriceUSD(token: string): Promise<number> {
+    try {
+      const resp: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=${token}`);
+      if (resp.status = 200) {
+        return resp.data.data.price
+      }
+      return 0;
+    } catch (error) {
+      console.log(error, 'get price error')
+      return 0;
+    }
+  }
   /**
    * calculate APR value
    * @param  {string} masterChefAddress
@@ -63,35 +75,38 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number): Promise<string> {
+  public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number, pid: number): Promise<string> {
     try {
       let ACPrice = 0;
-      try {
-        const ACToken: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=AC`);
-        if (ACToken.status = 200) { ACPrice = ACToken.data.data.price }
-      } catch (error) {
-        console.log(error, 'get price error')
-      }
+      ACPrice = await this.getTokenPriceUSD('AC');
 
-      const totalAllcationPoint: any = await this.totalAllocationPoint(masterChefAddress, chainId);
-      const allocationPoint: any = await this.allocationPoint(1, masterChefAddress, chainId);
-      const acPerBlock: any = await this.acPerBlock(masterChefAddress, chainId);
+      const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
+      const totalAllcationPoint: any = await masterchefContract.methods.totalAllocPoint().call();
+
+      const poolInfo: any = await await masterchefContract.methods.poolInfo(pid).call();
+
+      const acPerBlock: any = await masterchefContract.methods.cakePerBlock().call();
+
       const liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId)
       // console.log({ACPrice, totalAllcationPoint, allocationPoint, acPerBlock, liquidity});
       if (liquidity === 0) {
         return '0';
       }
       const blockMined = network[chainId].blockMined;
-
       //since it is in cake value
-      const accCakePerShare = allocationPoint.accCakePerShare / (10 ** 18);
+      const accCakePerShare = poolInfo.accCakePerShare / (10 ** 18);
       const apr: any = ((accCakePerShare / totalAllcationPoint) * ((acPerBlock / 10 ** 18) * blockMined * 100 * ACPrice)) / liquidity;
       return apr.toFixed(4);
     } catch (err) {
       throw err;
     }
   }
-
+  /**
+   * @param  {any} tokenAddress
+   * @param  {any} contractAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async handleLiquidity(tokenAddress: any, contractAddress: any, chainId: number): Promise<Number> {
     try {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
@@ -105,45 +120,26 @@ class MasterChef {
     }
   }
 
-  public async acPerBlock(contractAddress: any, chainId: number): Promise<string> {
-    try {
-      const contract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, contractAddress);
-      return await contract.methods.cakePerBlock().call();
-    } catch (error) {
-      throw error;
-    }
-  };
-
+  /**
+   * get token deposit
+   * @param  {any} pairAddress
+   * @param  {any} masterChefAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getTokenDeposit(pairAddress: any, masterChefAddress: any, chainId: number): Promise<Number> {
     try {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, TokenABI, pairAddress);
       const decimals = await contract.methods.decimals().call();
       let result = await contract.methods.balanceOf(masterChefAddress).call()
-      result = (Number(result) / 10 ** decimals).toFixed(5);
+      result = (Number(result) / 10 ** decimals);
       return Number(result);
     } catch (error) {
       throw error;
     }
   };
 
-  public async allocationPoint(index: any, contractAddress: any, chainId: number): Promise<string> {
-    try {
-      const contract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, contractAddress);
-      const result = await contract.methods.poolInfo(index).call();
-      return result
-    } catch (error) {
-      throw error;
-    }
-  };
 
-  public async totalAllocationPoint(contractAddress: any, chainId: number): Promise<string> {
-    try {
-      const contract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, contractAddress,);
-      return await contract.methods.totalAllocPoint().call();
-    } catch (error) {
-      throw error;
-    }
-  };
 
   public async getTokenZero(pairAddress: any, chainId: number): Promise<string> {
     try {
@@ -213,20 +209,12 @@ class MasterChef {
       } catch (err) {
         // console.log('not a pair error', err);
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolSingle}`);
-        if (respTokenOne.status === 200) {
-          return respTokenOne.data.data.price
-        }
-        return 0;
+        return await this.getTokenPriceUSD(symbolSingle);
       }
 
       if (tokenZero === '0x0000000000000000000000000000000000000000') {
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolSingle}`);
-        if (respTokenOne.status === 200) {
-          return respTokenOne.data.data.price
-        }
-        return 0;
+        return await this.getTokenPriceUSD(symbolSingle);
       } else {
         const tokenOne: any = await this.getTokenOne(pairAddress, chainId);
         const reserve: any = await this.getReserves(pairAddress, chainId);
@@ -235,20 +223,17 @@ class MasterChef {
         const decimalZero: any = await this.getDecimal(tokenZero, chainId);
         const decimalOne: any = await this.getDecimal(tokenOne, chainId);
         // fetching data from Api for token zero...
-        const respTokenZero = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolZero}`);
-        if (respTokenZero.status === 200) {
-          if (respTokenZero.data.data.symbol === symbolZero) {
-            priceTokenZero = respTokenZero.data.data.price * reserve[0] / 10 ** decimalZero;
-          }
+        const respTokenZero = await this.getTokenPriceUSD(symbolZero);
+        if (respTokenZero) {
+          priceTokenZero = respTokenZero * reserve[0] / 10 ** decimalZero;
         }
         // fetching data from Api for token one...
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolOne}`);
-        if (respTokenOne.status === 200) {
-          if (respTokenOne.data.data.symbol === symbolOne) {
-            priceTokenOne = respTokenOne.data.data.price * reserve[1] / 10 ** decimalOne
-          }
+    
+        const respTokenOne = await this.getTokenPriceUSD(symbolOne);
+        if (respTokenOne) {
+            priceTokenOne = respTokenOne * reserve[1] / 10 ** decimalOne;
         }
-        price = priceTokenZero + priceTokenOne
+        price = priceTokenZero + priceTokenOne;
         return price
       }
     } catch (err) {
@@ -270,39 +255,27 @@ class MasterChef {
       } catch (err) {
         // console.log('not a pair error', err);
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolSingle}`);
-        if (respTokenOne.status === 200) {
-          return respTokenOne.data.data.price
-        }
-        return 0;
+        return await this.getTokenPriceUSD(symbolSingle);
       }
 
       if (tokenZero === '0x0000000000000000000000000000000000000000') {
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolSingle}`);
-        if (respTokenOne.status === 200) {
-          return respTokenOne.data.data.price
-        }
-        return 0;
+        return await this.getTokenPriceUSD(symbolSingle);
       } else {
         const tokenOne: any = await this.getTokenOne(pairAddress, chainId);
         const symbolZero: any = await this.getSymbol(tokenZero, chainId);
         const symbolOne: any = await this.getSymbol(tokenOne, chainId);
         // fetching data from Api for token zero...
-        const respTokenZero = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolZero}`);
-        if (respTokenZero.status === 200) {
-          if (respTokenZero.data.data.symbol === symbolZero) {
-            priceTokenZero = respTokenZero.data.data.price;
-          }
+        const respTokenZero = await this.getTokenPriceUSD(symbolZero);
+        if (respTokenZero) {
+          priceTokenZero = respTokenZero;
         }
         // fetching data from Api for token one...
-        const respTokenOne = await axios(`${process.env.FARM_API_URL}pricefeeds?symbol=${symbolOne}`);
-        if (respTokenOne.status === 200) {
-          if (respTokenOne.data.data.symbol === symbolOne) {
-            priceTokenOne = respTokenOne.data.data.price;
-          }
+        const respTokenOne = await this.getTokenPriceUSD(symbolOne);
+        if (respTokenOne) {
+            priceTokenOne = respTokenOne;
         }
-        price = priceTokenZero + priceTokenOne
+        price = priceTokenZero + priceTokenOne;
         return price
       }
     } catch (err) {

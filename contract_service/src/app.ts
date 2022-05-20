@@ -20,7 +20,9 @@ class App {
     public app: express.Application;
     public port: any;
     private server: http.Server;
-
+    /**
+     * @param  {Controller[]} controllers
+     */
     constructor(controllers: Controller[]) {
         this.app = express();
         this.port = process.env.PORT ? process.env.PORT : 8082;
@@ -32,7 +34,9 @@ class App {
         this.initializeErrorHandling();
 
     }
-
+    /**
+     * listen
+     */
     public listen() {
         this.server.listen(this.port, () => {
             console.log(
@@ -42,7 +46,9 @@ class App {
         });
         return this.server;
     }
-
+    /**
+     * initializeMiddlewares
+     */
     private initializeMiddlewares() {
         this.app.use(express.json());
         this.app.use(express.urlencoded());
@@ -54,7 +60,9 @@ class App {
         // this.useSwagger();
         this.startCron();
     }
-
+    /**
+     * swagger
+     */
     private useSwagger() {
         const enable_swagger = process.env.ENABLE_SWAGGER == 'true' ? true : false;
         if (enable_swagger) {
@@ -63,7 +71,10 @@ class App {
             // this.app.get('/explorer', swaggerUi.setup(swaggerDocument));
         }
     }
-
+    /**
+     * initialize controller
+     * @param  {Controller[]} controllers
+     */
     private initializeControllers(controllers: Controller[]) {
         controllers.forEach(controller => {
             this.app.use("/api/contract_service", controller.router);
@@ -72,9 +83,15 @@ class App {
             return res.status(200).send({ status: "success" });
         });
     }
+    /**
+     * initialize error handling
+     */
     private initializeErrorHandling() {
         this.app.use(errorMiddleware);
     }
+    /**
+     * save logs
+     */
     private saveLogs() {
         console.log('\n inside savelogs ------ ');
         const logDirectory = path.join(__dirname, "log");
@@ -92,9 +109,11 @@ class App {
             this.app.use(morgan("combined", { stream: accessLogStream }));
         }
     }
-
+    /**
+     * start cron job
+     */
     private startCron() {
-        const job = new CronJob('0 */15 * * * *', async () => {
+        const job = new CronJob('0 */30 * * * *', async () => {
             console.log('You will see this message every 1:00 am' + new Date());
             await farmsContact.getFarmsValue();
         }, null, true, 'Europe/London');

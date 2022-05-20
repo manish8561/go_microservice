@@ -70,7 +70,7 @@ class Web3Helper {
     public async callContract(chainId: number, contractAbi: any, contractAddress: string): Promise<string> {
         try {
             const web3Obj = await this.callWeb3(chainId);
-            if (this.contractObj && this.contractAddress === contractAddress.toLowerCase()) {
+            if (this.contractObj && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
                 return this.contractObj;
             }
             this.contractAddress = contractAddress.toLowerCase();

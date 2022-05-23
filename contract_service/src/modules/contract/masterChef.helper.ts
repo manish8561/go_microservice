@@ -23,8 +23,9 @@ class MasterChef {
       //  * @returns {Number} APY as percentage (ie. 6 for APR of 5.82%)
       const interest: any = apr;
       // const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
-      const DAYS_IN_YEAR = 365.25;
-      const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
+      const DAYS_IN_YEAR = 365;
+      // const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
+      const aprToApy =( DAYS_IN_YEAR * apr).toString();
       return aprToApy
     } catch (err) {
       throw err;
@@ -51,7 +52,7 @@ class MasterChef {
       const decimalVal: any = await contract.methods.decimals().call();
       const dollerPrice: any = await this.calPrice2(deposit_token, chainId);
       tvl = (tvl / 10 ** decimalVal) * Number(dollerPrice);
-      return tvl.toFixed(4);
+      return tvl.toFixed(6);
     } catch (err) {
       throw err;
     }

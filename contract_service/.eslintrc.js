@@ -177,13 +177,7 @@ module.exports = {
             2,
             "expression"
         ],
-        "indent": [
-            2,
-            4,
-            {
-                "SwitchCase": 1
-            }
-        ],
+        "indent": [ 2, 4, { "SwitchCase": 1 } ],
         "key-spacing": [
             2,
             {
@@ -235,16 +229,7 @@ module.exports = {
             2,
             "always"
         ],
-        "space-before-function-paren": [
-            2,
-            "never"
-        ],
-        "space-in-parens": [
-            2,
-            "always"
-        ],
         "space-infix-ops": 2,
-        "space-return-throw-case": 2,
         "space-unary-ops": [
             2,
             {

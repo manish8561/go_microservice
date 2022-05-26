@@ -44,7 +44,11 @@ type VotesResult struct {
 }
 
 // init function runs first time
-func init() {}
+func init() {
+	//create index
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"proposalId", 1}, {"chainId", 1}, {"voter", 1}})
+
+}
 
 // Farm list api with page and limit
 func GetVoteCastTotal(filters VoteCast_Filters) float64 {

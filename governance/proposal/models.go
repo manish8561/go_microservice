@@ -52,12 +52,16 @@ type ProposalModel struct {
 //struct for filters
 type Filters struct {
 	// Token_Type string `bson: "token_type", json:"token_type"`
-	Status     string `bson: "source", json:"source"`
-	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
+	Status   string `bson: "source", json:"source"`
+	Chain_Id int64  `bson: "chain_id", json:"chain_id"`
 }
 
 // init function runs first time
-func init() {}
+func init() {
+	//create index
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"proposal_id", 1}, {"chain_id", 1}, {"proposer", 1}})
+
+}
 
 // You could input an ProposalModel which will be saved in database returning with error info
 // 	if err := SaveOne(&proposalModel); err != nil { ... }
@@ -166,9 +170,9 @@ func GetTotal(filters Filters) int64 {
 			t := time.Now()
 			// fmt.Println(t.Unix(),"time")
 			// get unix timestamp
-			query["end_time"] = bson.M{"$gte":t.Unix()}
-			query["start_time"] = bson.M{"$lt":t.Unix()}
-			query["canceled"] = false;
+			query["end_time"] = bson.M{"$gte": t.Unix()}
+			query["start_time"] = bson.M{"$lt": t.Unix()}
+			query["canceled"] = false
 		}
 	}
 
@@ -201,11 +205,11 @@ func GetAll(page int64, limit int64, filters Filters, sort_by string) ([]*Propos
 			t := time.Now()
 			// fmt.Println(t.Unix(),"time")
 			// get unix timestamp
-			query["end_time"] = bson.M{"$gte":t.Unix()}
-			query["start_time"] = bson.M{"$lt":t.Unix()}
-			query["canceled"] = false;
+			query["end_time"] = bson.M{"$gte": t.Unix()}
+			query["start_time"] = bson.M{"$lt": t.Unix()}
+			query["canceled"] = false
 		}
-	}	
+	}
 
 	cursor, err := collection.Find(ctx, query, opts)
 	if err != nil {

@@ -13,6 +13,11 @@ import (
 
 var client *mongo.Client
 
+func init() {
+	//initialize the db
+	InitDB()
+}
+
 // Opening a database and save the reference to `Database` struct.
 func InitDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -40,6 +45,7 @@ func InitDB() {
 	if err != nil {
 		fmt.Println("db err: (Init) ", err)
 	}
+	fmt.Println("Mongodb is connected.")
 	client = c
 }
 
@@ -69,6 +75,7 @@ func GetDB() *mongo.Client {
 
 // common add Index function
 func AddIndex(dbName string, collection string, indexKeys interface{}) error {
+	
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -78,6 +85,7 @@ func AddIndex(dbName string, collection string, indexKeys interface{}) error {
 		Keys: indexKeys,
 	})
 	if err != nil {
+		fmt.Println("error", err)
 		return err
 	}
 	fmt.Println(indexName)

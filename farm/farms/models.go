@@ -64,21 +64,6 @@ type FarmModel struct {
 	Yearly_Swap_Fees   float64            `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
 	Token0             Token              `bson:"token0" json:"token0"`
 	Token1             Token              `bson:"token1" json:"token1"`
-	Gauge_Info         string             `bson:"gauge_info" json:"gauge_info"`
-
-	// "gaugeInfo": {
-	//     "address": "0x5d1E2Ad05A946Ac05f188dAa0BF8c9b010dE356d",
-	//     "tvlStaked": 32410.18832923819,
-	//     "snobDailyAPR": 0.01243831494737943,
-	//     "snobWeeklyAPR": 0.08706820463165602,
-	//     "snobYearlyAPR": 4.539984955793492,
-	//     "fullDailyAPY": 0.12256110767415393,
-	//     "fullWeeklyAPY": 0.8604791091782902,
-	//     "fullYearlyAPY": 53.81597928044311,
-	//     "snobAllocation": 0.0025946792694176986,
-	//     "__typename": "GaugeInfo"
-	// },
-	// PasswordHash string `json:"-"` // to hide filed in json
 }
 
 //struct for filters
@@ -91,7 +76,8 @@ type Filters struct {
 
 // init function runs first time
 func init() {
-	// common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"deposit_token", "text"}, {"name", "text"}})
+	//creating the index in the collection
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"status", 1}, {"chain_id", 1}, {"name", "text"}, {"tvl_staked", 1}, {"token_type", 1}})
 }
 
 // You could input an FarmModel which will be saved in database returning with error info
@@ -485,6 +471,7 @@ func GetTvl() int {
 	defer cancel()
 
 	pipeline := []bson.M{
+		{"$match": bson.M{"status": "active"}},
 		{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": "$tvl_staked"}}},
 	}
 

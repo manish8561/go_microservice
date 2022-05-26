@@ -16,6 +16,12 @@ import (
 
 var client *mongo.Client
 
+//initialize function
+func init(){
+	// call db init function
+	InitDB()
+}
+
 // Opening a database and save the reference to `Database` struct.
 func InitDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -82,6 +88,25 @@ type UserModel struct {
 	Role      string
 	// Image              *string
 	PasswordHash string `json:"-"` // to hide filed in json
+}
+
+// common add Index function
+func AddIndex(dbName string, collection string, indexKeys interface{}) error {
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := GetDB() // get clients of mongodb connection
+	serviceCollection := db.Database(dbName).Collection(collection)
+	indexName, err := serviceCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: indexKeys,
+	})
+	if err != nil {
+		fmt.Println("error", err)
+		return err
+	}
+	fmt.Println(indexName)
+	return nil
 }
 
 // You could input string which will be saved in database returning with error info

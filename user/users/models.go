@@ -31,11 +31,16 @@ type UserModel struct {
 	Firstname string
 	Lastname  string
 	Status    string
-	Username  string
 	Email     string
 	Role      string
 	// Image              *string
 	PasswordHash string `json:"-"` // to hide filed in json
+}
+
+// initialize function
+func init() {
+	//create index
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.M{"email": "text"})
 }
 
 // A hack way to save ManyToMany relationship,
@@ -182,5 +187,3 @@ func GetProfile(ID string) (UserModel, error) {
 // 	}).Delete(FollowModel{}).Error
 // 	return err
 // }
-
-

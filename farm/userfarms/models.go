@@ -46,7 +46,10 @@ type Filters struct {
 }
 
 // init function runs first time
-func init() {}
+func init() {
+	//create index
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"user", 1}, {"chain_id", 1}})
+}
 
 // You could input an UserFarmsModel which will be saved in database returning with error info
 // 	if err := SaveOne(&stakeModel); err != nil { ... }

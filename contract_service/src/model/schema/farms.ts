@@ -41,10 +41,9 @@ class FarmSchema extends Schema {
             // token1: { type: Object },
             token0: { type: Object },
             token1: { type: Object },
-            gauge_info: { type: String }
         }, { timestamps: false, strict: false });
 
-        this.objectSchema.index({ address: 1, status: 1, chain_id: 1, name: 1 });
+        this.objectSchema.index({ address: 1, status: 1, chain_id: 1, name: "text", tvl_staked: 1, token_type:1 });
     }
 }
 

@@ -13,6 +13,12 @@ import (
 
 var client *mongo.Client
 
+//initial function
+func init() {
+	//connecting db
+	InitDB()
+}
+
 // Opening a database and save the reference to `Database` struct.
 func InitDB() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -36,7 +42,8 @@ func InitDB() {
 	}
 	// connect
 	c, err := mongo.Connect(ctx, clientOpts)
-
+	fmt.Println("Mongodb connect successfully.")
+	
 	if err != nil {
 		fmt.Println("db err: (Init) ", err)
 	}

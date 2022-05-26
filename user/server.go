@@ -30,17 +30,11 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
+//server initial function
+// func init(){}
+
 // main func server
 func main() {
-	// initalize variable from config
-	common.InitVariables()
-	// call db init function
-	common.InitDB()
-	// defer conn.Session.Close()
-
-	//creating grpc server function
-	common.Call_GRPC_Server()
-
 	//create server
 	r := gin.Default()
 	r.Use(CORSMiddleware())
@@ -89,5 +83,5 @@ func main() {
 	//}).First(&userAA)
 	//fmt.Println(userAA)
 	// r.Run() // listen and serve on 0.0.0.0:8080
-	r.Run()	
+	r.Run()
 }

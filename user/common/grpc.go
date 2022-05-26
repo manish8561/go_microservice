@@ -15,6 +15,11 @@ type Server struct {
 	pb.UnimplementedGreeterServer
 }
 
+// initialize function
+func init() {
+	Call_GRPC_Server()
+}
+
 // SayHello implements helloworld.GreeterServer(grpc)
 func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	log.Printf("Received Handshake: %v", in.GetName())

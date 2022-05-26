@@ -32,20 +32,11 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-// init function in every file
-func init() {
-	// initalize variable from config
-	common.InitVariables()
-
-	//init db function
-	common.InitDB()
-}
+// init function for whole server
+// func init() {}
 
 // main function
 func main() {
-	//calling grpc common server
-	common.Call_GRPC_Server()
-
 	//create server
 	r := gin.Default()
 	r.Use(CORSMiddleware())

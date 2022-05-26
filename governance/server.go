@@ -30,13 +30,7 @@ func CORSMiddleware() gin.HandlerFunc {
 }
 
 // init function in every file
-func init() {
-	// initalize variable from config
-	common.InitVariables()
-
-	//init db function
-	common.InitDB()
-}
+// func init() {}
 
 // main function
 func main() {

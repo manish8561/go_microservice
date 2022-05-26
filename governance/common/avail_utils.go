@@ -23,10 +23,16 @@ import (
 	"net/http"
 	"strings"
 
-	pb "github.com/autocompound/docker_backend/farm/helloworld"
+	pb "github.com/autocompound/docker_backend/governance/helloworld"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+//initial function
+func init() {
+	//initialize variables
+	InitVariables()
+}
 
 // A helper function to generate random string
 func RandString(n int) string {
@@ -188,7 +194,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 					c.AbortWithError(http.StatusUnauthorized, errors.New("No user found!"))
 					return
 				}
-				// response from user service 
+				// response from user service
 
 				// fmt.Println(my_user_id, claims["id"], user, "in the middleware")
 				UpdateContextUserModel(c, my_user_id, user)

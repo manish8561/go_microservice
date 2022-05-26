@@ -21,6 +21,7 @@ func Call_GRPC_Server() {
 		log.Fatalf("end point not found to connect", endpoint)
 	}
 	conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
+	log.Println("GRPC connected server.")
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

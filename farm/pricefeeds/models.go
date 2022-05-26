@@ -34,6 +34,10 @@ type PriceFeedModel struct {
 
 // init func in go file
 func init() {
+	// create index
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"coingeeko_id", 1}, {"symbol", 1}})
+
+	//start the cron
 	StartCall()
 }
 

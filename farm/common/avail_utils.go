@@ -2,7 +2,10 @@
 package common
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -19,10 +22,16 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	// "github.com/autocompound/docker_backend/user/users"
+
+	pb "github.com/autocompound/docker_backend/farm/helloworld"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+//init function
+func init (){
+	//initial variables
+	InitVariables()
+}
 
 // A helper function to generate random string
 func RandString(n int) string {
@@ -56,13 +65,12 @@ func InitVariables() {
 }
 
 // A Util function to generate jwt_token which can be used in the request header
-func GenToken(id string, role string) string {
+func GenToken(id string) string {
 	jwt_token := jwt.New(jwt.GetSigningMethod("HS256"))
 	// Set some claims
 	jwt_token.Claims = jwt.MapClaims{
-		"id":   id,
-		"exp":  time.Now().Add(time.Hour * 24).Unix(),
-		"role": role,
+		"id":  id,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	}
 	// Sign and get the complete encoded token as a string
 	token, _ := jwt_token.SignedString([]byte(NBSecretPassword))
@@ -135,7 +143,7 @@ var MyAuth2Extractor = &request.MultiExtractor{
 }
 
 // A helper to write user_id and user_model to the context
-func UpdateContextUserModel(c *gin.Context, my_user_id string, user *UserModel) {
+func UpdateContextUserModel(c *gin.Context, my_user_id string, user *pb.UserReply) {
 	if my_user_id != "" {
 		c.Set("my_user_id", my_user_id)
 		c.Set("user", user)
@@ -172,22 +180,23 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 				}
 				my_user_id := claims["id"].(string)
 
-				user, err := GetUserProfile(my_user_id)
+				//requesting grpc request for user details with id
+				grpc_server_conn := Get_GRPC_Conn()
+				cc := pb.NewGreeterClient(grpc_server_conn)
+				// Contact the server and print out its response.
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				user, err := cc.GetUserDetails(ctx, &pb.UserRequest{Id: my_user_id})
 				if err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					// log.Fatalf("could not greet: %v", err)
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "No user found!"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("No user found!"))
 					return
 				}
-				fmt.Println(my_user_id, claims["id"])
-				fmt.Println("user in common middleware", user)
+				// response from user service 
 
-				if err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
-					return
-				}
-
-				UpdateContextUserModel(c, my_user_id, &user)
+				// fmt.Println(my_user_id, claims["id"], user, "in the middleware")
+				UpdateContextUserModel(c, my_user_id, user)
 			}
 		} else {
 			c.Next()
@@ -196,3 +205,35 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 }
 
 // ------- common middleware code end--------------------
+
+//---------------- get price start here ----------------------
+// 3rd party function for price coingeeko
+func GetPrice(Id string) float64 {
+	// struct to decode the code
+	type d struct {
+		Usd float64 `json:"usd"`
+	}
+	type Info map[string]d
+
+	str := "https://api.coingecko.com/api/v3/simple/price?ids=" + Id + "&vs_currencies=usd"
+	response, err := http.Get(str)
+
+	if err != nil {
+		fmt.Print(err.Error())
+		// os.Exit(1)
+		return 0
+	}
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+	var responseObject Info
+	json.Unmarshal(responseData, &responseObject)
+	// fmt.Println(string(responseData), responseObject["moon-rabbit"].Usd)
+
+	return responseObject[Id].Usd
+}
+
+//---------------get price end here ----------------

@@ -25,7 +25,7 @@ class MasterChef {
       // const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
       const DAYS_IN_YEAR = 365;
       // const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
-      const aprToApy =( DAYS_IN_YEAR * apr).toString();
+      const aprToApy = (DAYS_IN_YEAR * apr).toString();
       return aprToApy
     } catch (err) {
       throw err;
@@ -122,6 +122,25 @@ class MasterChef {
   }
 
   /**
+   * Autocompound Per Block
+   * @param  {string} actoken
+   * @param  {string} strategy
+   * @param  {number} chainId
+   * @returns Promise
+   */
+  public async getTokenPerBlock(actoken: string, strategy: string, chainId: number): Promise<Number> {
+    try {
+      let contract: any = await Helpers.Web3Helper.callContract(chainId, StrategyPair, strategy);
+      let tokenPerBlock = await contract.methods.autoCompoundTokenPerBlock().call();
+      contract = await Helpers.Web3Helper.callContract(chainId, TokenABI, actoken);
+      const decimals = await contract.methods.decimals().call();
+      const result = Number(tokenPerBlock) / 10 ** decimals;
+      return Number(result);
+    } catch (error) {
+      throw error;
+    }
+  };
+  /**
    * get token deposit
    * @param  {any} pairAddress
    * @param  {any} masterChefAddress
@@ -140,8 +159,11 @@ class MasterChef {
     }
   };
 
-
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getTokenZero(pairAddress: any, chainId: number): Promise<string> {
     try {
       const contract: any = await Helpers.Web3Helper.callPairContract(pairAddress, chainId);
@@ -150,7 +172,11 @@ class MasterChef {
       throw error;
     }
   };
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getTokenOne(pairAddress: any, chainId: number): Promise<string> {
     try {
       const contract: any = await Helpers.Web3Helper.callPairContract(pairAddress, chainId);
@@ -159,7 +185,11 @@ class MasterChef {
       throw error;
     }
   };
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getReserves(pairAddress: any, chainId: number): Promise<string> {
     try {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, pairContractABI, pairAddress);
@@ -168,7 +198,11 @@ class MasterChef {
       throw error;
     }
   };
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getDecimals(pairAddress: any, chainId: number): Promise<string> {
     try {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, TokenABI, pairAddress);
@@ -177,7 +211,11 @@ class MasterChef {
       throw error;
     }
   };
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getSymbol(pairAddress: any, chainId: number): Promise<string> {
     try {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, TokenABI, pairAddress);
@@ -186,7 +224,11 @@ class MasterChef {
       throw error;
     }
   };
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async getDecimal(pairAddress: any, chainId: number): Promise<string> {
     try {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, TokenABI, pairAddress);
@@ -195,7 +237,12 @@ class MasterChef {
       throw error;
     }
   };
-
+  /**
+   * call price decenteralize way
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async calPrice(pairAddress: any, chainId: number): Promise<Number> {
     try {
       let price = 0
@@ -229,10 +276,10 @@ class MasterChef {
           priceTokenZero = respTokenZero * reserve[0] / 10 ** decimalZero;
         }
         // fetching data from Api for token one...
-    
+
         const respTokenOne = await this.getTokenPriceUSD(symbolOne);
         if (respTokenOne) {
-            priceTokenOne = respTokenOne * reserve[1] / 10 ** decimalOne;
+          priceTokenOne = respTokenOne * reserve[1] / 10 ** decimalOne;
         }
         price = priceTokenZero + priceTokenOne;
         return price
@@ -241,7 +288,11 @@ class MasterChef {
       throw err;
     }
   }
-
+  /**
+   * @param  {any} pairAddress
+   * @param  {number} chainId
+   * @returns Promise
+   */
   public async calPrice2(pairAddress: any, chainId: number): Promise<Number> {
     try {
       let price = 0
@@ -274,7 +325,7 @@ class MasterChef {
         // fetching data from Api for token one...
         const respTokenOne = await this.getTokenPriceUSD(symbolOne);
         if (respTokenOne) {
-            priceTokenOne = respTokenOne;
+          priceTokenOne = respTokenOne;
         }
         price = priceTokenZero + priceTokenOne;
         return price

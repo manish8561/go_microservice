@@ -52,7 +52,7 @@ type FarmModel struct {
 	AC_Token           string             `bson:"ac_token" json:"ac_token"` //autocompound token
 	Reward             string             `bson:"reward" json:"reward"`     //cake address
 	Bonus_Multiplier   int                `bson:"bonus_multiplier" json:"bonus_multiplier"`
-	Token_Per_Block    int                `bson:"token_per_block" json:"token_per_block"`
+	Token_Per_Block    float64                `bson:"token_per_block" json:"token_per_block"`
 	Source             string             `bson:"source" json:"source"`
 	Source_Link        string             `bson:"source_link" json:"source_link"`
 	Autocompound_Check bool               `bson:"autocompound_check" json:"autocompound_check"`

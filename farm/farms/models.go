@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,7 +78,7 @@ type Filters struct {
 // init function runs first time
 func init() {
 	//creating the index in the collection
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"status", 1}, {"chain_id", 1}, {"name", "text"}, {"tvl_staked", 1}, {"token_type", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"status", 1}, {"chain_id", 1}, {"name", "text"}, {"tvl_staked", 1}, {"token_per_block", 1}, {"token_type", 1}})
 }
 
 // You could input an FarmModel which will be saved in database returning with error info
@@ -459,12 +460,22 @@ func GetSource() ([]*Result, error) {
 }
 
 // get total tvl from farms
-func GetTvl() int {
+func GetTvl() float64 {
 	client := common.GetDB()
+	clientRedis := common.GetRedisDB()
 
-	var results []struct {
-		Total int `bson:"total" json:"total"`
+	//get data from redis
+	val, err := clientRedis.Get("totalTvl").Result()
+	if s, err := strconv.ParseFloat(val,  64); err == nil {
+		return s
 	}
+	if err != nil {
+		fmt.Println(err, "get data from redis")
+	}
+	type TVL struct {
+		Total float64 `bson:"total" json:"total"`
+	}
+	var results []TVL
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -483,8 +494,69 @@ func GetTvl() int {
 	err = cursor.All(ctx, &results)
 
 	if err := cursor.Err(); err != nil {
-		fmt.Println(cursor, "manish")
+		fmt.Println(cursor)
 		return 0
 	}
+	if len(results) == 0 {
+		return 0
+	}
+	//adding in redis
+	err = clientRedis.Set("totalTvl", results[0].Total, 10*time.Minute).Err()
+	if err != nil {
+		fmt.Println(err, "saving in redis")
+	}
 	return results[0].Total
+}
+
+//get avg autocompound per block
+func GetACPerBlock() float64 {
+	client := common.GetDB()
+	clientRedis := common.GetRedisDB()
+
+	//get data from redis
+	val, err := clientRedis.Get("acPerToken").Result()
+	if s, err := strconv.ParseFloat(val, 64); err == nil {
+		return s
+	}
+	if err != nil {
+		fmt.Println(err, "get data from redis")
+	}
+
+	type Avg struct {
+		Average float64 `bson:"average" json:"average"`
+	}
+	var results []Avg
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{"$match": bson.M{"status": "active"}},
+		{"$group": bson.M{"_id": nil, "average": bson.M{"$avg": "$token_per_block"}}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &results)
+
+	if err := cursor.Err(); err != nil {
+		fmt.Println(cursor)
+		return 0
+	}
+	// checking length of array
+	if len(results) == 0 {
+		return 0
+	}
+
+	//adding in redis
+	err = clientRedis.Set("acPerToken", results[0].Average, 10*time.Minute).Err()
+	if err != nil {
+		fmt.Println(err, "saving in redis")
+	}
+
+	return results[0].Average
 }

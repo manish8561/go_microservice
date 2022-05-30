@@ -22,6 +22,7 @@ func FarmsRegister(router *gin.RouterGroup) {
 	router.GET("", FarmList)
 	router.GET("/total", FarmTotal)
 	router.GET("/tvl", FarmTvl)
+	router.GET("/acperblock", FarmACPerBlock)
 	router.GET("/platform", FarmSource)
 	router.GET("/:id", FarmRetrieve)
 	router.Use(common.AuthMiddleware(true))
@@ -126,6 +127,13 @@ function to tvl from farm
 func FarmTvl(c *gin.Context) {
 	num := GetTvl()
 	c.JSON(http.StatusOK, gin.H{"success": true, "total": num})
+}
+/*
+function to get AC Token Per Block
+*/
+func FarmACPerBlock(c *gin.Context) {
+	num := GetACPerBlock()
+	c.JSON(http.StatusOK, gin.H{"success": true, "acperblock": num})
 }
 
 /*

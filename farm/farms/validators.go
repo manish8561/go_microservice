@@ -29,7 +29,7 @@ type FarmModelValidator struct {
 	AC_Token         string `form:"ac_token" json:"ac_token" binding:"required,alphanum,max=255"`
 	Token0           Token  `form:"token0" json:"token0" binding:"required"`
 	Token1           Token  `form:"token1" json:"token1" `
-	Token_Per_Block  int    `form:"token_per_block" json:"token_per_block" binding:"required"`
+	Token_Per_Block  float64    `form:"token_per_block" json:"token_per_block" binding:"required"`
 	Bonus_Multiplier int    `form:"bonus_multiplier" json:"bonus_multiplier" binding:"required"`
 	Source           string `form:"source" json:"source" binding:"required,max=255"`
 	Source_Link      string `form:"source_link" json:"source_link" binding:"required,max=255"`

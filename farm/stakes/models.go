@@ -23,13 +23,14 @@ const CollectionName = "stakes"
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type StakeModel struct {
-	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created     time.Time          `bson:"_created" json:"_created"`
-	Modified    time.Time          `bson:"_modified" json:"_modified"`
-	Chain_Id    int                `bson:"chain_id" json:"chain_id"`
-	Address     string             `bson:"address" json:"address"` //address field of strategy
-	Status      string             `bson:"status" json:"status"`
-	BlockNumber int                `bson:"blockNumber" json:"blockNumber"`
+	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created         time.Time          `bson:"_created" json:"_created"`
+	Modified        time.Time          `bson:"_modified" json:"_modified"`
+	Chain_Id        int                `bson:"chain_id" json:"chain_id"`
+	Address         string             `bson:"address" json:"address"` //address field of strategy
+	Status          string             `bson:"status" json:"status"`
+	BlockNumber     int64              `bson:"blockNumber" json:"blockNumber"`
+	LastBlockNumber int64              `bson:"lastBlockNumber" json:"lastBlockNumber"`
 }
 
 //struct for filters
@@ -77,9 +78,7 @@ func UpdateOne(data *StakeModel) (*mongo.UpdateResult, error) {
 	defer cancel()
 
 	res, err := primitive.ObjectIDFromHex("")
-	// if err != nil {
-	// 	return nil, err
-	// }
+
 	if data.ID == res {
 		return nil, errors.New("Object ID is required field")
 	}
@@ -100,6 +99,27 @@ func UpdateOne(data *StakeModel) (*mongo.UpdateResult, error) {
 	}
 	update = bson.M{"$set": update}
 	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// You could input an StakeModel which will be saved in database returning with error info
+// UpdateLastBlockNumberOne the stake record
+func UpdateLastBlockNumberOne(ID primitive.ObjectID, lastBlockNumber int64) (*mongo.UpdateResult, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	update := bson.M{"lastBlockNumber": lastBlockNumber}
+	update = bson.M{"$set": update}
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": ID}, update, opts)
 	if err != nil {
 		return result, err
 	}
@@ -183,6 +203,35 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	if status != "" {
 		query["status"] = status
 	}
+
+	cursor, err := collection.Find(ctx, query, opts)
+	if err != nil {
+		return records, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return records, err
+}
+
+// get all active staking address
+func GetAllActive() ([]*StakeModel, error) {
+	client := common.GetDB()
+	var records []*StakeModel
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	opts := options.Find()
+
+	query := bson.M{"status": "active"}
 
 	cursor, err := collection.Find(ctx, query, opts)
 	if err != nil {

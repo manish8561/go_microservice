@@ -1,6 +1,7 @@
 package stakes
 
 import (
+	"strings"
 	"time"
 
 	"github.com/autocompound/docker_backend/farm/common"
@@ -16,7 +17,7 @@ type StakeModelValidator struct {
 	ID          string `form:"_id" json:"_id"`
 	Address     string `form:"address" json:"address" binding:"required"`
 	Chain_Id    int    `form:"chain_id" json:"chain_id" binding:"required"`
-	BlockNumber int    `form:"blockNumber" json:"blockNumber" binding:"required"`
+	BlockNumber int64   `form:"blockNumber" json:"blockNumber" binding:"required"`
 
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	stakeModel StakeModel `json:"-"`
@@ -30,9 +31,10 @@ func (self *StakeModelValidator) Bind(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	self.stakeModel.Address = self.Address
+	self.stakeModel.Address = strings.ToLower(self.Address)
 	self.stakeModel.Chain_Id = self.Chain_Id
 	self.stakeModel.BlockNumber = self.BlockNumber
+	self.stakeModel.LastBlockNumber = self.BlockNumber
 
 	self.stakeModel.Status = "active"
 	self.stakeModel.Created = time.Now()

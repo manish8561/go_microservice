@@ -19,7 +19,6 @@ import (
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	// "github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -52,7 +51,7 @@ func init() {
 
 	//start the cron
 	// StartCall()
-	GetContract(4)
+	// GetContract(4)
 }
 
 // cron func call
@@ -254,13 +253,6 @@ func GetContract(chain_id int) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	//abi of the contracts
-	contractAbi, err := abi.JSON(strings.NewReader(string(TokensABI)))
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("abi", contractAbi)
 
 	logTransferSig := []byte("Transfer(address,address,uint256)")
 	// LogApprovalSig := []byte("Approval(address,address,uint256)")

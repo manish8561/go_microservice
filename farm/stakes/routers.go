@@ -1,7 +1,6 @@
 package stakes
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,6 +18,7 @@ func ApisRegister(router *gin.RouterGroup) {
 	router.GET("/total", StakeTotal)
 	router.GET("/:id", StakeRetrieve)
 	router.GET("/chainId/:chain_id", StakeFromChainId)
+	router.GET("/stakingData", StakeData)
 
 	// enable authentication for below routes
 	router.Use(common.AuthMiddleware(true))
@@ -97,12 +97,12 @@ func StakeRetrieve(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": record, "success": true})
 }
+
 /*
 function to retrive single record using get api
 */
 func StakeFromChainId(c *gin.Context) {
 	chain_id, err := strconv.ParseInt(c.Param("chain_id"), 10, 64)
-	fmt.Printf("chainid", chain_id)
 	if err != nil {
 		chain_id = 4 //rinkeby
 	}
@@ -113,6 +113,7 @@ func StakeFromChainId(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": record, "success": true})
 }
+
 /*
 function to save record in db
 */
@@ -161,4 +162,69 @@ func StakeDelete(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Record deleted successfully", "success": true})
 		return
 	}
+}
+
+/*
+function to retrive record list Event using get api
+*/
+func StakeData(c *gin.Context) {
+	//convert string to number
+	page, err := strconv.ParseInt(c.Query("page"), 10, 64)
+	if err != nil {
+		page = 1
+	}
+	if page <= 0 {
+		page = 1
+	}
+	limit, err := strconv.ParseInt(c.Query("limit"), 10, 64)
+	if err != nil {
+		limit = 10
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	// filtering
+	account := c.Query("account")
+	staking := c.Query("staking")
+	eventType := c.Query("eventType")
+	if account == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Account is field required", "success": false})
+		return
+	}
+	if staking == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Staking is field required", "success": false})
+		return
+	}
+	if eventType == "" {
+		eventType = "stake"
+	}
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = 4 //rinkeby
+	}
+	
+	filters := EventFilters{
+		ChainId:   chain_id,
+		Account:   account,
+		Staking:   staking,
+		EventType: eventType,
+	}
+
+	if eventType == "stake" {
+		records, err := GetAllStakeEvents(page, limit, filters)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
+	} else {
+		records, err := GetAllUnstakeEvents(page, limit, filters)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
+
+	}
+	
 }

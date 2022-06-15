@@ -10,7 +10,7 @@ import (
 
 // controller file with routes
 // register api in this function
-func UserFarmsRegister(router *gin.RouterGroup) {
+func ApisRegister(router *gin.RouterGroup) {
 	router.GET("", UserFarmList)
 	router.GET("/total", UserFarmTotal)
 	router.GET("/:id", UserFarmRetrieve)

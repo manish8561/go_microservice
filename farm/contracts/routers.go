@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ContractsRegister(router *gin.RouterGroup) {
+func ApisRegister(router *gin.RouterGroup) {
 	// router.GET("/", FarmList)
 	router.GET("/", FarmRetrieve)
 	// router.POST("/", FarmSave)

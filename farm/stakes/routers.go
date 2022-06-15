@@ -11,7 +11,7 @@ import (
 
 // controller file with routes
 // register api in this function
-func StakesRegister(router *gin.RouterGroup) {
+func ApisRegister(router *gin.RouterGroup) {
 
 	// Set a lower memory limit for multipart forms (default is 32 MiB)
 	// router.MaxMultipartMemory = 8 << 20  // 8 MiB

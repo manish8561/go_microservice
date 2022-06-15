@@ -11,6 +11,7 @@ import (
 	"github.com/autocompound/docker_backend/farm/pricefeeds"
 	"github.com/autocompound/docker_backend/farm/stakes"
 	"github.com/autocompound/docker_backend/farm/userfarms"
+	"github.com/autocompound/docker_backend/farm/tokens"
 )
 
 // cors common function for * n
@@ -46,11 +47,12 @@ func main() {
 	// v1.Use(farms.AuthMiddleware(false))
 
 	v1.Use(common.AuthMiddleware(false))
-	farms.FarmsRegister(v1.Group("/farm"))
-	stakes.StakesRegister(v1.Group("/stake"))
-	pricefeeds.PriceFeedsRegister(v1.Group("/pricefeeds"))
-	contracts.ContractsRegister(v1.Group("/contract"))
-	userfarms.UserFarmsRegister(v1.Group("/userfarms"))
+	farms.ApisRegister(v1.Group("/farm"))
+	stakes.ApisRegister(v1.Group("/stake"))
+	pricefeeds.ApisRegister(v1.Group("/pricefeeds"))
+	contracts.ApisRegister(v1.Group("/contract"))
+	userfarms.ApisRegister(v1.Group("/userfarms"))
+	tokens.ApisRegister(v1.Group("/tokens"))
 
 	testAuth := r.Group("/api/farm_service/ping")
 

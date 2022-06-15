@@ -23,12 +23,13 @@ const CollectionName = "stakes"
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type StakeModel struct {
-	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created  time.Time          `bson:"_created" json:"_created"`
-	Modified time.Time          `bson:"_modified" json:"_modified"`
-	Chain_Id int                `bson:"chain_id" json:"chain_id"`
-	Address  string             `bson:"address" json:"address"` //address field of strategy
-	Status   string             `bson:"status" json:"status"`
+	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created     time.Time          `bson:"_created" json:"_created"`
+	Modified    time.Time          `bson:"_modified" json:"_modified"`
+	Chain_Id    int                `bson:"chain_id" json:"chain_id"`
+	Address     string             `bson:"address" json:"address"` //address field of strategy
+	Status      string             `bson:"status" json:"status"`
+	BlockNumber int                `bson:"blockNumber" json:"blockNumber"`
 }
 
 //struct for filters

@@ -1,4 +1,4 @@
-package pricefeeds
+package tokens
 
 import (
 	"net/http"
@@ -11,22 +11,21 @@ import (
 // controller file with routes
 // register api in this function
 func ApisRegister(router *gin.RouterGroup) {
-	router.GET("", GetSymbolPrice)
-	router.GET("/update", UpdateSymbolPrice)
+	// router.GET("", GetSymbolPrice)
 
 	//Authorize Routes
 	router.Use(common.AuthMiddleware(true))
 	router.GET("/total", Total)
 	router.GET("/list", List)
 	router.POST("", Add)
-	router.DELETE("/:id", DeletePrice)
+	router.DELETE("/:id", DeleteRecord)
 }
 
 /*
-function to insert price feed
+function to insert record
 */
 func Add(c *gin.Context) {
-	record := &PriceFeedModel{}
+	record := &TokensModel{}
 	if err := common.Bind(c, record); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
 		return
@@ -37,33 +36,6 @@ func Add(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "Insert record successfully", "success": true})
 }
-
-/*
-function to update price in the collection
-*/
-func UpdateSymbolPrice(c *gin.Context) {
-	symbol := c.Query("symbol")
-	val, err := GetTokenPrice(symbol, true)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": val})
-}
-
-/*
-function to retrive price in the collection
-*/
-func GetSymbolPrice(c *gin.Context) {
-	symbol := c.Query("symbol")
-	val, err := GetTokenPrice(symbol, false)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": val})
-}
-
 /*
 function to total price feed counts
 */
@@ -105,12 +77,12 @@ func List(c *gin.Context) {
 }
 
 /*
-function to delete price feed
+function to delete record
 */
-func DeletePrice(c *gin.Context) {
+func DeleteRecord(c *gin.Context) {
 	id := c.Param("id")
 
-	ok, err := DeleteRecord(id)
+	ok, err := DeleteRecordModel(id)
 	if ok {
 		c.JSON(http.StatusOK, gin.H{"success": true})
 		return

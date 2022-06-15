@@ -19,7 +19,7 @@ type FarmModelValidator struct {
 	Chain_Id         int    `form:"chain_id" json:"chain_id" binding:"required"`
 	PID              int    `form:"pid" json:"pid" binding:"required"`
 	Name             string `form:"name" json:"name" binding:"required,max=255"`
-	Token_Type       string `form:"token_type" json:"token_type" binding:"required,max=10"`
+	Token_Type       string `form:"token_type" json:"token_type" binding:"required,max=20"`
 	Deposit_Token    string `from:"deposit_token json:"deposit_token"  binding:"required,alphanum,max=255"`
 	Masterchef       string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
 	Router           string `form:"router" json:"router" binding:"required,alphanum,max=255"`

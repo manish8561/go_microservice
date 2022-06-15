@@ -13,9 +13,10 @@ import (
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
 type StakeModelValidator struct {
-	ID               string `form:"_id" json:"_id"`
-	Address			string `form:"address" json:"address" binding:"required"`
-	Chain_Id         int    `form:"chain_id" json:"chain_id" binding:"required"`
+	ID          string `form:"_id" json:"_id"`
+	Address     string `form:"address" json:"address" binding:"required"`
+	Chain_Id    int    `form:"chain_id" json:"chain_id" binding:"required"`
+	BlockNumber int    `form:"blockNumber" json:"blockNumber" binding:"required"`
 
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	stakeModel StakeModel `json:"-"`
@@ -31,6 +32,7 @@ func (self *StakeModelValidator) Bind(c *gin.Context) error {
 	}
 	self.stakeModel.Address = self.Address
 	self.stakeModel.Chain_Id = self.Chain_Id
+	self.stakeModel.BlockNumber = self.BlockNumber
 
 	self.stakeModel.Status = "active"
 	self.stakeModel.Created = time.Now()

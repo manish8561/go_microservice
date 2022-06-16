@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/autocompound/docker_backend/user/common"
@@ -17,7 +16,6 @@ func UsersRegister(router *gin.RouterGroup) {
 
 	router.Use(common.AuthMiddleware(true))
 	router.POST("/changePassword", ChangePassword)
-
 }
 
 // func UserRegister(router *gin.RouterGroup) {
@@ -137,7 +135,6 @@ func UsersLogin(c *gin.Context) {
 
 //user change password
 func ChangePassword(c *gin.Context) {
-
 	changePasswordValidator := NewChangePasswordValidator()
 	if err := changePasswordValidator.Bind(c); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": common.NewValidatorError(err)})
@@ -147,8 +144,7 @@ func ChangePassword(c *gin.Context) {
 	user, _ := c.Get("user")
 	// convert to common userModel
 	u := (user).(*common.UserModel)
-
-	fmt.Println("compare", u.Email)
+	//get user from db
 	userModel, err := FindOneUser(u.Email)
 
 	if err != nil {

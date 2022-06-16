@@ -14,6 +14,10 @@ import (
 func UsersRegister(router *gin.RouterGroup) {
 	router.POST("", UsersRegistration)
 	router.POST("/login", UsersLogin)
+
+	router.Use(common.AuthMiddleware(true))
+	router.POST("/changePassword", ChangePassword)
+
 }
 
 // func UserRegister(router *gin.RouterGroup) {
@@ -26,6 +30,7 @@ func ProfileRegister(router *gin.RouterGroup) {
 	// router.POST("/:username/follow", ProfileFollow)
 	// router.DELETE("/:username/follow", ProfileUnfollow)
 }
+
 // get user profile from middleware
 func ProfileRetrieve(c *gin.Context) {
 	userModel, _ := c.Get("user")
@@ -104,7 +109,6 @@ func UsersLogin(c *gin.Context) {
 		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid email or password")))
 		return
 	}
-	fmt.Println(userModel)
 	c.JSON(http.StatusOK, gin.H{"token": common.GenToken(userModel.ID.Hex(), userModel.Role)})
 }
 
@@ -130,3 +134,43 @@ func UsersLogin(c *gin.Context) {
 // 	serializer := UserSerializer{c}
 // 	c.JSON(http.StatusOK, gin.H{"user": serializer.Response()})
 // }
+
+//user change password
+func ChangePassword(c *gin.Context) {
+
+	changePasswordValidator := NewChangePasswordValidator()
+	if err := changePasswordValidator.Bind(c); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": common.NewValidatorError(err)})
+		return
+	}
+	// get user object from request
+	user, _ := c.Get("user")
+	// convert to common userModel
+	u := (user).(*common.UserModel)
+
+	fmt.Println("compare", u.Email)
+	userModel, err := FindOneUser(u.Email)
+
+	if err != nil {
+		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid  email or password")))
+		return
+	}
+	//checking old password
+	if userModel.checkPassword(changePasswordValidator.OldPassword) != nil {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "Incorrect Old Password"})
+		return
+	}
+	//checking old password is not equal to new one
+	if userModel.checkPassword(changePasswordValidator.Password) == nil {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "Enter different new password."})
+		return
+	}
+	userModel.setPassword(changePasswordValidator.Password)
+
+	res, err := ChangePasswordOne(&userModel)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"success": true, "data": res})
+}

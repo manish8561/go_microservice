@@ -87,3 +87,25 @@ func NewLoginValidator() LoginValidator {
 	loginValidator := LoginValidator{}
 	return loginValidator
 }
+
+type ChangePasswordValidator struct {
+	OldPassword string    `form:"oldPassword" json:"oldPassword" binding:"required,min=8,max=255"`
+	Password    string    `form:"password" json:"password" binding:"required,min=8,max=255"`
+	userModel   UserModel `json:"-"`
+}
+
+func (self *ChangePasswordValidator) Bind(c *gin.Context) error {
+	err := common.Bind(c, self)
+	if err != nil {
+		return err
+	}
+
+	// self.userModel.PasswordHash = self.Password
+	return nil
+}
+
+// You can put the default value of a Validator here
+func NewChangePasswordValidator() ChangePasswordValidator {
+	changePasswordValidator := ChangePasswordValidator{}
+	return changePasswordValidator
+}

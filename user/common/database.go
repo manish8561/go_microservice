@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
+
 
 )
 
@@ -75,21 +77,6 @@ func InitDB() {
 func GetDB() *mongo.Client {
 	return client
 }
-
-type UserModel struct {
-	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created   time.Time          `bson:"_created" json:"_created"`
-	Modified  time.Time          `bson:"_modified" json:"_modified"`
-	Firstname string
-	Lastname  string
-	Status    string
-	Username  string
-	Email     string
-	Role      string
-	// Image              *string
-	PasswordHash string `json:"-"` // to hide filed in json
-}
-
 // common add Index function
 func AddIndex(dbName string, collection string, indexKeys interface{}) error {
 	
@@ -109,6 +96,28 @@ func AddIndex(dbName string, collection string, indexKeys interface{}) error {
 	return nil
 }
 
+type UserInterface interface {
+	checkPassword() error
+}
+
+type UserModel struct {
+	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created   time.Time          `bson:"_created" json:"_created"`
+	Modified  time.Time          `bson:"_modified" json:"_modified"`
+	Firstname string             `bson:"firstname" json:"firstname"`
+	Lastname  string             `bson:"lastname" json:"lastname"`
+	Status    string             `bson:"status" json:"status"`
+	Email     string             `bson:"email" json:"email"`
+	Role      string             `bson:"role" json:"role"`
+	// Image              *string
+	PasswordHash string `json:"-"` // to hide filed in json
+}
+
+func (u *UserModel) checkPassword(password string) error {
+	bytePassword := []byte(password)
+	byteHashedPassword := []byte(u.PasswordHash)
+	return bcrypt.CompareHashAndPassword(byteHashedPassword, bytePassword)
+}
 // You could input string which will be saved in database returning with error info
 // 	if err := FindOne(&userModel); err != nil { ... }
 func GetUserProfile(ID string) (UserModel, error) {
@@ -127,3 +136,4 @@ func GetUserProfile(ID string) (UserModel, error) {
 	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&person)
 	return *person, err
 }
+

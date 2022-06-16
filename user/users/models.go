@@ -11,7 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	// "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 	// pb "github.com/autocompound/docker_backend/user/helloworld"
@@ -28,11 +29,11 @@ type UserModel struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created   time.Time          `bson:"_created" json:"_created"`
 	Modified  time.Time          `bson:"_modified" json:"_modified"`
-	Firstname string
-	Lastname  string
-	Status    string
-	Email     string
-	Role      string
+	Firstname string             `bson:"firstname" json:"firstname"`
+	Lastname  string             `bson:"lastname" json:"lastname"`
+	Status    string             `bson:"status" json:"status"`
+	Email     string             `bson:"email" json:"email"`
+	Role      string             `bson:"role" json:"role"`
 	// Image              *string
 	PasswordHash string `json:"-"` // to hide filed in json
 }
@@ -187,3 +188,24 @@ func GetProfile(ID string) (UserModel, error) {
 // 	}).Delete(FollowModel{}).Error
 // 	return err
 // }
+//
+func ChangePasswordOne(data *UserModel) (*mongo.UpdateResult, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// options for update
+	opts := options.Update().SetUpsert(false)
+
+	modified := time.Now()
+	update := bson.M{"_modified": modified, "passwordhash": data.PasswordHash}
+	update = bson.M{"$set": update}
+
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

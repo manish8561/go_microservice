@@ -13,8 +13,6 @@ apiEndpoints:
     paths: "/api/farm_service/*"
   contracts:
     paths: "/api/contract_service/*"
-  governance:
-    paths: "/api/governance_service/*"
   events:
     paths: "/api/event_service/*"
 serviceEndpoints:
@@ -26,8 +24,6 @@ serviceEndpoints:
     url: "http://20.10.11.4:3002"
   contracts:
     url: "http://20.10.11.5:3003"
-  governance:
-    url: "http://20.10.11.6:3004"
   events:
     url: "http://20.10.11.7:3005"
 policies:
@@ -71,13 +67,6 @@ pipelines:
         - proxy:
             - action:
                 serviceEndpoint: contracts
-  governance:
-      apiEndpoints:
-        - governance
-      policies:
-        - proxy:
-            - action:
-                serviceEndpoint: governance
   events:
       apiEndpoints:
         - events

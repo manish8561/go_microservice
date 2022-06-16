@@ -33,17 +33,6 @@ services:
     networks:
       my_network:
         ipv4_address: 20.10.11.7
-  governance:
-    hostname: governance
-    ports:
-      - "0.0.0.0:3004:3004"
-    container_name: governance
-    restart: always
-    build: ./governance
-    env_file: ./config/governance.env
-    networks:
-      my_network:
-        ipv4_address: 20.10.11.6
   contract_service:
     hostname: contract_service
     ports:

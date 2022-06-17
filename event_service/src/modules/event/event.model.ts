@@ -10,35 +10,7 @@ class EventModel extends BaseModel {
   constructor() {
     super();
   }
-  /**
-   * checking the add of event
-   */
-  public async check() {
-    try {
-      const ob: any = new ProposalCreated();
 
-      ob.cronStatus = "pending";
-      ob.transactionHash = "transaction hash";
-      ob.blockNumber = 123434;
-      ob.lastBlockNumber = 123434;
-      ob.id = 1;
-      ob.governance = "governance address";
-      ob.proposer = "propser address";
-      ob.targets = ["test", "test2"];
-      ob.values = ["test", "test2"];
-      ob.signatures = ["test", "test2"];
-      ob.calldatas = ["test", "test2"];
-      ob['_created'] = new Date();
-      ob['_modified'] = new Date();
-      ob.startTime = (new Date()).getTime();
-      ob.endTime = (new Date()).getTime();
-      ob.description = "ipfs hash";
-      ob.proposalType = 2;
-      return await ob.save();
-    } catch (error) {
-      throw error;
-    }
-  }
   /**
    * intialize collection
    */

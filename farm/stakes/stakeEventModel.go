@@ -67,14 +67,9 @@ type EventFilters struct {
 }
 
 //struct for votes with total
-type EventResult1 struct {
+type EventResult struct {
 	Total   int               `bson:"total" json:"total"`
 	Records []StakeEventModel `bson:"records" json:"records"`
-	// UnstakeEvent []UnstakeEventModel `bson:"unstakeEvent" json:"unstakeEvent"`
-}
-type EventResult2 struct {
-	Total   int                 `bson:"total" json:"total"`
-	Records []UnstakeEventModel `bson:"records" json:"records"`
 	// UnstakeEvent []UnstakeEventModel `bson:"unstakeEvent" json:"unstakeEvent"`
 }
 
@@ -84,14 +79,13 @@ func init() {
 	common.AddIndex(os.Getenv("MONGO_DATABASE"), UnStakeEventCollection, bson.D{{"blockNumber", "-1"}, {"account", "1"}, {"chainId", "1"}})
 
 	StartCall()
-
 }
 
 // cron func call
 func StartCall() {
 	c := cron.New()
 	c.AddFunc("0 */2 * * * *", func() {
-		fmt.Println("[Job 1]Every 30 minutes job\n")
+		fmt.Println("[Job 1]Every 2 minutes job\n")
 		getStakingContracts()
 		fmt.Println("cron job return value")
 	})
@@ -139,9 +133,76 @@ func SaveUnstakeEventOne(data *UnstakeEventModel) (string, error) {
 	return newID, err
 }
 
+/**
+* delete the duplicates
+* @param  {string} d
+ */
+func callingDelete(CollectionName string, ChainId int) error {
+	type IDResult struct {
+		TransactionHash string
+	}
+
+	type DeleteResult struct {
+		ID    IDResult
+		Dups  []primitive.ObjectID
+		Count float64
+	}
+	var records []*DeleteResult
+
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"chainId": ChainId}
+
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$match": query},
+		{"$group": bson.M{
+			"_id":   bson.M{"transactionHash": "$transactionHash"},
+			"dups":  bson.M{"$addToSet": "$_id"},
+			"count": bson.M{"$sum": 1},
+		}},
+		{"$match": bson.M{"count": bson.M{"$gt": 1}}},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		log.Fatalf("err in aggregate", err)
+		return err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("records", len(records))
+	// delete the duplicate ids at once
+	if len(records) > 0 {
+		for _, element := range records {
+			//slice array
+			slicedArr := element.Dups[1:]
+
+			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
+			if err != nil {
+				return err
+			}
+			fmt.Println("delete response", res)
+		}
+
+	}
+	return nil
+}
+
 // GetAllStakeEvents list api with page and limit
-func GetAllStakeEvents(page int64, limit int64, filters EventFilters) (*EventResult1, error) {
-	var records []*EventResult1
+func GetAllStakeEvents(page int64, limit int64, filters EventFilters) (*EventResult, error) {
+	var records []*EventResult
 
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(StakeEventCollection)
@@ -183,13 +244,12 @@ func GetAllStakeEvents(page int64, limit int64, filters EventFilters) (*EventRes
 	if err != nil {
 		return records[0], err
 	}
-
 	return records[0], nil
 }
 
 // GetAllUnstakeEvents list api with page and limit
-func GetAllUnstakeEvents(page int64, limit int64, filters EventFilters) (*EventResult1, error) {
-	var records []*EventResult1
+func GetAllUnstakeEvents(page int64, limit int64, filters EventFilters) (*EventResult, error) {
+	var records []*EventResult
 
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(UnStakeEventCollection)
@@ -237,14 +297,12 @@ func GetAllUnstakeEvents(page int64, limit int64, filters EventFilters) (*EventR
 
 //get staking contract address from db
 func getStakingContracts() {
-	fmt.Println("================================================")
 	records, err := GetAllActive()
 	if err != nil {
 		fmt.Println("Error to get active strategy:", err)
 		return
 	}
-	for index, element := range records {
-		fmt.Println("index", index)
+	for _, element := range records {
 		//call events from network
 		GetContractEvent(element.Chain_Id, element.Address, int64(element.LastBlockNumber), element.ID)
 	}
@@ -385,6 +443,11 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 
 		fmt.Printf("\n\n")
 	}
+	//calling delete duplicate for each event
+
+	go callingDelete(StakeEventCollection, chainId)
+	go callingDelete(UnStakeEventCollection, chainId)
+	//update event
 	go UpdateLastBlockNumberOne(ID, newBlockNumber)
 	return err
 }

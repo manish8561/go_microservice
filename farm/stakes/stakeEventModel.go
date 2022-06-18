@@ -87,6 +87,7 @@ func StartCall() {
 	c.AddFunc("0 */2 * * * *", func() {
 		fmt.Println("[Job 1]Every 2 minutes job\n")
 		getStakingContracts()
+		callingDelete(StakeEventCollection, 4)
 		fmt.Println("cron job return value")
 	})
 	// Start cron with one scheduled job
@@ -143,7 +144,7 @@ func callingDelete(CollectionName string, ChainId int) error {
 	}
 
 	type DeleteResult struct {
-		ID    IDResult
+		ID    IDResult `json:"_id" bson:"_id"`
 		Dups  []primitive.ObjectID
 		Count float64
 	}
@@ -182,7 +183,8 @@ func callingDelete(CollectionName string, ChainId int) error {
 		return err
 	}
 
-	fmt.Println("records", len(records))
+	// fmt.Println("records", len(records))
+	// fmt.Println("records", records[0].ID.TransactionHash)
 	// delete the duplicate ids at once
 	if len(records) > 0 {
 		for _, element := range records {

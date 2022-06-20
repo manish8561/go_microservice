@@ -137,7 +137,7 @@ func UsersLogin(c *gin.Context) {
 func ChangePassword(c *gin.Context) {
 	changePasswordValidator := NewChangePasswordValidator()
 	if err := changePasswordValidator.Bind(c); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": common.NewValidatorError(err)})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": err.Error()})
 		return
 	}
 	// get user object from request

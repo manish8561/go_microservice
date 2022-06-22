@@ -6,16 +6,22 @@ export const blockDiff = 200;
 
 //block mined
 export const network: any = {
-    4: {//rinkeby
-        blockMined: 5700,
-    },
     1: { //eth
-        blockMined: 5700,
+        blockMined: 5760,
+    },
+    4: {//rinkeby
+        blockMined: 5760,
     },
     56: { //bsc
         blockMined: 28800,
     },
     97: {//bsc testnet
         blockMined: 28800,
+    },
+    137: {//polygon mainnet
+        blockMined: 43200
+    },
+    80001: {//polygon testnet
+        blockMined: 43200
     }
-}
+};

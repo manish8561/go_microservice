@@ -13,10 +13,19 @@ class Web3Helper {
      * @param  {Number} chainId
      * @returns Promise
      */
-    private async seletRPC(chainId: Number): Promise<string> {
+     private async seletRPC(chainId: Number): Promise<string> {
         let rpc = 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
 
         switch (chainId) {
+            case 80001: //polygon testnet
+                rpc = process.env.RPC_POLYGON_TESTNET_URL!;
+                break;
+            case 137: //polygon mainnet
+                rpc = process.env.RPC_POLYGON_URL!;
+                break;
+            case 97: //bsc testnet
+                rpc = process.env.RPC_BSC_TESTNET_URL!;
+                break;
             case 56: //bsc mainnet
                 rpc = process.env.RPC_BNB_URL!;
                 break;

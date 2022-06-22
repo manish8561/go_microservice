@@ -1,6 +1,6 @@
-import Web3 from "web3"
-import { blockDiff } from "../../bin/token"
-import pairABI from '../../bin/pairContractABI.json'
+import Web3 from "web3";
+import { blockDiff } from "../../bin/token";
+import pairABI from '../../bin/pairContractABI.json';
 
 class Web3Helper {
     public web3Obj: any;
@@ -18,6 +18,15 @@ class Web3Helper {
         let rpc = 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
 
         switch (chainId) {
+            case 80001: //polygon testnet
+                rpc = process.env.RPC_POLYGON_TESTNET_URL!;
+                break;
+            case 137: //polygon mainnet
+                rpc = process.env.RPC_POLYGON_URL!;
+                break;
+            case 97: //bsc testnet
+                rpc = process.env.RPC_BSC_TESTNET_URL!;
+                break;
             case 56: //bsc mainnet
                 rpc = process.env.RPC_BNB_URL!;
                 break;
@@ -45,8 +54,8 @@ class Web3Helper {
             } else {
                 this.chainId = chainId;
                 const rpc = await this.seletRPC(chainId);
-                this.web3Obj = new Web3(rpc)
-                return this.web3Obj
+                this.web3Obj = new Web3(rpc);
+                return this.web3Obj;
             }
         } catch (error) {
             throw error;
@@ -59,7 +68,7 @@ class Web3Helper {
      */
     public async getBlockNumber(chainId: Number): Promise<number> {
         const web3Obj = await this.callWeb3(chainId);
-        return await web3Obj.eth.getBlockNumber()
+        return await web3Obj.eth.getBlockNumber();
     }
     /* dynamically call the contract instance */
     /**
@@ -111,7 +120,7 @@ class Web3Helper {
             }
             const web3Obj = await this.callWeb3(chainId);
             this.contractObj = new web3Obj.eth.Contract(pairABI, contractAddress);
-            return this.contractObj
+            return this.contractObj;
         } catch (error) {
             throw error;
         }

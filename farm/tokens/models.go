@@ -241,6 +241,75 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 	return records, err
 }
 
+/**
+* delete the duplicates
+* @param  {string} d
+ */
+ func callingDelete(CollectionName string, ChainId int) error {
+	type IDResult struct {
+		TransactionHash string
+	}
+
+	type DeleteResult struct {
+		ID    IDResult `json:"_id" bson:"_id"`
+		Dups  []primitive.ObjectID
+		Count float64
+	}
+	var records []*DeleteResult
+
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"chainId": ChainId}
+
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$match": query},
+		{"$group": bson.M{
+			"_id":   bson.M{"transactionHash": "$transactionHash"},
+			"dups":  bson.M{"$addToSet": "$_id"},
+			"count": bson.M{"$sum": 1},
+		}},
+		{"$match": bson.M{"count": bson.M{"$gt": 1}}},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		log.Fatalf("err in aggregate", err)
+		return err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+	if err != nil {
+		return err
+	}
+
+	// fmt.Println("records", len(records))
+	// fmt.Println("records", records[0].ID.TransactionHash)
+	// delete the duplicate ids at once
+	if len(records) > 0 {
+		for _, element := range records {
+			//slice array
+			slicedArr := element.Dups[1:]
+
+			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
+			if err != nil {
+				return err
+			}
+			fmt.Println("delete response", res)
+		}
+
+	}
+	return nil
+}
+
+
 // function to get block timestamp
 func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 	blockNumber := big.NewInt(block_num)
@@ -349,6 +418,8 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 				}
 			}
 		}
+		//calling delete
+		go callingDelete(CollectionName, chainId)
 	} else {
 		d := TransferEventModel{
 			ChainId:         chainId,

@@ -13,8 +13,6 @@ apiEndpoints:
     paths: "/api/farm_service/*"
   contracts:
     paths: "/api/contract_service/*"
-  events:
-    paths: "/api/event_service/*"
 serviceEndpoints:
   httpbin:
     url: "https://httpbin.org"
@@ -24,8 +22,6 @@ serviceEndpoints:
     url: "http://20.10.11.4:3002"
   contracts:
     url: "http://20.10.11.5:3003"
-  events:
-    url: "http://20.10.11.7:3005"
 policies:
   - basic-auth
   - cors
@@ -67,10 +63,3 @@ pipelines:
         - proxy:
             - action:
                 serviceEndpoint: contracts
-  events:
-      apiEndpoints:
-        - events
-      policies:
-        - proxy:
-            - action:
-                serviceEndpoint: events

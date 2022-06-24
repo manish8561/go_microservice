@@ -10,8 +10,9 @@ import (
 	"github.com/autocompound/docker_backend/farm/farms"
 	"github.com/autocompound/docker_backend/farm/pricefeeds"
 	"github.com/autocompound/docker_backend/farm/stakes"
-	"github.com/autocompound/docker_backend/farm/userfarms"
 	"github.com/autocompound/docker_backend/farm/tokens"
+	"github.com/autocompound/docker_backend/farm/userfarms"
+
 )
 
 // cors common function for * n

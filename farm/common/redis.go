@@ -32,6 +32,7 @@ func InitRedisDB() {
 	pong, err := clientRedis.Ping().Result()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	fmt.Println("Redis connected successfully. Ping:", pong)
 }

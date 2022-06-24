@@ -2,11 +2,12 @@ package tokens
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,147 +18,121 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo/options"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
-	// "github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	// token "./autocompound.go"
 )
 
-const CollectionName = "tokens"
+const CollectionName = "transfers"
+const blockDff = 200
 
 // Models should only be concerned with database schema, more strict checking should be put in validator.
 // event Transfer(address indexed from, address indexed to, uint256 value);
 //
-type TokensModel struct {
-	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created     time.Time          `bson:"_created" json:"_created,omitempty"`
-	Modified    time.Time          `bson:"_modified" json:"_modified,omitempty"`
-	Chain_Id    int                `bson:"chain_id" json:"chain_id,omitempty"`
-	Address     string             `bson:"address" json:"address,omitempty"`
-	Symbol      string             `bson:"symbol" json:"symbol,omitempty"` //address field of strategy
-	BlockNumber int                `bson:"blockNumber" json:"blockNumber,omitempty"`
-	Status      string             `bson: "status" json: "status"`
+type TransferEventModel struct {
+	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	ChainId         int                `bson:"chainId" json:"chainId"`
+	Address         string             `bson:"address" json:"address"`
+	TransactionHash string             `bson:"transactionHash" json:"transactionHash"`
+	From            string             `bson:"from" json:"from"`
+	To              string             `bson:"to" json:"to"`
+	Value           float64            `bson:"value" json:"value"`
+	BlockNumber     int64              `bson:"blockNumber" json:"blockNumber"`
+	LastBlockNumber int64              `bson:"lastBlockNumber" json:"lastBlockNumber"`
+	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
+}
+
+//struct for graph data
+type GraphDataModel struct {
+	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Value     float64            `bson:"value" json:"value"`
+	Timestamp int64              `bson:"timestamp" json:"timestamp"`
+}
+
+//struct for filters
+type Filters struct {
+	ChainId int64  `bson: "chainId" json:"chainId"`
+	Address string `bson: "address" json:"address"`
 }
 
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"symbol", 1}})
-
-	//comment
-	fmt.Printf("tokens model")
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"blockNumber", -1}, {"from", 1}, {"to", 1}})
 
 	//start the cron
-	// StartCall()
-	// GetContract(4)
+	StartCall()
 }
 
 // cron func call
 func StartCall() {
 	c := cron.New()
-	c.AddFunc("0 */30 * * * *", func() {
+	c.AddFunc("0 */2 * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
-		r := UpdateAll()
-		fmt.Println("cron job return value", r)
+		//calling get autocompounds
+		GetAutocompound()
 	})
 	// Start cron with one scheduled job
 	c.Start()
 }
 
-// Get All Symbols
-func UpdateAll() bool {
-	client := common.GetDB()
-	var records []*TokensModel
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(bson.D{{"_created", -1}})
-	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-	query := bson.M{"status": "active"}
-
-	cursor, err := collection.Find(ctx, query, opts)
-	if err != nil {
-		return false
-	}
-	defer cursor.Close(ctx)
-
-	err = cursor.All(ctx, &records)
-
-	return true
-}
-
-// You could input an TokensModel which will be saved in database returning with error info
+// You could input an TransferEventModel which will be saved in database returning with error info
 // 	if err := SaveOne(&farmModel); err != nil { ... }
-func SaveOne(data *TokensModel) error {
+func SaveOne(data *TransferEventModel) error {
 	client := common.GetDB()
-	person := &TokensModel{}
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	//convert string to uppercase
-	data.Symbol = strings.ToUpper(data.Symbol)
-	// to check for unique email address
-	err := collection.FindOne(ctx, bson.M{"symbol": data.Symbol}).Decode(&person)
+
+	res, err := collection.InsertOne(ctx, data)
 	if err != nil {
-		data.Created = time.Now()
-		data.Modified = time.Now()
-		res, err := collection.InsertOne(ctx, data)
 		fmt.Println(res, "Inserted")
 		return err
 	}
-	return errors.New("symbol already exists!")
+	return nil
 }
 
-// You could input an TokensModel which will be updated in database returning with error info
+// You could input an TransferEventModel which will be updated in database returning with error info
 // 	if err := UpdateOne(&farmModel); err != nil { ... }
-func UpdateOne(data *TokensModel) error {
+func UpdateOne(ID primitive.ObjectID, lastBlockNumber int64) error {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// to check for unique email address
 	opts := options.Update().SetUpsert(false)
-	// update := bson.D{{"$set", bson.D{{"token", "newemail@example.com"}}}}
-	update := bson.D{{"$set", data}}
+	update := bson.M{"lastBlockNumber": lastBlockNumber}
+	update = bson.M{"$set": update}
 
-	res, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
+	res, err := collection.UpdateOne(ctx, bson.M{"_id": ID}, update, opts)
 	if err != nil {
 		return err
 	}
 	fmt.Println(res, "Updated")
-	return err
+	return nil
 }
 
 // You could input string which will be saved in database returning with error info
 // 	if err := FindOne(&farmModel); err != nil { ... }
-func GetFarm(ID string) (TokensModel, error) {
+func GetRecord(chainId int, ac string) (TransferEventModel, error) {
 	client := common.GetDB()
-	farm := &TokensModel{}
+	record := &TransferEventModel{}
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	//convert string to objectid
-	objID, err := primitive.ObjectIDFromHex(ID)
-	if err != nil {
-		return *farm, err
-	}
 
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&farm)
+	opts := options.FindOne().SetSort(bson.D{{"blockNumber", -1}})
+	err := collection.FindOne(ctx, bson.M{"chainId": chainId, "address": strings.ToLower(ac)}, opts).Decode(&record)
 
-	return *farm, err
+	return *record, err
 }
 
 // Price Feed list api with page and limit
@@ -177,9 +152,9 @@ func GetTotal(status string) int64 {
 }
 
 // Price Feed list api with page and limit
-func GetAll(page int64, limit int64, status string) ([]*TokensModel, error) {
+func GetAll(page int64, limit int64, status string) ([]*TransferEventModel, error) {
 	client := common.GetDB()
-	var records []*TokensModel
+	var records []*TransferEventModel
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -224,77 +199,181 @@ func DeleteRecordModel(ID string) (bool, error) {
 	return true, err
 }
 
+//aggregate function for graph in dashboard
+
+/*
+db.getCollection('transfers').aggregate([{$match:{chainId:4, address:"0x37dc6cf6a221b6e511eb9fcdef6cb467c636847b"}},{$limit:7},{$sort:{timestamp:-1}},{$project:{value:1, timestamp:1}}])
+*/
+func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
+	client := common.GetDB()
+	var records []*GraphDataModel
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$match": bson.M{"chainId": filters.ChainId, "address": filters.Address}},
+		{"$project": bson.M{
+			// "_id":   0,
+			"value":     1,
+			"timestamp": 1,
+		}},
+		{"$sort": bson.M{"timestamp": -1}},
+		{"$limit": 7},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		return records, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return records, err
+}
+
+// function to get block timestamp
+func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
+	blockNumber := big.NewInt(block_num)
+	block, err := client.BlockByNumber(context.Background(), blockNumber)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// fmt.Printf("%t", block.Time())
+	// fmt.Println(block.Time(), block_num, "block timestamp")
+	return int64(block.Time())
+
+}
+
 // You could input string which will be saved in database returning with error info
 // 	if err := FindOne(&farmModel); err != nil { ... }
-func GetContract(chain_id int) error {
+func GetContract(chainId int, ac string, blockNumber int64) error {
 	// Create an IPC based RPC connection to a remote node
-	conn := common.Get_Eth_Connection(chain_id)
+	conn := common.Get_Eth_Connection(chainId)
 
-	contractAddress := ethcommon.HexToAddress("0x23fc559A2b5c749F87D0Ef30099eb342be3B3150")
+	// to get latest blocknumber
+	header, err := conn.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	lastestBlockNumber := header.Number.Int64()
+
+	contractAddress := ethcommon.HexToAddress(ac)
 	token, err := NewTokens(contractAddress, conn)
 	if err != nil {
 		log.Fatalf("Failed to instantiate a Token contract: %v", err)
 	}
 	decimals, err := token.Decimals(&bind.CallOpts{})
 	if err != nil {
-		log.Printf("Failed to retrieve token name: %v", err)
+		log.Fatalf("Failed to retrieve token name: %v", err)
 	}
 	fmt.Println("Token decimals:", decimals)
-
-	query := ethereum.FilterQuery{
-		FromBlock: big.NewInt(10826826),
-		ToBlock:   big.NewInt(10827728),
-		Addresses: []ethcommon.Address{
-			contractAddress,
-		},
-	}
-	//logs from contract
-	logs, err := conn.FilterLogs(context.Background(), query)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to retrieve token name: %v", err)
 	}
 
-	logTransferSig := []byte("Transfer(address,address,uint256)")
-	// LogApprovalSig := []byte("Approval(address,address,uint256)")
-	logTransferSigHash := crypto.Keccak256Hash(logTransferSig)
-	// logApprovalSigHash := crypto.Keccak256Hash(LogApprovalSig)
+	record, err := GetRecord(chainId, ac)
 
-	for _, vLog := range logs {
-		// fmt.Println("Log Index: ", vLog.Index)
-		// fmt.Println("vLog.Topics[0] ", vLog.Topics[0].Hex())
+	if (record != TransferEventModel{}) {
 
-		switch vLog.Topics[0].Hex() {
-		case logTransferSigHash.Hex():
-			fmt.Printf("Log Name: Transfer\n")
-
-			transferEvent, err := token.ParseTransfer(vLog)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println("Log Block Number: ", vLog.BlockNumber)
-			fmt.Println("\n Log Transaction: ", vLog.TxHash.Hex())
-
-			fmt.Println("From : ", transferEvent.From)
-			fmt.Println("To : ", transferEvent.To)
-			fmt.Println("Value: ", transferEvent.Value)
-
-			// case logApprovalSigHash.Hex():
-			// 	fmt.Println("Log Name: Approval\n")
-
-			// 	approvalEvent, err := token.ParseApproval(vLog)
-			// 	if err != nil {
-			// 		log.Fatal(err)
-			// 	}
-			// 	// approvalEvent.Owner = ethcommon.HexToAddress(vLog.Topics[1].Hex())
-			// 	// approvalEvent.Spender = ethcommon.HexToAddress(vLog.Topics[2].Hex())
-			// 	fmt.Print("\n value: ", approvalEvent.Value)
-			// 	fmt.Print("\n owner: ", approvalEvent.Owner)
-			// 	fmt.Print("\n Spender: ", approvalEvent.Spender)
-
-			// 	fmt.Println("\n d: ",approvalEvent)
+		newBlockNumber := record.LastBlockNumber + blockDff
+		if newBlockNumber >= lastestBlockNumber {
+			newBlockNumber = lastestBlockNumber
 		}
 
-		fmt.Printf("\n\n")
+		//query the logs
+		query := ethereum.FilterQuery{
+			FromBlock: big.NewInt(record.LastBlockNumber),
+			ToBlock:   big.NewInt(newBlockNumber),
+			Addresses: []ethcommon.Address{
+				contractAddress,
+			},
+		}
+		//logs from contract
+		logs, err := conn.FilterLogs(context.Background(), query)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(logs) == 0 {
+			go UpdateOne(record.ID, newBlockNumber)
+			return nil
+		}
+
+		logTransferSig := []byte("Transfer(address,address,uint256)")
+		// LogApprovalSig := []byte("Approval(address,address,uint256)")
+		logTransferSigHash := crypto.Keccak256Hash(logTransferSig)
+		// logApprovalSigHash := crypto.Keccak256Hash(LogApprovalSig)
+
+		dd := math.Pow(10, float64(decimals))
+
+		for _, vLog := range logs {
+			switch vLog.Topics[0].Hex() {
+			case logTransferSigHash.Hex():
+				fmt.Printf("Log Name: Transfer\n")
+
+				transferEvent, err := token.ParseTransfer(vLog)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				//converting the string to float64
+				transferValue, err := strconv.ParseFloat(transferEvent.Value.String(), 64)
+				if err != nil {
+					log.Fatal(err)
+				}
+				blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
+				d := TransferEventModel{
+					ChainId:         chainId,
+					Address:         strings.ToLower(ac),
+					TransactionHash: vLog.TxHash.Hex(),
+					From:            strings.ToLower(transferEvent.From.Hex()),
+					To:              strings.ToLower(transferEvent.To.Hex()),
+					Value:           (transferValue / dd),
+					BlockNumber:     int64(vLog.BlockNumber),
+					LastBlockNumber: int64(vLog.BlockNumber),
+					Timestamp:       blockTimestamp,
+				}
+				err = SaveOne(&d)
+				if err != nil {
+					log.Printf("Failed to retrieve token name: %v", err)
+				}
+			}
+		}
+	} else {
+		d := TransferEventModel{
+			ChainId:         chainId,
+			Address:         strings.ToLower(ac),
+			TransactionHash: "",
+			From:            "",
+			To:              "",
+			Value:           0,
+			BlockNumber:     blockNumber,
+			LastBlockNumber: blockNumber,
+			Timestamp:       0,
+		}
+		err := SaveOne(&d)
+		if err != nil {
+			log.Fatalf("Failed to retrieve token name: %v", err)
+		}
 	}
+
 	return err
+}
+
+func GetAutocompound() {
+	for chainId, val := range common.NetworkMap {
+		fmt.Println(chainId, val.AC, "\n\n in token model")
+		GetContract(chainId, val.AC, val.BlockNumber)
+	}
+
 }

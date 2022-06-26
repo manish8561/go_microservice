@@ -347,14 +347,14 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 		log.Printf("Failed to retrieve token name: %v", err)
 	}
 	//traversal
-	newBlockNumber := lastBlockNumber + blockDiff
+	newBlockNumber := (lastBlockNumber + 1) + blockDiff
 
 	if newBlockNumber >= lastestBlockNumber {
 		newBlockNumber = lastestBlockNumber
 	}
 
 	query := ethereum.FilterQuery{
-		FromBlock: big.NewInt(lastBlockNumber),
+		FromBlock: big.NewInt(lastBlockNumber + 1),
 		ToBlock:   big.NewInt(newBlockNumber),
 		Addresses: []ethcommon.Address{
 			contractAddress,

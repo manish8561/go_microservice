@@ -43,6 +43,7 @@ type TransferEventModel struct {
 	BlockNumber     int64              `bson:"blockNumber" json:"blockNumber"`
 	LastBlockNumber int64              `bson:"lastBlockNumber" json:"lastBlockNumber"`
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
+	CreatedAt       time.Time          `bson:"createdAt" json:"createdAt"`
 }
 
 //struct for graph data
@@ -50,6 +51,13 @@ type GraphDataModel struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Value     float64            `bson:"value" json:"value"`
 	Timestamp int64              `bson:"timestamp" json:"timestamp"`
+}
+
+//struct for graph data
+type GraphDataModel2 struct {
+	ID    time.Time `json:"_id,omitempty" bson:"_id,omitempty"`
+	Value float64   `bson:"value" json:"value"`
+	Count int64     `bson:"count" json:"count"`
 }
 
 //struct for filters
@@ -61,7 +69,7 @@ type Filters struct {
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"blockNumber", -1}, {"from", 1}, {"to", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"blockNumber", -1}, {"from", 1}, {"to", 1}, {"createdAt", -1}})
 
 	//start the cron
 	StartCall()
@@ -69,6 +77,7 @@ func init() {
 
 // cron func call
 func StartCall() {
+	fmt.Print("manish")
 	c := cron.New()
 	c.AddFunc("0 */2 * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
@@ -215,7 +224,7 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 	// Specify a pipeline that will return the number of times each name appears
 	// in the collection.
 	pipeline := []bson.M{
-		{"$match": bson.M{"chainId": filters.ChainId, "address": filters.Address}},
+		{"$match": bson.M{"chainId": filters.ChainId, "address": strings.ToLower(filters.Address)}},
 		{"$project": bson.M{
 			// "_id":   0,
 			"value":     1,
@@ -241,11 +250,66 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 	return records, err
 }
 
+/* get last seven days volume
+db.getCollection('transfers').aggregate([
+// {$match:{chainId:4,timestamp:{$gte:1}, timestamp:{$lt:1}}},
+{$group:{
+    _id:"$createdAt",
+    count:{$sum:1},
+    value:{$sum:"$value"}
+    }}
+])
+*/
+func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
+	client := common.GetDB()
+	var records []*GraphDataModel2
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	//last seven day timestamp
+	currentDate := get_date_without_time(time.Now().Unix())
+	lastWeekDate := currentDate.Unix() - (7 * 24 * 60 * 60)
+
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$sort": bson.M{"timestamp": -1}},
+		{"$match": bson.M{"chainId": filters.ChainId, "address": strings.ToLower(filters.Address), "timestamp": bson.M{"$lte": currentDate.Unix(), "$gt": lastWeekDate}}},
+		{"$group": bson.M{
+			"_id":   "$createdAt",
+			"count": bson.M{"$sum": 1},
+			"value": bson.M{"$sum": "$value"},
+		}},
+		// {"$match": bson.M{"timestamp": bson.M{"$lt": currentDate.Unix()}}},
+		{"$project": bson.M{
+			"_id":   1,
+			"value": 1,
+			"count": 1,
+		}},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		return records, err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	return records, err
+}
+
 /**
 * delete the duplicates
 * @param  {string} d
  */
- func callingDelete(CollectionName string, ChainId int) error {
+func callingDelete(CollectionName string, ChainId int) error {
 	type IDResult struct {
 		TransactionHash string
 	}
@@ -309,7 +373,6 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 	return nil
 }
 
-
 // function to get block timestamp
 func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 	blockNumber := big.NewInt(block_num)
@@ -322,6 +385,16 @@ func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 	// fmt.Println(block.Time(), block_num, "block timestamp")
 	return int64(block.Time())
 
+}
+
+// Get date without time from timestamp
+func get_date_without_time(timestamp int64) time.Time {
+	currentDate := time.Unix(timestamp, 0).UTC()
+
+	//get year month day
+	y, m, d := currentDate.Date()
+	//convert to date
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
 // You could input string which will be saved in database returning with error info
@@ -354,15 +427,15 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 	record, err := GetRecord(chainId, ac)
 
 	if (record != TransferEventModel{}) {
-
-		newBlockNumber := record.LastBlockNumber + blockDff
+		lastBlockNumber := (record.LastBlockNumber + 1)
+		newBlockNumber := lastBlockNumber + blockDff
 		if newBlockNumber >= lastestBlockNumber {
 			newBlockNumber = lastestBlockNumber
 		}
 
 		//query the logs
 		query := ethereum.FilterQuery{
-			FromBlock: big.NewInt(record.LastBlockNumber),
+			FromBlock: big.NewInt(lastBlockNumber),
 			ToBlock:   big.NewInt(newBlockNumber),
 			Addresses: []ethcommon.Address{
 				contractAddress,
@@ -387,8 +460,8 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 
 		for _, vLog := range logs {
 			switch vLog.Topics[0].Hex() {
+			// Transfer event hex
 			case logTransferSigHash.Hex():
-				fmt.Printf("Log Name: Transfer\n")
 
 				transferEvent, err := token.ParseTransfer(vLog)
 				if err != nil {
@@ -411,6 +484,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 					BlockNumber:     int64(vLog.BlockNumber),
 					LastBlockNumber: int64(vLog.BlockNumber),
 					Timestamp:       blockTimestamp,
+					CreatedAt:       get_date_without_time(blockTimestamp),
 				}
 				err = SaveOne(&d)
 				if err != nil {
@@ -431,6 +505,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 			BlockNumber:     blockNumber,
 			LastBlockNumber: blockNumber,
 			Timestamp:       0,
+			CreatedAt:       time.Now(),
 		}
 		err := SaveOne(&d)
 		if err != nil {

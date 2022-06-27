@@ -225,13 +225,15 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 	// in the collection.
 	pipeline := []bson.M{
 		{"$match": bson.M{"chainId": filters.ChainId, "address": strings.ToLower(filters.Address)}},
+		{"$sort": bson.M{"timestamp": -1}},
 		{"$project": bson.M{
 			// "_id":   0,
 			"value":     1,
 			"timestamp": 1,
 		}},
-		{"$sort": bson.M{"timestamp": -1}},
 		{"$limit": 7},
+		{"$sort": bson.M{"timestamp": 1}},
+
 	}
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
@@ -281,7 +283,6 @@ func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
 			"count": bson.M{"$sum": 1},
 			"value": bson.M{"$sum": "$value"},
 		}},
-		// {"$match": bson.M{"timestamp": bson.M{"$lt": currentDate.Unix()}}},
 		{"$project": bson.M{
 			"_id":   1,
 			"value": 1,
@@ -512,13 +513,13 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 			log.Fatalf("Failed to retrieve token name: %v", err)
 		}
 	}
-
 	return err
 }
 
+//to get all autocompound address from constant file in a map
 func GetAutocompound() {
 	for chainId, val := range common.NetworkMap {
-		fmt.Println(chainId, val.AC, "\n\n in token model")
+		//calling the contract as per chainId
 		GetContract(chainId, val.AC, val.BlockNumber)
 	}
 

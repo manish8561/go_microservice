@@ -14,23 +14,24 @@ import (
 // - DataModel: fill with data from Validator after invoking common.Bind(c, self)
 // Then, you can just call model.save() after the data is ready in DataModel.
 type FarmModelValidator struct {
-	ID               string `form:"_id" json:"_id"`
-	Address			string `form:"address" json:"address" binding:"required"`
-	Chain_Id         int    `form:"chain_id" json:"chain_id" binding:"required"`
-	PID              int    `form:"pid" json:"pid" binding:"required"`
-	Name             string `form:"name" json:"name" binding:"required,max=255"`
-	Token_Type       string `form:"token_type" json:"token_type" binding:"required,max=20"`
-	Deposit_Token    string `from:"deposit_token json:"deposit_token"  binding:"required,alphanum,max=255"`
-	Masterchef       string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
-	Router           string `form:"router" json:"router" binding:"required,alphanum,max=255"`
-	Weth             string `form:"weth" json:"weth" binding:"required,alphanum,max=255"`
-	Reward           string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
-	Stake            string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
-	AC_Token         string `form:"ac_token" json:"ac_token" binding:"required,alphanum,max=255"`
-	Token0           Token  `form:"token0" json:"token0" binding:"required"`
-	Token1           Token  `form:"token1" json:"token1" `
-	Token_Per_Block  float64    `form:"token_per_block" json:"token_per_block" binding:"required"`
+	ID            string `form:"_id" json:"_id"`
+	Address       string `form:"address" json:"address" binding:"required"`
+	Chain_Id      int    `form:"chain_id" json:"chain_id" binding:"required"`
+	PID           int    `form:"pid" json:"pid" binding:"required"`
+	Name          string `form:"name" json:"name" binding:"required,max=255"`
+	Token_Type    string `form:"token_type" json:"token_type" binding:"required,max=20"`
+	Deposit_Token string `from:"deposit_token json:"deposit_token"  binding:"required,alphanum,max=255"`
+	Masterchef    string `form:"masterchef" json:"masterchef" binding:"required,alphanum,max=255"`
+	Router        string `form:"router" json:"router" binding:"required,alphanum,max=255"`
+	Weth          string `form:"weth" json:"weth" binding:"required,alphanum,max=255"`
+	Reward        string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
+	Stake         string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
+	AC_Token      string `form:"ac_token" json:"ac_token" binding:"required,alphanum,max=255"`
+	Token0        Token  `form:"token0" json:"token0" binding:"required"`
+	Token1        Token  `form:"token1" json:"token1" `
+	// Token_Per_Block  float64 `form:"token_per_block" json:"token_per_block" binding:"required"`
 	Bonus_Multiplier int    `form:"bonus_multiplier" json:"bonus_multiplier" binding:"required"`
+	FarmType         string `form:"farmType" json:"farmType" binding:"required,max=255"`
 	Source           string `form:"source" json:"source" binding:"required,max=255"`
 	Source_Link      string `form:"source_link" json:"source_link" binding:"required,max=255"`
 
@@ -58,10 +59,11 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	self.farmModel.Stake = strings.ToLower(self.Stake)
 	self.farmModel.AC_Token = strings.ToLower(self.AC_Token)
 	self.farmModel.Reward = strings.ToLower(self.Reward)
-	self.farmModel.Token_Per_Block = self.Token_Per_Block
+	// self.farmModel.Token_Per_Block = self.Token_Per_Block
 	self.farmModel.Bonus_Multiplier = self.Bonus_Multiplier
 	self.farmModel.Token0 = self.Token0
 	self.farmModel.Token1 = self.Token1
+	self.farmModel.FarmType = self.FarmType
 	self.farmModel.Source = self.Source
 	self.farmModel.Source_Link = self.Source_Link
 

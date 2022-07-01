@@ -15,7 +15,7 @@ var NetworkMap = map[int]MultipleAddress{
 	// 56:    {AC: "0x37DC6cF6A221b6E511EB9fcdeF6cb467c636847b", BlockNumber:10850501},//bsc mainnet
 	// 97:    {AC: "0x37DC6cF6A221b6E511EB9fcdeF6cb467c636847b", BlockNumber:10850501},//bsd testnet
 	// 137:   {AC: "0x37DC6cF6A221b6E511EB9fcdeF6cb467c636847b", BlockNumber:10850501},//polygon mainnet
-	// 80001: {AC: "0x37DC6cF6A221b6E511EB9fcdeF6cb467c636847b", BlockNumber:10850501},//polygon testnet
+	80001: {AC: "0x6cDb2D638Ed5BCe1791aaaB0e096f047765caDa7", BlockNumber:26942775},//polygon testnet
 }
 
 //    networkMap[1] = MultipleAddress{AC:"0x37DC6cF6A221b6E511EB9fcdeF6cb467c636847b"}

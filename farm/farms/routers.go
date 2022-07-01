@@ -132,7 +132,11 @@ func FarmTvl(c *gin.Context) {
 function to get AC Token Per Block
 */
 func FarmACPerBlock(c *gin.Context) {
-	num := GetACPerBlock()
+	chainId, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chainId = 4 //rinkeby
+	}
+	num := GetACPerBlock(chainId)
 	c.JSON(http.StatusOK, gin.H{"success": true, "acperblock": num})
 }
 

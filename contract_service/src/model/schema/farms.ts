@@ -3,7 +3,7 @@ class FarmSchema extends Schema {
     public objectSchema: any;
 
     constructor() {
-        super()
+        super();
         this.schema();
     }
 
@@ -27,6 +27,7 @@ class FarmSchema extends Schema {
             reward: { type: String },
             bonus_multiplier: { type: Number },
             token_per_block: { type: Number },
+            farmType: { type: String },
             source: { type: String },
             source_link: { type: String },
             autocompound_check: { type: Boolean },

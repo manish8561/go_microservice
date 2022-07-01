@@ -77,7 +77,6 @@ func init() {
 
 // cron func call
 func StartCall() {
-	fmt.Print("manish")
 	c := cron.New()
 	c.AddFunc("0 */2 * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")

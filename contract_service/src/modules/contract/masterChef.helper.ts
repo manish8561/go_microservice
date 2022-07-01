@@ -78,25 +78,26 @@ class MasterChef {
    */
   public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number, pid: number): Promise<string> {
     try {
-      let ACPrice = 0;
-      ACPrice = await this.getTokenPriceUSD('AC');
+      //reward token price (cake for pancake)
+      let acPrice = 0;
+      acPrice = await this.getTokenPriceUSD('AC');
 
       const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
       const totalAllcationPoint: any = await masterchefContract.methods.totalAllocPoint().call();
 
       const poolInfo: any = await await masterchefContract.methods.poolInfo(pid).call();
 
-      const acPerBlock: any = await masterchefContract.methods.cakePerBlock().call();
+      const cakePerBlock: any = await masterchefContract.methods.cakePerBlock().call();
 
       const liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId)
-      // console.log({ACPrice, totalAllcationPoint, allocationPoint, acPerBlock, liquidity});
+      // console.log({acPrice, totalAllcationPoint, allocationPoint, cakePerBlock, liquidity});
       if (liquidity === 0) {
         return '0';
       }
       const blockMined = network[chainId].blockMined;
       //since it is in cake value
       const accCakePerShare = poolInfo.accCakePerShare / (10 ** 18);
-      const apr: any = ((accCakePerShare / totalAllcationPoint) * ((acPerBlock / 10 ** 18) * blockMined * 100 * ACPrice)) / liquidity;
+      const apr: any = ((accCakePerShare / totalAllcationPoint) * ((cakePerBlock / 10 ** 18) * blockMined * 100 * acPrice)) / liquidity;
       return apr.toFixed(4);
     } catch (err) {
       throw err;

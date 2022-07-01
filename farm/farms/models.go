@@ -52,7 +52,8 @@ type FarmModel struct {
 	AC_Token           string             `bson:"ac_token" json:"ac_token"` //autocompound token
 	Reward             string             `bson:"reward" json:"reward"`     //cake address
 	Bonus_Multiplier   int                `bson:"bonus_multiplier" json:"bonus_multiplier"`
-	Token_Per_Block    float64                `bson:"token_per_block" json:"token_per_block"`
+	Token_Per_Block    float64            `bson:"token_per_block" json:"token_per_block"`
+	FarmType           string             `bson:"farmType" json:"farmType"`
 	Source             string             `bson:"source" json:"source"`
 	Source_Link        string             `bson:"source_link" json:"source_link"`
 	Autocompound_Check bool               `bson:"autocompound_check" json:"autocompound_check"`
@@ -466,7 +467,7 @@ func GetTvl() float64 {
 
 	//get data from redis
 	val, err := clientRedis.Get("totalTvl").Result()
-	if s, err := strconv.ParseFloat(val,  64); err == nil {
+	if s, err := strconv.ParseFloat(val, 64); err == nil {
 		return s
 	}
 	if err != nil {
@@ -509,7 +510,7 @@ func GetTvl() float64 {
 }
 
 //get avg autocompound per block
-func GetACPerBlock() float64 {
+func GetACPerBlock(chainId int64) float64 {
 	client := common.GetDB()
 	clientRedis := common.GetRedisDB()
 
@@ -523,6 +524,7 @@ func GetACPerBlock() float64 {
 	}
 
 	type Avg struct {
+		// ID      nil     `bson:"_id" bson:"_id"`
 		Average float64 `bson:"average" json:"average"`
 	}
 	var results []Avg
@@ -532,7 +534,7 @@ func GetACPerBlock() float64 {
 	defer cancel()
 
 	pipeline := []bson.M{
-		{"$match": bson.M{"status": "active"}},
+		{"$match": bson.M{"status": "active", "chain_id": chainId}},
 		{"$group": bson.M{"_id": nil, "average": bson.M{"$avg": "$token_per_block"}}},
 	}
 
@@ -542,11 +544,10 @@ func GetACPerBlock() float64 {
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &results)
-
 	if err := cursor.Err(); err != nil {
-		fmt.Println(cursor)
 		return 0
 	}
+
 	// checking length of array
 	if len(results) == 0 {
 		return 0

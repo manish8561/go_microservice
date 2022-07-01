@@ -173,6 +173,9 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if data.Reward != "" {
 		update["reward"] = strings.ToLower(data.Reward)
 	}
+	if data.FarmType != "" {
+		update["farmType"] = data.FarmType
+	}
 	if data.Source != "" {
 		update["source"] = data.Source
 	}

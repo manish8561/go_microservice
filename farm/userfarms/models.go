@@ -242,6 +242,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 			"reward":             "$farms.reward",
 			"bonus_multiplier":   "$farms.bonus_multiplier",
 			"token_per_block":    "$farms.token_per_block",
+			"farmType":           "$farms.farmType",
 			"source":             "$farms.source",
 			"source_link":        "$farms.source_link",
 			"autocompound_check": "$farms.autocompound_check",

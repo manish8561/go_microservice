@@ -46,6 +46,7 @@ type FarmModel struct {
 	Deposit_Token      string             `bson:"deposit_token" json:"deposit_token"`
 	Status             string             `bson:"status" json:"status"`
 	Masterchef         string             `bson:"masterchef" json:"masterchef"`
+	// masterchef for pancakeswap, stakingRewards address for quickswap
 	Router             string             `bson:"router" json:"router"`
 	Weth               string             `bson:"weth" json:"weth"`
 	Stake              string             `bson:"stake" json:"stake"`       //staking contract address

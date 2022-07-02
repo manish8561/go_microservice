@@ -113,7 +113,7 @@ class App {
      * start cron job
      */
     private startCron() {
-        const job = new CronJob('0 */30 * * * *', async () => {
+        const job = new CronJob('0 */29 * * * *', async () => {
             console.log('You will see this message every 1:00 am' + new Date());
             await farmsContact.getFarmsValue();
         }, null, true, 'Europe/London');

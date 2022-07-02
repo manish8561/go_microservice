@@ -253,7 +253,9 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 
 /* get last seven days volume
 db.getCollection('transfers').aggregate([
+{$sort: bson.M{"timestamp":-1}},
 // {$match:{chainId:4,timestamp:{$gte:1}, timestamp:{$lt:1}}},
+{$match:{chainId:4}},
 {$group:{
     _id:"$createdAt",
     count:{$sum:1},

@@ -4,8 +4,8 @@ import MasterchefABI from '../../bin/masterChefContractABI.json';
 import StrategyPair from '../../bin/strategy.pairABI.json';
 import StrategyToken from '../../bin/strategy.singleABI.json';
 import axios from "axios";
-import * as Helpers from '../../helpers'
-import { network } from '../../bin/token'
+import * as Helpers from '../../helpers';
+import { network } from '../../bin/token';
 
 
 class MasterChef {
@@ -26,7 +26,7 @@ class MasterChef {
       const DAYS_IN_YEAR = 365;
       // const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
       const aprToApy = (DAYS_IN_YEAR * apr).toString();
-      return aprToApy
+      return aprToApy;
     } catch (err) {
       throw err;
     }
@@ -57,15 +57,20 @@ class MasterChef {
       throw err;
     }
   }
+  /**
+   * get price from other service
+   * @param  {string} token
+   * @returns Promise
+   */
   public async getTokenPriceUSD(token: string): Promise<number> {
     try {
-      const resp: any = await axios.get(`${process.env.FARM_API_URL}pricefeeds?symbol=${token}`);
+      const resp: any = await axios.get(`${process.env.FARM_API_URL}api/farm_service/pricefeeds?symbol=${token}`);
       if (resp.status = 200) {
-        return resp.data.data.price
+        return resp.data.data.price;
       }
       return 0;
     } catch (error) {
-      console.log(error, 'get price error')
+      // console.log(error, 'get price error');
       return 0;
     }
   }
@@ -89,8 +94,8 @@ class MasterChef {
 
       const cakePerBlock: any = await masterchefContract.methods.cakePerBlock().call();
 
-      const liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId)
-      // console.log({acPrice, totalAllcationPoint, allocationPoint, cakePerBlock, liquidity});
+      const liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
+      // console.log({acPrice, totalAllcationPoint, cakePerBlock, liquidity});
       if (liquidity === 0) {
         return '0';
       }
@@ -113,10 +118,10 @@ class MasterChef {
     try {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress, chainId);
-        let tokenPrice: any = await this.calPrice(tokenAddress, chainId)
-        return d * tokenPrice
+        let tokenPrice: any = await this.calPrice(tokenAddress, chainId);
+        return d * tokenPrice;
       }
-      return 0
+      return 0;
     } catch (error) {
       throw error;
     }
@@ -152,7 +157,7 @@ class MasterChef {
     try {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, TokenABI, pairAddress);
       const decimals = await contract.methods.decimals().call();
-      let result = await contract.methods.balanceOf(masterChefAddress).call()
+      let result = await contract.methods.balanceOf(masterChefAddress).call();
       result = (Number(result) / 10 ** decimals);
       return Number(result);
     } catch (error) {
@@ -246,7 +251,7 @@ class MasterChef {
    */
   public async calPrice(pairAddress: any, chainId: number): Promise<Number> {
     try {
-      let price = 0
+      let price = 0;
       let priceTokenZero: any = 0;
       let priceTokenOne: any = 0;
       let tokenZero: any;
@@ -283,7 +288,7 @@ class MasterChef {
           priceTokenOne = respTokenOne * reserve[1] / 10 ** decimalOne;
         }
         price = priceTokenZero + priceTokenOne;
-        return price
+        return price;
       }
     } catch (err) {
       throw err;
@@ -296,7 +301,7 @@ class MasterChef {
    */
   public async calPrice2(pairAddress: any, chainId: number): Promise<Number> {
     try {
-      let price = 0
+      let price = 0;
       let priceTokenZero: any = 0;
       let priceTokenOne: any = 0;
       let tokenZero: any;
@@ -329,7 +334,7 @@ class MasterChef {
           priceTokenOne = respTokenOne;
         }
         price = priceTokenZero + priceTokenOne;
-        return price
+        return price;
       }
     } catch (err) {
       throw err;

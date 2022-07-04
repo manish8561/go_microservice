@@ -232,7 +232,6 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 		}},
 		{"$limit": 7},
 		{"$sort": bson.M{"timestamp": 1}},
-
 	}
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
@@ -253,14 +252,14 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 
 /* get last seven days volume
 db.getCollection('transfers').aggregate([
-{$sort: bson.M{"timestamp":-1}},
-// {$match:{chainId:4,timestamp:{$gte:1}, timestamp:{$lt:1}}},
+{$sort: {"timestamp":-1}},
 {$match:{chainId:4}},
 {$group:{
     _id:"$createdAt",
     count:{$sum:1},
     value:{$sum:"$value"}
-    }}
+    }},
+{$sort:{_id:1}}
 ])
 */
 func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
@@ -284,6 +283,7 @@ func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
 			"count": bson.M{"$sum": 1},
 			"value": bson.M{"$sum": "$value"},
 		}},
+		{"$sort": bson.M{"_id": 1}},
 		{"$project": bson.M{
 			"_id":   1,
 			"value": 1,

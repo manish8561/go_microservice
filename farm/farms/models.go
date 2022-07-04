@@ -34,39 +34,39 @@ type Token struct {
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type FarmModel struct {
-	ID                 primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created            time.Time          `bson:"_created" json:"_created"`
-	Modified           time.Time          `bson:"_modified" json:"_modified"`
-	Chain_Id           int                `bson:"chain_id" json:"chain_id"`
-	Transaction_Hash   string             `bson:"transaction_hash" json:"transaction_hash"`
-	PID                int                `bson:"pid" json:"pid"`
-	Address            string             `bson:"address" json:"address"` //address field of strategy
-	Name               string             `bson:"name" json:"name"`
-	Token_Type         string             `bson:"token_type" json:"token_type"`
-	Deposit_Token      string             `bson:"deposit_token" json:"deposit_token"`
-	Status             string             `bson:"status" json:"status"`
-	Masterchef         string             `bson:"masterchef" json:"masterchef"`
+	ID               primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created          time.Time          `bson:"_created" json:"_created"`
+	Modified         time.Time          `bson:"_modified" json:"_modified"`
+	Chain_Id         int                `bson:"chain_id" json:"chain_id"`
+	Transaction_Hash string             `bson:"transaction_hash" json:"transaction_hash"`
+	PID              int                `bson:"pid" json:"pid"`
+	Address          string             `bson:"address" json:"address"` //address field of strategy
+	Name             string             `bson:"name" json:"name"`
+	Token_Type       string             `bson:"token_type" json:"token_type"`
+	Deposit_Token    string             `bson:"deposit_token" json:"deposit_token"`
+	Status           string             `bson:"status" json:"status"`
+	Masterchef       string             `bson:"masterchef" json:"masterchef"`
 	// masterchef for pancakeswap, stakingRewards address for quickswap
-	Router             string             `bson:"router" json:"router"`
-	Weth               string             `bson:"weth" json:"weth"`
-	Stake              string             `bson:"stake" json:"stake"`       //staking contract address
-	AC_Token           string             `bson:"ac_token" json:"ac_token"` //autocompound token
-	Reward             string             `bson:"reward" json:"reward"`     //cake address
-	Bonus_Multiplier   int                `bson:"bonus_multiplier" json:"bonus_multiplier"`
-	Token_Per_Block    float64            `bson:"token_per_block" json:"token_per_block"`
-	FarmType           string             `bson:"farmType" json:"farmType"`
-	Source             string             `bson:"source" json:"source"`
-	Source_Link        string             `bson:"source_link" json:"source_link"`
-	Autocompound_Check bool               `bson:"autocompound_check" json:"autocompound_check"`
-	Tvl_Staked         float64            `bson:"tvl_staked" json:"tvl_staked"`
-	Daily_APR          float64            `bson:"daily_apr" json:"daily_apr"`
-	Daily_APY          float64            `bson:"daily_apy" json:"daily_apy"`
-	Weekly_APY         float64            `bson:"weekly_apy" json:"weekly_apy"`
-	Yearly_APY         float64            `bson:"yearly_apy" json:"yearly_apy"`
-	Price_Pool_Token   float64            `bson:"price_pool_token" json:"price_pool_token"`
-	Yearly_Swap_Fees   float64            `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
-	Token0             Token              `bson:"token0" json:"token0"`
-	Token1             Token              `bson:"token1" json:"token1"`
+	Router             string  `bson:"router" json:"router"`
+	Weth               string  `bson:"weth" json:"weth"`
+	Stake              string  `bson:"stake" json:"stake"`       //staking contract address
+	AC_Token           string  `bson:"ac_token" json:"ac_token"` //autocompound token
+	Reward             string  `bson:"reward" json:"reward"`     //cake address
+	Bonus_Multiplier   int     `bson:"bonus_multiplier" json:"bonus_multiplier"`
+	Token_Per_Block    float64 `bson:"token_per_block" json:"token_per_block"`
+	FarmType           string  `bson:"farmType" json:"farmType"`
+	Source             string  `bson:"source" json:"source"`
+	Source_Link        string  `bson:"source_link" json:"source_link"`
+	Autocompound_Check bool    `bson:"autocompound_check" json:"autocompound_check"`
+	Tvl_Staked         float64 `bson:"tvl_staked" json:"tvl_staked"`
+	Daily_APR          float64 `bson:"daily_apr" json:"daily_apr"`
+	Daily_APY          float64 `bson:"daily_apy" json:"daily_apy"`
+	Weekly_APY         float64 `bson:"weekly_apy" json:"weekly_apy"`
+	Yearly_APY         float64 `bson:"yearly_apy" json:"yearly_apy"`
+	Price_Pool_Token   float64 `bson:"price_pool_token" json:"price_pool_token"`
+	Yearly_Swap_Fees   float64 `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
+	Token0             Token   `bson:"token0" json:"token0"`
+	Token1             Token   `bson:"token1" json:"token1"`
 }
 
 //struct for filters
@@ -152,7 +152,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if data.Name != "" {
 		update["name"] = data.Name
 	}
-
 	if data.Deposit_Token != "" {
 		update["deposit_token"] = strings.ToLower(data.Deposit_Token)
 	}

@@ -59,7 +59,6 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	self.farmModel.Stake = strings.ToLower(self.Stake)
 	self.farmModel.AC_Token = strings.ToLower(self.AC_Token)
 	self.farmModel.Reward = strings.ToLower(self.Reward)
-	// self.farmModel.Token_Per_Block = self.Token_Per_Block
 	self.farmModel.Bonus_Multiplier = self.Bonus_Multiplier
 	self.farmModel.Token0 = self.Token0
 	self.farmModel.Token1 = self.Token1

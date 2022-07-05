@@ -52,6 +52,7 @@ type FarmModel struct {
 	Stake              string  `bson:"stake" json:"stake"`       //staking contract address
 	AC_Token           string  `bson:"ac_token" json:"ac_token"` //autocompound token
 	Reward             string  `bson:"reward" json:"reward"`     //cake address
+	RewardImage        string  `bson:"rewardImage" json:"rewardImage"`
 	Bonus_Multiplier   int     `bson:"bonus_multiplier" json:"bonus_multiplier"`
 	Token_Per_Block    float64 `bson:"token_per_block" json:"token_per_block"`
 	FarmType           string  `bson:"farmType" json:"farmType"`
@@ -172,6 +173,9 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	}
 	if data.Reward != "" {
 		update["reward"] = strings.ToLower(data.Reward)
+	}
+	if data.RewardImage != "" {
+		update["rewardImage"] = data.RewardImage
 	}
 	if data.FarmType != "" {
 		update["farmType"] = data.FarmType

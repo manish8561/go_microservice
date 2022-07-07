@@ -33,7 +33,7 @@ class Quickswap {
     try {
       //reward token price (cake for pancake)
       let acPrice = 0;
-      acPrice = await this.getTokenPriceUSD('AC');
+      acPrice = await this.getTokenPriceUSD('QUICK');
 
       let stakingRewardsABI = StakingRewardsABI;
       if (farmType === "quickswapdual") {

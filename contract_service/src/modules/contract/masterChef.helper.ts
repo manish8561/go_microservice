@@ -85,7 +85,7 @@ class MasterChef {
     try {
       //reward token price (cake for pancake)
       let acPrice = 0;
-      acPrice = await this.getTokenPriceUSD('AC');
+      acPrice = await this.getTokenPriceUSD('CAKE');
 
       const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
       const totalAllcationPoint: any = await masterchefContract.methods.totalAllocPoint().call();

@@ -45,14 +45,17 @@ class Quickswap {
       const totalSupply: any = await stakingRewardContract.methods.totalSupply().call();
       let cakePerBlock: any = 0;
       if (farmType === "quickswapdual") {
-        const rewardPerTokenA = await stakingRewardContract.methods.rewardPerTokenA().call();
-        const rewardPerTokenB = await stakingRewardContract.methods.rewardPerTokenB().call();
-        cakePerBlock = rewardPerTokenA + rewardPerTokenB;
+        const rewardPerTokenA = await stakingRewardContract.methods.rewardRateA().call();
+        const rewardPerTokenB = await stakingRewardContract.methods.rewardRateB().call();
+        cakePerBlock = Number(rewardPerTokenA) + Number(rewardPerTokenB);
       } else {
-        cakePerBlock = await stakingRewardContract.methods.rewardPerToken().call();
+        cakePerBlock = Number(await stakingRewardContract.methods.rewardRate().call());
       }
-
       const blockMined = network[chainId].blockMined;
+      // console.log(
+      //   'cake per block', cakePerBlock,
+      //   'total supply', totalSupply,
+      //   '-------------------------');
       //since it is in cake value
       // const accCakePerShare = poolInfo.accCakePerShare / (10 ** 18);
       // const apr: any = ((accCakePerShare / totalAllcationPoint) * ((cakePerBlock / 10 ** 18) * blockMined * 100 * acPrice)) / liquidity;

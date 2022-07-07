@@ -25,6 +25,7 @@ class FarmSchema extends Schema {
             stake: { type: String },
             ac_token: { type: String },
             reward: { type: String },
+            rewardImage: { type: String },
             bonus_multiplier: { type: Number },
             token_per_block: { type: Number },
             farmType: { type: String },

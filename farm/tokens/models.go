@@ -429,6 +429,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 	record, err := GetRecord(chainId, ac)
 
 	if (record != TransferEventModel{}) {
+		fmt.Println(record.LastBlockNumber, "before")
 		lastBlockNumber := (record.LastBlockNumber + 1)
 		newBlockNumber := lastBlockNumber + blockDff
 		if newBlockNumber >= lastestBlockNumber {
@@ -461,6 +462,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 		dd := math.Pow(10, float64(decimals))
 
 		for _, vLog := range logs {
+			fmt.Println(vLog.Topics[0].Hex(), "transfer hex")
 			switch vLog.Topics[0].Hex() {
 			// Transfer event hex
 			case logTransferSigHash.Hex():
@@ -494,6 +496,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 				}
 			}
 		}
+		go UpdateOne(record.ID, newBlockNumber)
 		//calling delete
 		go callingDelete(CollectionName, chainId)
 	} else {

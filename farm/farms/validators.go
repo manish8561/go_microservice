@@ -25,14 +25,14 @@ type FarmModelValidator struct {
 	Router        string `form:"router" json:"router" binding:"required,alphanum,max=255"`
 	Weth          string `form:"weth" json:"weth" binding:"required,alphanum,max=255"`
 	Reward        string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
-	RewardImage   string `form:"rewardImage" json:"rewardImage" binding:"required,alphanum,max=255"`
+	RewardImage   string `form:"rewardImage" json:"rewardImage" binding:"required"`
 	Stake         string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
 	AC_Token      string `form:"ac_token" json:"ac_token" binding:"required,alphanum,max=255"`
 	Token0        Token  `form:"token0" json:"token0" binding:"required"`
 	Token1        Token  `form:"token1" json:"token1"`
-	FarmType         string `form:"farmType" json:"farmType" binding:"required,max=255"`
-	Source           string `form:"source" json:"source" binding:"required,max=255"`
-	Source_Link      string `form:"source_link" json:"source_link" binding:"required,max=255"`
+	FarmType      string `form:"farmType" json:"farmType" binding:"required,max=255"`
+	Source        string `form:"source" json:"source" binding:"required,max=255"`
+	Source_Link   string `form:"source_link" json:"source_link" binding:"required,max=255"`
 
 	// Image     string    `form:"image" json:"image" binding:"omitempty,url"`
 	farmModel FarmModel `json:"-"`

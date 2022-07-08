@@ -19,7 +19,7 @@ export const network: any = {
         blockMined: 28800,
     },
     137: {//polygon mainnet
-        blockMined: 43200
+        blockMined: 0.0004
     },
     80001: {//polygon testnet
         blockMined: 43200

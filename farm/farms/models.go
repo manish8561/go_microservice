@@ -91,11 +91,17 @@ func SaveOne(data *FarmModel) (string, error) {
 	record := &FarmModel{}
 	newID := ""
 
+	query := bson.M{"deposit_token": data.Deposit_Token}
+	// for single asset and stable coin checking reward token
+	if data.Token_Type == "token" || data.Token_Type == "stable" {
+		query = bson.M{"reward": data.Reward}
+	}
+
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// to check for unique email address
-	err := collection.FindOne(ctx, bson.M{"deposit_token": data.Deposit_Token}).Decode(&record)
+	err := collection.FindOne(ctx, query).Decode(&record)
 	if err != nil {
 		res, err := collection.InsertOne(ctx, data)
 		fmt.Println(res.InsertedID, "Inserted")

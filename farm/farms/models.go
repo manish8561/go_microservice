@@ -382,6 +382,24 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	return farms, err
 }
 
+// delete record from collection
+func DeleteRecord(ID string) (bool, error) {
+	client := common.GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+
+	objID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return false, err
+	}
+	res, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objID})
+	if err != nil {
+		return false, err
+	}
+	fmt.Println(res, "Delete Farm")
+	return true, err
+}
+
 // struct for aggregate response
 type Result struct {
 	ID     string `bson:"_id" json:"_id"`
@@ -418,7 +436,7 @@ func GetSource() ([]*Result, error) {
 }
 
 // get total tvl from farms
-func GetTvl() float64 {
+func GetTvl(chainId int64) float64 {
 	client := common.GetDB()
 	clientRedis := common.GetRedisDB()
 
@@ -440,7 +458,7 @@ func GetTvl() float64 {
 	defer cancel()
 
 	pipeline := []bson.M{
-		{"$match": bson.M{"status": "active"}},
+		{"$match": bson.M{"status": "active", "chain_id": chainId}},
 		{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": "$tvl_staked"}}},
 	}
 

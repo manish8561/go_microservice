@@ -26,6 +26,8 @@ func ApisRegister(router *gin.RouterGroup) {
 	router.GET("/platform", FarmSource)
 	router.GET("/:id", FarmRetrieve)
 	router.Use(common.AuthMiddleware(true))
+	router.DELETE("/:id", FarmDelete)
+
 
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
@@ -124,7 +126,11 @@ func FarmSource(c *gin.Context) {
 function to tvl from farm
 */
 func FarmTvl(c *gin.Context) {
-	num := GetTvl()
+	chainId, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chainId = 4 //rinkeby
+	}
+	num := GetTvl(chainId)
 	c.JSON(http.StatusOK, gin.H{"success": true, "total": num})
 }
 /*
@@ -217,7 +223,20 @@ func FarmSetOperator(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "updated farm successfully", "success": true})
 }
+/*
+function to delete farm
+*/
+func FarmDelete(c *gin.Context) {
+	id := c.Param("id")
 
+	ok, err := DeleteRecord(id)
+	if ok {
+		c.JSON(http.StatusOK, gin.H{"success": true})
+		return
+	}
+	c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
+	return
+}
 /*
 function to upload file in the farm
 */

@@ -17,7 +17,6 @@ type FarmModelValidator struct {
 	ID            string `form:"_id" json:"_id"`
 	Address       string `form:"address" json:"address" binding:"required"`
 	Chain_Id      int    `form:"chain_id" json:"chain_id" binding:"required"`
-	PID           int    `form:"pid" json:"pid" binding:"required"`
 	Name          string `form:"name" json:"name" binding:"required,max=255"`
 	Token_Type    string `form:"token_type" json:"token_type" binding:"required,max=20"`
 	Deposit_Token string `from:"deposit_token json:"deposit_token"  binding:"required,alphanum,max=255"`
@@ -26,7 +25,6 @@ type FarmModelValidator struct {
 	Weth          string `form:"weth" json:"weth" binding:"required,alphanum,max=255"`
 	Reward        string `form:"reward" json:"reward" binding:"required,alphanum,max=255"`
 	RewardImage   string `form:"rewardImage" json:"rewardImage" binding:"required"`
-	Stake         string `form:"stake" json:"stake" binding:"required,alphanum,max=255"`
 	AC_Token      string `form:"ac_token" json:"ac_token" binding:"required,alphanum,max=255"`
 	Token0        Token  `form:"token0" json:"token0" binding:"required"`
 	Token1        Token  `form:"token1" json:"token1"`
@@ -48,14 +46,12 @@ func (self *FarmModelValidator) Bind(c *gin.Context) error {
 	}
 	self.farmModel.Address = strings.ToLower(self.Address)
 	self.farmModel.Chain_Id = self.Chain_Id
-	self.farmModel.PID = self.PID
 	self.farmModel.Name = self.Name
 	self.farmModel.Token_Type = self.Token_Type
 	self.farmModel.Deposit_Token = strings.ToLower(self.Deposit_Token)
 	self.farmModel.Masterchef = strings.ToLower(self.Masterchef)
 	self.farmModel.Router = strings.ToLower(self.Router)
 	self.farmModel.Weth = strings.ToLower(self.Weth)
-	self.farmModel.Stake = strings.ToLower(self.Stake)
 	self.farmModel.AC_Token = strings.ToLower(self.AC_Token)
 	self.farmModel.Reward = strings.ToLower(self.Reward)
 	self.farmModel.RewardImage = self.RewardImage

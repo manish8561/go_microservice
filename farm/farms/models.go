@@ -39,7 +39,6 @@ type FarmModel struct {
 	Modified         time.Time          `bson:"_modified" json:"_modified"`
 	Chain_Id         int                `bson:"chain_id" json:"chain_id"`
 	Transaction_Hash string             `bson:"transaction_hash" json:"transaction_hash"`
-	PID              int                `bson:"pid" json:"pid"`
 	Address          string             `bson:"address" json:"address"` //address field of strategy
 	Name             string             `bson:"name" json:"name"`
 	Token_Type       string             `bson:"token_type" json:"token_type"`
@@ -49,7 +48,6 @@ type FarmModel struct {
 	// masterchef for pancakeswap, stakingRewards address for quickswap
 	Router             string  `bson:"router" json:"router"`
 	Weth               string  `bson:"weth" json:"weth"`
-	Stake              string  `bson:"stake" json:"stake"`       //staking contract address
 	AC_Token           string  `bson:"ac_token" json:"ac_token"` //autocompound token
 	Reward             string  `bson:"reward" json:"reward"`     //cake address
 	RewardImage        string  `bson:"rewardImage" json:"rewardImage"`
@@ -62,10 +60,6 @@ type FarmModel struct {
 	Tvl_Staked         float64 `bson:"tvl_staked" json:"tvl_staked"`
 	Daily_APR          float64 `bson:"daily_apr" json:"daily_apr"`
 	Daily_APY          float64 `bson:"daily_apy" json:"daily_apy"`
-	Weekly_APY         float64 `bson:"weekly_apy" json:"weekly_apy"`
-	Yearly_APY         float64 `bson:"yearly_apy" json:"yearly_apy"`
-	Price_Pool_Token   float64 `bson:"price_pool_token" json:"price_pool_token"`
-	Yearly_Swap_Fees   float64 `bson:"yearly_swap_fees" json:"yearly_swap_fees"`
 	Token0             Token   `bson:"token0" json:"token0"`
 	Token1             Token   `bson:"token1" json:"token1"`
 }
@@ -153,9 +147,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if data.Transaction_Hash != "" {
 		update["transaction_hash"] = data.Transaction_Hash
 	}
-	if data.PID > 0 {
-		update["pid"] = data.PID
-	}
 	if data.Name != "" {
 		update["name"] = data.Name
 	}
@@ -170,9 +161,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	}
 	if data.Weth != "" {
 		update["weth"] = strings.ToLower(data.Weth)
-	}
-	if data.Stake != "" {
-		update["stake"] = strings.ToLower(data.Stake)
 	}
 	if data.AC_Token != "" {
 		update["ac_token"] = strings.ToLower(data.AC_Token)
@@ -198,7 +186,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if data.Token_Per_Block > 0 {
 		update["token_per_block"] = data.Token_Per_Block
 	}
-
 	if data.Tvl_Staked > 0 {
 		update["tvl_staked"] = data.Tvl_Staked
 	}
@@ -211,18 +198,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	if data.Daily_APY > 0 {
 		update["daily_apy"] = data.Daily_APY
 	}
-	if data.Weekly_APY > 0 {
-		update["weekly_apy"] = data.Weekly_APY
-	}
-	if data.Yearly_APY > 0 {
-		update["yearly_apy"] = data.Yearly_APY
-	}
-	if data.Price_Pool_Token > 0 {
-		update["price_pool_token"] = data.Price_Pool_Token
-	}
-	if data.Yearly_Swap_Fees > 0 {
-		update["yearly_swap_fees"] = data.Yearly_Swap_Fees
-	}
 	// check struct for empty value
 	if (data.Token0 != Token{}) {
 		update["token0"] = data.Token0
@@ -232,37 +207,6 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	}
 	if data.Token_Type == "token" || data.Token_Type == "stable" {
 		update["token1"] = nil
-	}
-	update = bson.M{"$set": update}
-	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-
-// You could input an FarmModel which will be saved in database returning with error info
-// update stake in the farm
-func UpdateStake(data *FarmModel) (*mongo.UpdateResult, error) {
-	client := common.GetDB()
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	res, err := primitive.ObjectIDFromHex("")
-
-	if data.ID == res {
-		return nil, errors.New("Object ID is required field")
-	}
-	// options for update
-	opts := options.Update().SetUpsert(false)
-
-	modified := time.Now()
-	update := bson.M{"_modified": modified, "token_type": data.Token_Type}
-
-	if data.Stake != "" {
-		update["stake"] = data.Stake
 	}
 	update = bson.M{"$set": update}
 	result, err := collection.UpdateOne(ctx, bson.M{"_id": data.ID}, update, opts)

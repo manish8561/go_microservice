@@ -30,7 +30,6 @@ func ApisRegister(router *gin.RouterGroup) {
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
 	router.PUT("", FarmUpdate)
-	router.PUT("/stake", FarmStake)
 	router.PUT("/transaction", FarmTransactionUpdate)
 	router.PUT("/setOperator", FarmSetOperator)
 	// router.DELETE("/:username/follow", FarmUnfollow)
@@ -185,23 +184,6 @@ func FarmUpdate(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "farm updated", "data": data, "success": true})
-}
-
-/*
-function to update stake farm in db
-*/
-func FarmStake(c *gin.Context) {
-	farms := &FarmModel{}
-	if err := common.Bind(c, farms); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
-		return
-	}
-	data, err := UpdateStake(farms)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error(), "success": false})
-		return
-	}
-	c.JSON(http.StatusCreated, gin.H{"message": "farm stake updated", "data": data, "success": true})
 }
 
 /*

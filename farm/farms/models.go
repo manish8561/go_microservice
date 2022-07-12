@@ -441,7 +441,7 @@ func GetTvl(chainId int64) float64 {
 	clientRedis := common.GetRedisDB()
 
 	//get data from redis
-	val, err := clientRedis.Get("totalTvl").Result()
+	val, err := clientRedis.Get("totalTvl_" + strconv.FormatInt(chainId, 10)).Result()
 	if s, err := strconv.ParseFloat(val, 64); err == nil {
 		return s
 	}
@@ -477,7 +477,7 @@ func GetTvl(chainId int64) float64 {
 		return 0
 	}
 	//adding in redis
-	err = clientRedis.Set("totalTvl", results[0].Total, 10*time.Minute).Err()
+	err = clientRedis.Set("totalTvl_"+strconv.FormatInt(chainId, 10), results[0].Total, 10*time.Minute).Err()
 	if err != nil {
 		fmt.Println(err, "saving in redis")
 	}

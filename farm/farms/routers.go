@@ -25,6 +25,7 @@ func ApisRegister(router *gin.RouterGroup) {
 	router.GET("/acperblock", FarmACPerBlock)
 	router.GET("/platform", FarmSource)
 	router.GET("/:id", FarmRetrieve)
+	//authentication
 	router.Use(common.AuthMiddleware(true))
 	router.DELETE("/:id", FarmDelete)
 

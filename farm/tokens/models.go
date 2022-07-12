@@ -277,7 +277,7 @@ func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
 	// in the collection.
 	pipeline := []bson.M{
 		{"$sort": bson.M{"timestamp": -1}},
-		{"$match": bson.M{"chainId": filters.ChainId, "address": strings.ToLower(filters.Address), "timestamp": bson.M{"$lte": currentDate.Unix(), "$gt": lastWeekDate}}},
+		{"$match": bson.M{"chainId": filters.ChainId, "address": strings.ToLower(filters.Address), "timestamp": bson.M{"$gt": lastWeekDate, "$lte": currentDate.Unix()}}},
 		{"$group": bson.M{
 			"_id":   "$createdAt",
 			"count": bson.M{"$sum": 1},

@@ -20,6 +20,19 @@ services:
   #     - "/data/dvolumes/autocompound/docker_rabbit:/var/lib/rabbitmq"
   #   networks:
   #     - my_network
+  ledger:
+    hostname: ledger
+    ports:
+      - "0.0.0.0:3004:3004"
+    container_name: ledger
+    restart: always
+    build: ./ledger
+    env_file: ./config/ledger.env
+    depends_on:
+      - user
+    networks:
+      my_network:
+        ipv4_address: 20.10.11.6
   contract_service:
     hostname: contract_service
     ports:

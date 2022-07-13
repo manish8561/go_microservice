@@ -68,6 +68,7 @@ type GraphDataModel2 struct {
 type Filters struct {
 	ChainId int64  `bson: "chainId" json:"chainId"`
 	Address string `bson: "address" json:"address"`
+	Type    string `bson: "type" json:"type"`
 }
 
 // init func in go file
@@ -152,7 +153,7 @@ func GetBlockTransactions(chainId int, bN int64) error {
 			for _, vLog := range receipt.Logs {
 				fmt.Println(vLog.BlockHash.Hex())
 				fmt.Println(vLog.BlockNumber)  // 2394201
-				fmt.Println(vLog.TxHash.Hex()) // 
+				fmt.Println(vLog.TxHash.Hex()) //
 
 				switch vLog.Topics[0].Hex() {
 				// Withdraw event hex
@@ -168,7 +169,7 @@ func GetBlockTransactions(chainId int, bN int64) error {
 						log.Fatal(err)
 					}
 					fmt.Println("----------------------")
-					fmt.Println("Account: ",strings.ToLower(withdrawEvent.Account.Hex()))
+					fmt.Println("Account: ", strings.ToLower(withdrawEvent.Account.Hex()))
 					fmt.Println("transfer value:", transferValue)
 					fmt.Println("----------------------")
 					// blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
@@ -513,8 +514,8 @@ func GetDetails() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId
 		// GetContract(chainId, val.AC, val.BlockNumber)
-		fmt.Println(chainId, val,val.AC.Address, val.AC.BlockNumber,"----------")
-		// GetBlockTransactions(137, 30591094)
+		fmt.Println(chainId, val, val.AC.Address, val.AC.BlockNumber, "----------")
+		// GetBlockTransactions(chainId, 30591094)
 
 	}
 }

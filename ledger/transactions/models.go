@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
+
 	// "math"
 	"math/big"
 	"os"
+
 	// "strconv"
 	"strings"
 	"time"
@@ -18,10 +21,11 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo/options"
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
-	"github.com/ethereum/go-ethereum"
+	// "github.com/ethereum/go-ethereum"
 	// "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	// "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	// token "./autocompound.go"
 )
@@ -78,18 +82,18 @@ func init() {
 // cron func call
 func StartCall() {
 	c := cron.New()
-	c.AddFunc("0 */2 * * * *", func() {
+	c.AddFunc("0 */1 * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
 		//calling get autocompounds
-		// GetAutocompound()
-		GetBlockTransactions(137, 2000)
+		GetDetails()
 	})
 	// Start cron with one scheduled job
 	c.Start()
 }
+
 // You could input string which will be saved in database returning with error info
 // 	if err := FindOne(&farmModel); err != nil { ... }
-func GetBlockTransactions(chainId int, blockNumber int64) error {
+func GetBlockTransactions(chainId int, bN int64) error {
 	// Create an IPC based RPC connection to a remote node
 	conn := common.Get_Eth_Connection(chainId)
 
@@ -99,11 +103,99 @@ func GetBlockTransactions(chainId int, blockNumber int64) error {
 		log.Fatal(err)
 	}
 	lastestBlockNumber := header.Number.Int64()
-	fmt.Println(lastestBlockNumber,"before")
+	fmt.Println(lastestBlockNumber, "before")
 
+	blockNumber := big.NewInt(bN)
+	block, err := conn.BlockByNumber(context.Background(), blockNumber)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(block.Number().Uint64())     // 5671744
+	fmt.Println(block.Time())                // 1527211625
+	fmt.Println(block.Difficulty().Uint64()) // 3217000136609065
+	fmt.Println(block.Hash().Hex())          // 0x9e8751ebb5069389b855bba72d94902cc385042661498a415979b7b6ee9ba4b9
+	fmt.Println(len(block.Transactions()))   // 144
+
+	fmt.Println("------------------------------------------------")
+	strategyContractAddress := "0x375746d4c701032a282b4bed951e39b9312f9c6c"
+
+	for _, tx := range block.Transactions() {
+		fmt.Println("Transactions: ", tx.Hash().Hex()) // 0x5d49fcaa394c97ec8a9c3e7bd9e8388d420fb050a52083ca52ff24b3b65bc9c2
+		// fmt.Println(tx.Value().String())               // 10000000000000000
+		// fmt.Println(tx.Gas())                          // 105000
+		// fmt.Println(tx.GasPrice().Uint64())            // 102000000000
+		// fmt.Println(tx.Nonce())                        // 110644
+		// fmt.Println(tx.Data())                         // []
+		// fmt.Println("to address: ", tx.To().Hex()) // 0x375746d4c701032a282b4bed951e39b9312f9c6c
+		if strings.ToLower(tx.To().Hex()) == strings.ToLower(strategyContractAddress) {
+			contractAddress := ethcommon.HexToAddress(strategyContractAddress)
+			strategyContract, err := NewTransactions(contractAddress, conn)
+			if err != nil {
+				log.Fatalf("Failed to instantiate a Token contract: %v", err)
+			}
+
+			logWithdrawSig := []byte("Withdraw(address,uint256)")
+			// // LogApprovalSig := []byte("Approval(address,address,uint256)")
+			logWithdrawSigHash := crypto.Keccak256Hash(logWithdrawSig)
+
+			receipt, err := conn.TransactionReceipt(context.Background(), tx.Hash())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println("recept and logs:")
+
+			fmt.Println(receipt.Status) // 1
+			fmt.Println(receipt.Logs)   // ...
+
+			for _, vLog := range receipt.Logs {
+				fmt.Println(vLog.BlockHash.Hex())
+				fmt.Println(vLog.BlockNumber)  // 2394201
+				fmt.Println(vLog.TxHash.Hex()) // 
+
+				switch vLog.Topics[0].Hex() {
+				// Withdraw event hex
+				case logWithdrawSigHash.Hex():
+					withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					//converting the string to float64
+					transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Println("----------------------")
+					fmt.Println("Account: ",strings.ToLower(withdrawEvent.Account.Hex()))
+					fmt.Println("transfer value:", transferValue)
+					fmt.Println("----------------------")
+					// blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
+					// d := TransferEventModel{
+					// 	ChainId:         chainId,
+					// 	Address:         strings.ToLower(ac),
+					// 	TransactionHash: vLog.TxHash.Hex(),
+					// 	From:            strings.ToLower(transferEvent.From.Hex()),
+					// 	To:              strings.ToLower(transferEvent.To.Hex()),
+					// 	Value:           (transferValue / dd),
+					// 	BlockNumber:     int64(vLog.BlockNumber),
+					// 	LastBlockNumber: int64(vLog.BlockNumber),
+					// 	Timestamp:       blockTimestamp,
+					// 	CreatedAt:       get_date_without_time(blockTimestamp),
+					// }
+					// err = SaveOne(&d)
+					// if err != nil {
+					// 	log.Printf("Failed to retrieve token name: %v", err)
+					// }
+				}
+			}
+		}
+	}
 
 	return err
 }
+
 // You could input an TransferEventModel which will be saved in database returning with error info
 // 	if err := SaveOne(&farmModel); err != nil { ... }
 func SaveOne(data *TransferEventModel) error {
@@ -416,132 +508,13 @@ func get_date_without_time(timestamp int64) time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
-// You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&farmModel); err != nil { ... }
-func GetContract(chainId int, ac string, blockNumber int64) error {
-	// Create an IPC based RPC connection to a remote node
-	conn := common.Get_Eth_Connection(chainId)
-
-	// to get latest blocknumber
-	header, err := conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	lastestBlockNumber := header.Number.Int64()
-
-	contractAddress := ethcommon.HexToAddress(ac)
-	// token, err := NewTokens(contractAddress, conn)
-	// if err != nil {
-	// 	log.Fatalf("Failed to instantiate a Token contract: %v", err)
-	// }
-	// decimals, err := token.Decimals(&bind.CallOpts{})
-	// if err != nil {
-	// 	log.Fatalf("Failed to retrieve token name: %v", err)
-	// }
-	// fmt.Println("Token decimals:", decimals)
-	// if err != nil {
-	// 	log.Fatalf("Failed to retrieve token name: %v", err)
-	// }
-
-	record, err := GetRecord(chainId, ac)
-
-	if (record != TransferEventModel{}) {
-		fmt.Println(record.LastBlockNumber, "before")
-		lastBlockNumber := (record.LastBlockNumber + 1)
-		newBlockNumber := lastBlockNumber + blockDff
-		if newBlockNumber >= lastestBlockNumber {
-			newBlockNumber = lastestBlockNumber
-		}
-
-		//query the logs
-		query := ethereum.FilterQuery{
-			FromBlock: big.NewInt(lastBlockNumber),
-			ToBlock:   big.NewInt(newBlockNumber),
-			Addresses: []ethcommon.Address{
-				contractAddress,
-			},
-		}
-		//logs from contract
-		logs, err := conn.FilterLogs(context.Background(), query)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if len(logs) == 0 {
-			go UpdateOne(record.ID, newBlockNumber)
-			return nil
-		}
-
-		// logTransferSig := []byte("Transfer(address,address,uint256)")
-		// LogApprovalSig := []byte("Approval(address,address,uint256)")
-		// logTransferSigHash := crypto.Keccak256Hash(logTransferSig)
-		// logApprovalSigHash := crypto.Keccak256Hash(LogApprovalSig)
-
-		// dd := math.Pow(10, float64(decimals))
-		// dd := math.Pow(10, float64(0.1))
-
-		// for _, vLog := range logs {
-		// 	fmt.Println(vLog.Topics[0].Hex(), "transfer hex")
-		// 	switch vLog.Topics[0].Hex() {
-		// 	// Transfer event hex
-		// 	case logTransferSigHash.Hex():
-
-		// 		transferEvent, err := token.ParseTransfer(vLog)
-		// 		if err != nil {
-		// 			log.Fatal(err)
-		// 		}
-
-		// 		//converting the string to float64
-		// 		transferValue, err := strconv.ParseFloat(transferEvent.Value.String(), 64)
-		// 		if err != nil {
-		// 			log.Fatal(err)
-		// 		}
-		// 		blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
-		// 		d := TransferEventModel{
-		// 			ChainId:         chainId,
-		// 			Address:         strings.ToLower(ac),
-		// 			TransactionHash: vLog.TxHash.Hex(),
-		// 			From:            strings.ToLower(transferEvent.From.Hex()),
-		// 			To:              strings.ToLower(transferEvent.To.Hex()),
-		// 			Value:           (transferValue / dd),
-		// 			BlockNumber:     int64(vLog.BlockNumber),
-		// 			LastBlockNumber: int64(vLog.BlockNumber),
-		// 			Timestamp:       blockTimestamp,
-		// 			CreatedAt:       get_date_without_time(blockTimestamp),
-		// 		}
-		// 		err = SaveOne(&d)
-		// 		if err != nil {
-		// 			log.Printf("Failed to retrieve token name: %v", err)
-		// 		}
-		// 	}
-		// }
-		go UpdateOne(record.ID, newBlockNumber)
-		//calling delete
-		go callingDelete(CollectionName, chainId)
-	} else {
-		d := TransferEventModel{
-			ChainId:         chainId,
-			Address:         strings.ToLower(ac),
-			TransactionHash: "",
-			From:            "",
-			To:              "",
-			Value:           0,
-			BlockNumber:     blockNumber,
-			LastBlockNumber: blockNumber,
-			Timestamp:       0,
-			CreatedAt:       time.Now(),
-		}
-		err := SaveOne(&d)
-		if err != nil {
-			log.Fatalf("Failed to retrieve token name: %v", err)
-		}
-	}
-	return err
-}
-
 //to get all autocompound address from constant file in a map
-func GetAutocompound() {
+func GetDetails() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId
-		GetContract(chainId, val.AC, val.BlockNumber)
+		// GetContract(chainId, val.AC, val.BlockNumber)
+		fmt.Println(chainId, val,val.AC.Address, val.AC.BlockNumber,"----------")
+		// GetBlockTransactions(137, 30591094)
+
 	}
 }

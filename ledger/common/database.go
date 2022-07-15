@@ -91,3 +91,19 @@ func AddIndex(dbName string, collection string, indexKeys interface{}) error {
 	fmt.Println(indexName)
 	return nil
 }
+// You could input an TransactionModel which will be saved in database returning with error info
+// 	if err := SaveOne(&record); err != nil { ... }
+func SaveOne(data interface{}, CollectionName string) error {
+	client := GetDB()
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	res, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		fmt.Println(res, "Inserted")
+		return err
+	}
+	return nil
+}

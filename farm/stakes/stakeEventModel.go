@@ -87,7 +87,6 @@ func StartCall() {
 	c.AddFunc("0 */2 * * * *", func() {
 		fmt.Println("[Job 1]Every 2 minutes job\n")
 		getStakingContracts()
-		callingDelete(StakeEventCollection, 4)
 		fmt.Println("cron job return value")
 	})
 	// Start cron with one scheduled job
@@ -307,6 +306,9 @@ func getStakingContracts() {
 	for _, element := range records {
 		//call events from network
 		GetContractEvent(element.Chain_Id, element.Address, int64(element.LastBlockNumber), element.ID)
+		go callingDelete(StakeEventCollection, element.Chain_Id)
+		go callingDelete(UnStakeEventCollection, element.Chain_Id)
+
 	}
 }
 

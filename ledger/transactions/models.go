@@ -57,7 +57,6 @@ type TransactionModel struct {
 	TransactionHash string             `bson:"transactionHash" json:"transactionHash"`
 	Type            string             `bson:"type" json:"type"`
 	Account         string             `bson:"account" json:"account"`
-	To              string             `bson:"to" json:"to"`
 	Amount          float64            `bson:"amount" json:"amount"`
 	BlockNumber     int64              `bson:"blockNumber" json:"blockNumber"`
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
@@ -80,7 +79,8 @@ type Filters struct {
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"blockNumber", -1}, {"from", 1}, {"to", 1}, {"createdAt", -1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
 
 	//start the cron
 	StartCall()
@@ -91,7 +91,7 @@ func StartCall() {
 	c := cron.New()
 	c.AddFunc("*/30 * * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
-		//calling get autocompounds
+		//calling get transactions according to farms(strategies)
 		GetDetails()
 	})
 	// Start cron with one scheduled job
@@ -109,6 +109,7 @@ func checkContract(address string) bool {
 		"0x7e01691b46ecd36b4a0f4f5d1f32dc178c9aa279",
 		"0x375746d4c701032a282b4bed951e39b9312f9c6c",
 		"0x2d32d65fcd4a2b64e4ffa512ac3d0896b542b0d5",
+		"0x3421dfd649b31f5bb48528368a68351014b5029e",
 	}
 	for _, e := range strategies {
 		if strings.ToLower(e) == strings.ToLower(address) {
@@ -171,7 +172,8 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 				fmt.Println(err)
 			}
 
-			if receipt.Status == 1 { // 1 success
+			// 1 success status
+			if receipt.Status == 1 {
 				// fmt.Println("Logs: ", len(receipt.Logs)) // ...
 
 				for _, vLog := range receipt.Logs {
@@ -197,15 +199,12 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 							TransactionHash: vLog.TxHash.Hex(),
 							Type:            "deposit",
 							Account:         strings.ToLower(withdrawEvent.Account.Hex()),
-							To:              strategyAddress,
 							Amount:          (transferValue / dd),
 							BlockNumber:     bN,
 							Timestamp:       blockTimestamp,
 						}
-						err = common.SaveOne(&d, CollectionName)
-						if err != nil {
-							log.Printf("Failed to retrieve token name: %v", err)
-						}
+						go SaveDataBackground(&d, CollectionName)
+						
 					//Withdraw Event
 					case logWithdrawSigHash.Hex():
 						withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
@@ -230,15 +229,11 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 							TransactionHash: vLog.TxHash.Hex(),
 							Type:            "withdraw",
 							Account:         strings.ToLower(withdrawEvent.Account.Hex()),
-							To:              strategyAddress,
 							Amount:          (transferValue / dd),
 							BlockNumber:     bN,
 							Timestamp:       blockTimestamp,
 						}
-						err = common.SaveOne(&d, CollectionName)
-						if err != nil {
-							log.Printf("Failed to retrieve token name: %v", err)
-						}
+						go SaveDataBackground(&d, CollectionName)
 					}
 				}
 			}
@@ -247,6 +242,14 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	}
 
 	return (bN + 1), err
+}
+
+// function for background process
+func SaveDataBackground(data interface{}, CollectionName string) {
+	err := common.SaveOne(data, CollectionName)
+	if err != nil {
+		log.Printf("Failed to retrieve token name: %v", err)
+	}
 }
 
 // You could input an TransactionModel which will be updated in database returning with error info

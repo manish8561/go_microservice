@@ -17,3 +17,5 @@ var NetworkMap = map[int]MultipleAddress{
 	137:   {AC: "0x12e9a9dcDc8f276c71524Ddd102343525ddAbB26", BlockNumber:30244347},//polygon mainnet
 	// 80001: {AC: "0x6cDb2D638Ed5BCe1791aaaB0e096f047765caDa7", BlockNumber:26942775},//polygon testnet
 }
+
+var DefaultChainId int64 = 137 //polygon

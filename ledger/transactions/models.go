@@ -62,24 +62,28 @@ type TransactionModel struct {
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
 }
 
-//struct for graph data
-type GraphDataModel struct {
-	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Value     float64            `bson:"value" json:"value"`
-	Timestamp int64              `bson:"timestamp" json:"timestamp"`
+// struct for api with total
+type EventResult struct {
+	Total   int                `bson:"total" json:"total"`
+	Records []TransactionModel `bson:"records" json:"records"`
+	// UnstakeEvent []UnstakeEventModel `bson:"unstakeEvent" json:"unstakeEvent"`
 }
 
 //struct for filters
 type Filters struct {
-	ChainId int64  `bson: "chainId" json:"chainId"`
-	Address string `bson: "address" json:"address"`
-	Type    string `bson: "type" json:"type"`
+	ChainId   int64  `bson: "chainId" json:"chainId"`
+	Address   string `bson: "address" json:"address"`
+	Type      string `bson: "type" json:"type"`
+	StartTime int64  `bson: "startTime" json:"startTime"`
+	EndTime   int64  `bson: "endTime" json:"endTime"`
+	Page      int64  `bson: "page" json:"page"`
+	Limit     int64  `bson: "limit" json:"limit"`
 }
 
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}})
 	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
 
 	//start the cron
@@ -89,13 +93,60 @@ func init() {
 // cron func call
 func StartCall() {
 	c := cron.New()
-	c.AddFunc("*/30 * * * * *", func() {
+	c.AddFunc("*/10 * * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
 		//calling get transactions according to farms(strategies)
 		GetDetails()
 	})
 	// Start cron with one scheduled job
 	c.Start()
+}
+
+// get all transaction list api with page and limit
+func GetTransactions(filters Filters) (*EventResult, error) {
+	var records []*EventResult
+
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"chainId": filters.ChainId, "type": strings.ToLower(filters.Type), "account": strings.ToLower(filters.Address), "timestamp": bson.M{"$gte": filters.StartTime, "$lte": filters.EndTime}}
+
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$facet": bson.M{
+			"total": []bson.M{
+				{"$match": query},
+				{"$count": "total"},
+			},
+			"records": []bson.M{
+				{"$match": query},
+				{"$skip": (filters.Page - 1) * filters.Limit},
+				{"$limit": filters.Limit},
+				{"$sort": bson.M{"blockNumber": -1}},
+			},
+		}},
+		{"$project": bson.M{
+			"total": bson.M{"$cond": bson.M{
+				"if": bson.M{"$gt": bson.A{bson.M{"$size": "$total"}, 0}}, "then": bson.M{"$first": "$total.total"}, "else": 0}}, "records": 1,
+		}},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		return records[0], err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+	if err != nil {
+		return records[0], err
+	}
+	return records[0], nil
 }
 
 //get farms
@@ -110,6 +161,7 @@ func checkContract(address string) bool {
 		"0x375746d4c701032a282b4bed951e39b9312f9c6c",
 		"0x2d32d65fcd4a2b64e4ffa512ac3d0896b542b0d5",
 		"0x3421dfd649b31f5bb48528368a68351014b5029e",
+		"0x12e9a9dcDc8f276c71524Ddd102343525ddAbB26",
 	}
 	for _, e := range strategies {
 		if strings.ToLower(e) == strings.ToLower(address) {
@@ -147,6 +199,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	// fmt.Println(block.Time())            // 1527211625
 
 	fmt.Println("------------------------------------------------")
+	fmt.Println("chainId: ", chainId, "blockNumber: ", bN)
 	fmt.Println("Total Transactions: ", len(block.Transactions()))
 	dd := math.Pow(10, float64(18))
 
@@ -204,7 +257,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 							Timestamp:       blockTimestamp,
 						}
 						go SaveDataBackground(&d, CollectionName)
-						
+
 					//Withdraw Event
 					case logWithdrawSigHash.Hex():
 						withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
@@ -295,181 +348,6 @@ func GetRecord(chainId int, CN string) (interface{}, error) {
 		err := collection.FindOne(ctx, bson.M{"chainId": chainId}, opts).Decode(&record2)
 		return *record2, err
 	}
-}
-
-// Price Feed list api with page and limit
-func GetTotal(status string) int64 {
-	client := common.GetDB()
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	query := bson.M{}
-	num, err := collection.CountDocuments(ctx, query)
-	if err != nil {
-		return 0
-	}
-	return num
-}
-
-// Price Feed list api with page and limit
-func GetAll(page int64, limit int64, status string) ([]*TransactionModel, error) {
-	client := common.GetDB()
-	var records []*TransactionModel
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
-	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-
-	query := bson.M{}
-
-	cursor, err := collection.Find(ctx, query, opts)
-	if err != nil {
-		return records, err
-	}
-	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &records)
-
-	if err := cursor.Err(); err != nil {
-		return nil, err
-	}
-	return records, err
-}
-
-// delete record from collection
-func DeleteRecordModel(ID string) (bool, error) {
-	client := common.GetDB()
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-
-	objID, err := primitive.ObjectIDFromHex(ID)
-	if err != nil {
-		return false, err
-	}
-	res, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objID})
-	if err != nil {
-		return false, err
-	}
-	fmt.Println(res, "Delete")
-	return true, err
-}
-
-//aggregate function for graph in dashboard
-
-/*
-db.getCollection('transfers').aggregate([{$match:{chainId:4, address:"0x37dc6cf6a221b6e511eb9fcdef6cb467c636847b"}},{$limit:7},{$sort:{timestamp:-1}},{$project:{value:1, timestamp:1}}])
-*/
-func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
-	client := common.GetDB()
-	var records []*GraphDataModel
-
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Specify a pipeline that will return the number of times each name appears
-	// in the collection.
-	pipeline := []bson.M{
-		{"$match": bson.M{"chainId": filters.ChainId, "address": strings.ToLower(filters.Address)}},
-		{"$sort": bson.M{"timestamp": -1}},
-		{"$project": bson.M{
-			// "_id":   0,
-			"value":     1,
-			"timestamp": 1,
-		}},
-		{"$limit": 7},
-		{"$sort": bson.M{"timestamp": 1}},
-	}
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	opts := options.Aggregate()
-
-	cursor, err := collection.Aggregate(ctx, pipeline, opts)
-	if err != nil {
-		return records, err
-	}
-	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &records)
-
-	if err := cursor.Err(); err != nil {
-		return nil, err
-	}
-	return records, err
-}
-
-/**
-* delete the duplicates
-* @param  {string} d
- */
-func callingDelete(CollectionName string, ChainId int) error {
-	type IDResult struct {
-		TransactionHash string
-	}
-
-	type DeleteResult struct {
-		ID    IDResult `json:"_id" bson:"_id"`
-		Dups  []primitive.ObjectID
-		Count float64
-	}
-	var records []*DeleteResult
-
-	client := common.GetDB()
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	query := bson.M{"chainId": ChainId}
-
-	// Specify a pipeline that will return the number of times each name appears
-	// in the collection.
-	pipeline := []bson.M{
-		{"$match": query},
-		{"$group": bson.M{
-			"_id":   bson.M{"transactionHash": "$transactionHash"},
-			"dups":  bson.M{"$addToSet": "$_id"},
-			"count": bson.M{"$sum": 1},
-		}},
-		{"$match": bson.M{"count": bson.M{"$gt": 1}}},
-	}
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	opts := options.Aggregate()
-
-	cursor, err := collection.Aggregate(ctx, pipeline, opts)
-	if err != nil {
-		log.Fatalf("err in aggregate", err)
-		return err
-	}
-	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &records)
-	if err != nil {
-		return err
-	}
-
-	// fmt.Println("records", len(records))
-	// fmt.Println("records", records[0].ID.TransactionHash)
-	// delete the duplicate ids at once
-	if len(records) > 0 {
-		for _, element := range records {
-			//slice array
-			slicedArr := element.Dups[1:]
-
-			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
-			if err != nil {
-				return err
-			}
-			fmt.Println("delete response", res)
-		}
-
-	}
-	return nil
 }
 
 // function to get block timestamp

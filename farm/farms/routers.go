@@ -48,7 +48,7 @@ func FarmTotal(c *gin.Context) {
 	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
-		chain_id = 4 //rinkeby
+		chain_id = common.DefaultChainId
 	}
 	// filtering
 	filters := Filters{
@@ -89,7 +89,7 @@ func FarmList(c *gin.Context) {
 	name := c.Query("name")
 	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
-		chain_id = 4 //rinkeby
+		chain_id = common.DefaultChainId
 	}
 	filters := Filters{
 		Source:     source,

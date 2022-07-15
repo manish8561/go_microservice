@@ -6,9 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/autocompound/docker_backend/ledger/common"
-	"github.com/autocompound/docker_backend/ledger/pricefeeds"
 	"github.com/autocompound/docker_backend/ledger/transactions"
-
 )
 
 // cors common function for * n
@@ -42,8 +40,7 @@ func main() {
 	v1 := r.Group("/api/ledger_service")
 
 	v1.Use(common.AuthMiddleware(false))
-	pricefeeds.ApisRegister(v1.Group("/pricefeeds"))
-	transactions.ApisRegister(v1.Group("/tokens"))
+	transactions.ApisRegister(v1.Group("/transactions"))
 
 	testAuth := r.Group("/api/ledger_service/ping")
 

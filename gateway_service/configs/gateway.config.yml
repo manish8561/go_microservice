@@ -13,6 +13,8 @@ apiEndpoints:
     paths: "/api/farm_service/*"
   contracts:
     paths: "/api/contract_service/*"
+  ledgers:
+    paths: "/api/ledger_service/*"
 serviceEndpoints:
   httpbin:
     url: "https://httpbin.org"
@@ -22,6 +24,8 @@ serviceEndpoints:
     url: "http://20.10.11.4:3002"
   contracts:
     url: "http://20.10.11.5:3003"
+  ledgers:
+    url: "http://20.10.11.6:3004"
 policies:
   - basic-auth
   - cors
@@ -63,3 +67,10 @@ pipelines:
         - proxy:
             - action:
                 serviceEndpoint: contracts
+  ledgers:
+      apiEndpoints:
+        - ledgers
+      policies:
+        - proxy:
+            - action:
+                serviceEndpoint: ledgers

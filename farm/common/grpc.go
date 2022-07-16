@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"log"
+	"net"
 	"os"
 	"time"
 
@@ -12,13 +13,63 @@ import (
 
 var grpc_server_conn *grpc.ClientConn
 
+type Server struct {
+	pb.UnimplementedGreeterServer
+}
+
 func init() {
 	//calling grpc common server
 	Call_GRPC_Server()
 }
 
+// SayHello implements helloworld.GreeterServer(grpc)
+func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	log.Printf("Received Handshake: %v", in.GetName())
+	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
+}
+
+//send user details
+func (s *Server) GetUserDetails(ctx context.Context, in *pb.UserRequest) (*pb.UserReply, error) {
+	// log.Printf("Received ID: %v", in.GetId())
+	// user, err := GetUserProfile(in.GetId())
+	// if err != nil {
+	// 	return &pb.UserReply{}, err
+	// }
+	// log.Printf("user from db:", user)
+	return &pb.UserReply{
+		Id:        in.GetId(),
+		Firstname: "user.Firstname",
+		Lastname:  "user.Lastname",
+		Status:    "user.Status",
+		Role:      "user.Role",
+		XCreated:  "(user.Created).String()",
+		XModified: "",
+	}, nil
+}
+
 //initial function to handle grpc connection
 func Call_GRPC_Server() {
+	// grpc Server as farm
+	// grpc start
+
+	go func() {
+		endpoint, ok := os.LookupEnv("FARM_GRPC_SERVER_PORT")
+		if !ok {
+			endpoint = ":50052"
+		}
+		lis, err := net.Listen("tcp", endpoint)
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+		s := grpc.NewServer()
+		pb.RegisterGreeterServer(s, &Server{})
+		log.Printf("farm grpc server listening at %v", lis.Addr())
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("could not start grpc server: %v", err)
+		}
+	}()
+	// grpc end
+
 	// Set up a connection to the grpc client for user .
 	// grpc start
 	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
@@ -34,16 +85,15 @@ func Call_GRPC_Server() {
 
 	// defer conn.Close()
 	c := pb.NewGreeterClient(conn)
-	log.Printf("grpc", c)
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world"})
+	rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world farm"})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
 	log.Printf("Greeting: %s", rr.GetMessage())
-	// grpc end
+
 }
 
 //get user details

@@ -32,7 +32,7 @@ func Get_Eth_Connection(chain_id int) *ethclient.Client {
 	}
 
 	if !ok {
-		log.Fatalf("end point not found to connect %v", rpc)
+		log.Printf("end point not found to connect %v", rpc)
 	}
 
 	if global_chain_id != chain_id {
@@ -40,7 +40,7 @@ func Get_Eth_Connection(chain_id int) *ethclient.Client {
 		conn, err := ethclient.Dial(rpc)
 		global_eth_client = conn
 		if err != nil {
-			log.Fatalf("Failed to connect to the Ethereum client: %v", err)
+			log.Printf("Failed to connect to the Ethereum client: %v", err)
 		}
 	}
 

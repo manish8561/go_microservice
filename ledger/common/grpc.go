@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -21,7 +22,8 @@ func init() {
 func Call_GRPC_Server() {
 	// Set up a connection to the grpc client for user .
 	// grpc start
-	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
+	endpoint, ok := os.LookupEnv("FARM_GRPC_SERVER_PORT")
+	fmt.Println("GRPC", endpoint)
 	if !ok {
 		log.Fatalf("end point not found to connect", endpoint)
 	}
@@ -34,11 +36,11 @@ func Call_GRPC_Server() {
 
 	// defer conn.Close()
 	c := pb.NewGreeterClient(conn)
-	log.Printf("grpc", c)
+	log.Printf("grpc ledger", c)
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world"})
+	rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world ledger"})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}

@@ -29,7 +29,9 @@ import (
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
 	// token "./strategy.go"
+	pb "github.com/autocompound/docker_backend/ledger/helloworld"
 )
 
 const CollectionName = "farms_transactions"
@@ -90,6 +92,23 @@ func init() {
 	StartCall()
 }
 
+//get active farms
+func GetFarmFromService(chainId int) *pb.FarmReply {
+	c := int64(chainId)
+	grpc_server_conn := common.Get_GRPC_Conn()
+	cc := pb.NewGreeterClient(grpc_server_conn)
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	result, err := cc.GetFarms(ctx, &pb.FarmRequest{ChainId: c, Status: "active"})
+	if err != nil {
+		fmt.Println("grpc ledger error", err)
+		return nil
+	}
+
+	return result
+}
+
 // cron func call
 func StartCall() {
 	c := cron.New()
@@ -102,69 +121,22 @@ func StartCall() {
 	c.Start()
 }
 
-// get all transaction list api with page and limit
-func GetTransactions(filters Filters) (*EventResult, error) {
-	var records []*EventResult
-
-	client := common.GetDB()
-	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	query := bson.M{"chainId": filters.ChainId, "type": strings.ToLower(filters.Type), "account": strings.ToLower(filters.Address), "timestamp": bson.M{"$gte": filters.StartTime, "$lte": filters.EndTime}}
-
-	// Specify a pipeline that will return the number of times each name appears
-	// in the collection.
-	pipeline := []bson.M{
-		{"$facet": bson.M{
-			"total": []bson.M{
-				{"$match": query},
-				{"$count": "total"},
-			},
-			"records": []bson.M{
-				{"$match": query},
-				{"$skip": (filters.Page - 1) * filters.Limit},
-				{"$limit": filters.Limit},
-				{"$sort": bson.M{"blockNumber": -1}},
-			},
-		}},
-		{"$project": bson.M{
-			"total": bson.M{"$cond": bson.M{
-				"if": bson.M{"$gt": bson.A{bson.M{"$size": "$total"}, 0}}, "then": bson.M{"$first": "$total.total"}, "else": 0}}, "records": 1,
-		}},
-	}
-	// Find the document for which the _id field matches id.
-	// Specify the Sort option to sort the documents by age.
-	opts := options.Aggregate()
-
-	cursor, err := collection.Aggregate(ctx, pipeline, opts)
-	if err != nil {
-		return records[0], err
-	}
-	defer cursor.Close(ctx)
-	err = cursor.All(ctx, &records)
-	if err != nil {
-		return records[0], err
-	}
-	return records[0], nil
-}
-
 //get farms
 // func GetFarms(chainId int)
-func checkContract(address string) bool {
-	strategies := [...]string{
-		"0x3349e79dfcc1d80114c37d48a516940f06a2b7d2",
-		"0xfaa931e617889a10a2f5d9537a9ff9f4d8cedfb8",
-		"0x94764fbaef3804474c583640447e2c2a824d31a6",
-		"0x07809cb1c6b275b144fc0bd2b9693f6faa47ea61",
-		"0x7e01691b46ecd36b4a0f4f5d1f32dc178c9aa279",
-		"0x375746d4c701032a282b4bed951e39b9312f9c6c",
-		"0x2d32d65fcd4a2b64e4ffa512ac3d0896b542b0d5",
-		"0x3421dfd649b31f5bb48528368a68351014b5029e",
-		"0x12e9a9dcDc8f276c71524Ddd102343525ddAbB26",
-	}
-	for _, e := range strategies {
-		if strings.ToLower(e) == strings.ToLower(address) {
+func checkContract(address string, farmReply *pb.FarmReply) bool {
+	// strategies := [...]string{
+	// 	"0x3349e79dfcc1d80114c37d48a516940f06a2b7d2",
+	// 	"0xfaa931e617889a10a2f5d9537a9ff9f4d8cedfb8",
+	// 	"0x94764fbaef3804474c583640447e2c2a824d31a6",
+	// 	"0x07809cb1c6b275b144fc0bd2b9693f6faa47ea61",
+	// 	"0x7e01691b46ecd36b4a0f4f5d1f32dc178c9aa279",
+	// 	"0x375746d4c701032a282b4bed951e39b9312f9c6c",
+	// 	"0x2d32d65fcd4a2b64e4ffa512ac3d0896b542b0d5",
+	// 	"0x3421dfd649b31f5bb48528368a68351014b5029e",
+	// 	"0x12e9a9dcDc8f276c71524Ddd102343525ddAbB26",
+	// }
+	for _, e := range farmReply.Items {
+		if strings.ToLower(e.Address) == strings.ToLower(address) {
 			return true
 		}
 	}
@@ -174,6 +146,16 @@ func checkContract(address string) bool {
 // You could input string which will be saved in database returning with error info
 // 	if err := FindOne(&record); err != nil { ... }
 func GetBlockTransactions(chainId int, bN int64) (int64, error) {
+	//GRPC call
+	r := GetFarmFromService(chainId)
+	// error from grpc
+	if r == nil {
+		return bN, nil
+	}
+	fmt.Println("------------------------------------------------")
+
+	fmt.Println("gprc result: ",  len(r.Items), "chainId: ", chainId)
+
 	// Create an IPC based RPC connection to a remote node
 	conn := common.Get_Eth_Connection(chainId)
 
@@ -205,7 +187,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 
 	for _, tx := range block.Transactions() {
 		// fmt.Println("Transaction: ", tx.Hash().Hex())
-		if tx.To() != nil && checkContract(tx.To().Hex()) {
+		if tx.To() != nil && checkContract(tx.To().Hex(), r) {
 			strategyAddress := strings.ToLower(tx.To().Hex())
 			contractAddress := ethcommon.HexToAddress(strategyAddress)
 			strategyContract, err := NewTransactions(contractAddress, conn)
@@ -348,6 +330,53 @@ func GetRecord(chainId int, CN string) (interface{}, error) {
 		err := collection.FindOne(ctx, bson.M{"chainId": chainId}, opts).Decode(&record2)
 		return *record2, err
 	}
+}
+
+// get all transaction list api with page and limit
+func GetTransactions(filters Filters) (*EventResult, error) {
+	var records []*EventResult
+
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	query := bson.M{"chainId": filters.ChainId, "type": strings.ToLower(filters.Type), "account": strings.ToLower(filters.Address), "timestamp": bson.M{"$gte": filters.StartTime, "$lte": filters.EndTime}}
+
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$facet": bson.M{
+			"total": []bson.M{
+				{"$match": query},
+				{"$count": "total"},
+			},
+			"records": []bson.M{
+				{"$match": query},
+				{"$skip": (filters.Page - 1) * filters.Limit},
+				{"$limit": filters.Limit},
+				{"$sort": bson.M{"blockNumber": -1}},
+			},
+		}},
+		{"$project": bson.M{
+			"total": bson.M{"$cond": bson.M{
+				"if": bson.M{"$gt": bson.A{bson.M{"$size": "$total"}, 0}}, "then": bson.M{"$first": "$total.total"}, "else": 0}}, "records": 1,
+		}},
+	}
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	opts := options.Aggregate()
+
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
+	if err != nil {
+		return records[0], err
+	}
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
+	if err != nil {
+		return records[0], err
+	}
+	return records[0], nil
 }
 
 // function to get block timestamp

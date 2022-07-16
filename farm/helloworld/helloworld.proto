@@ -16,7 +16,6 @@ syntax = "proto3";
 
 // import "google/protobuf/timestamp.proto";
 
-
 option go_package = "github.com/autocompound/docker_backend/user/helloworld/helloworld";
 option java_multiple_files = true;
 option java_package = "io.autocompound.user.helloworld";
@@ -27,31 +26,38 @@ package helloworld;
 // The greeting service definition.
 service Greeter {
   // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc SayHello(HelloRequest) returns (HelloReply) {}
   rpc GetUserDetails(UserRequest) returns (UserReply) {}
+  rpc GetFarms(FarmRequest) returns (FarmReply) {}
 }
 
 // The request message containing the user's name.
-message HelloRequest {
-  string name = 1;
-}
+message HelloRequest { string name = 1; }
 
 // The response message containing the greetings
-message HelloReply {
-  string message = 1;
-}
+message HelloReply { string message = 1; }
 
-message UserRequest {
-  string id=1;
-}
+message UserRequest { string id = 1; }
 
 message UserReply {
-  string id=1;
-  string email=2;
-  string firstname=3;
-  string lastname=4;
-  string status=5;
-  string role=6;
-  string _created=7;
-  string _modified=8;
+  string id = 1;
+  string email = 2;
+  string firstname = 3;
+  string lastname = 4;
+  string status = 5;
+  string role = 6;
+  string _created = 7;
+  string _modified = 8;
+}
+// request for all farm
+message FarmRequest {
+  int64 chainId = 1;
+  string status = 2;
+}
+// array response for farms
+message FarmReply { repeated Item items = 1; }
+message Item {
+  string id = 1;
+  string address = 2;
+  string status = 3;
 }

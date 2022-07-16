@@ -29,7 +29,7 @@ services:
     build: ./ledger
     env_file: ./config/ledger.env
     depends_on:
-      - user
+      - farm
     networks:
       my_network:
         ipv4_address: 20.10.11.6
@@ -50,6 +50,7 @@ services:
     hostname: farm
     ports:
       - "0.0.0.0:3002:3002"
+      - "0.0.0.0:50052:50052"
     container_name: farm
     restart: always
     build: ./farm

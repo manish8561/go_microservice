@@ -25,6 +25,7 @@ type GreeterClient interface {
 	// Sends a greeting
 	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
 	GetUserDetails(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*UserReply, error)
+	GetFarms(ctx context.Context, in *FarmRequest, opts ...grpc.CallOption) (*FarmReply, error)
 }
 
 type greeterClient struct {
@@ -53,6 +54,15 @@ func (c *greeterClient) GetUserDetails(ctx context.Context, in *UserRequest, opt
 	return out, nil
 }
 
+func (c *greeterClient) GetFarms(ctx context.Context, in *FarmRequest, opts ...grpc.CallOption) (*FarmReply, error) {
+	out := new(FarmReply)
+	err := c.cc.Invoke(ctx, "/helloworld.Greeter/GetFarms", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GreeterServer is the server API for Greeter service.
 // All implementations must embed UnimplementedGreeterServer
 // for forward compatibility
@@ -60,6 +70,7 @@ type GreeterServer interface {
 	// Sends a greeting
 	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
 	GetUserDetails(context.Context, *UserRequest) (*UserReply, error)
+	GetFarms(context.Context, *FarmRequest) (*FarmReply, error)
 	mustEmbedUnimplementedGreeterServer()
 }
 
@@ -72,6 +83,9 @@ func (UnimplementedGreeterServer) SayHello(context.Context, *HelloRequest) (*Hel
 }
 func (UnimplementedGreeterServer) GetUserDetails(context.Context, *UserRequest) (*UserReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserDetails not implemented")
+}
+func (UnimplementedGreeterServer) GetFarms(context.Context, *FarmRequest) (*FarmReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFarms not implemented")
 }
 func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
 
@@ -122,6 +136,24 @@ func _Greeter_GetUserDetails_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Greeter_GetFarms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FarmRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GreeterServer).GetFarms(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.Greeter/GetFarms",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GreeterServer).GetFarms(ctx, req.(*FarmRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,6 +168,10 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserDetails",
 			Handler:    _Greeter_GetUserDetails_Handler,
+		},
+		{
+			MethodName: "GetFarms",
+			Handler:    _Greeter_GetFarms_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

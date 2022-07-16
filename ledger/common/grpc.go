@@ -36,7 +36,6 @@ func Call_GRPC_Server() {
 
 	// defer conn.Close()
 	c := pb.NewGreeterClient(conn)
-	log.Printf("grpc ledger", c)
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

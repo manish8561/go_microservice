@@ -38,11 +38,7 @@ const CollectionName = "farms_transactions"
 const CollectionName2 = "farms_blocks"
 const blockDff = 200
 
-// Models should only be concerned with database schema, more strict checking should be put in validator.
-// Transaction Model
-// event Deposit(address indexed account,  uint256 amount);
-// event Withdraw(address indexed account,  uint256 amount);
-// Both events
+//Network Block Number Model
 type FarmBlockModel struct {
 	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created         time.Time          `bson:"_created" json:"_created"`
@@ -52,6 +48,11 @@ type FarmBlockModel struct {
 	LastBlockNumber int64              `bson:"lastBlockNumber" json:"lastBlockNumber"`
 }
 
+// Models should only be concerned with database schema, more strict checking should be put in validator.
+// Transaction Model
+// event Deposit(address indexed account,  uint256 amount);
+// event Withdraw(address indexed account,  uint256 amount);
+// Both events
 type TransactionModel struct {
 	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	ChainId         int                `bson:"chainId" json:"chainId"`
@@ -64,11 +65,10 @@ type TransactionModel struct {
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
 }
 
-// struct for api with total
+// struct for api data with total
 type EventResult struct {
 	Total   int                `bson:"total" json:"total"`
 	Records []TransactionModel `bson:"records" json:"records"`
-	// UnstakeEvent []UnstakeEventModel `bson:"unstakeEvent" json:"unstakeEvent"`
 }
 
 //struct for filters
@@ -89,7 +89,7 @@ func init() {
 	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
 
 	//start the cron
-	StartCall()
+	StartCronJob()
 }
 
 //get active farms
@@ -110,7 +110,7 @@ func GetFarmFromService(chainId int) *pb.FarmReply {
 }
 
 // cron func call
-func StartCall() {
+func StartCronJob() {
 	c := cron.New()
 	c.AddFunc("*/10 * * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
@@ -153,8 +153,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 		return bN, nil
 	}
 	fmt.Println("------------------------------------------------")
-
-	fmt.Println("gprc result: ",  len(r.Items), "chainId: ", chainId)
+	fmt.Println("gprc result: ", len(r.Items), "chainId: ", chainId)
 
 	// Create an IPC based RPC connection to a remote node
 	conn := common.Get_Eth_Connection(chainId)
@@ -406,8 +405,6 @@ func get_date_without_time(timestamp int64) time.Time {
 func GetDetails() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId
-		// GetContract(chainId, val.AC, val.BlockNumber)
-		// fmt.Println(chainId, val, val.AC.Address, val.AC.BlockNumber, "----------")
 
 		// get record from db
 		result, err := GetRecord(chainId, CollectionName2)
@@ -434,7 +431,43 @@ func GetDetails() {
 			fmt.Println(err, "get transaction err")
 		}
 		go UpdateOne(r.ID, bn, CollectionName2)
-		// GetBlockTransactions(chainId, 30591094)
-
 	}
+}
+
+//to get the profit and loss
+func GetProfitLoss(strategy string) float64 {
+	client := common.GetDB()
+	var records *TransactionModel
+	var records2 *TransactionModel
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	sorting := bson.D{{"timestamp", -1}}
+
+	// Find the document for which the _id field matches id.
+	// Specify the Sort option to sort the documents by age.
+	// The first document in the sorted order will be returned.
+	opts := options.FindOne().SetSort(sorting)
+	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
+	// deposit
+	query := bson.M{"strategy": strings.ToLower(strategy), "type": "deposit"}
+
+	err := collection.FindOne(ctx, query, opts).Decode(&records)
+	if err != nil {
+		return 0
+	}
+	// withdraw
+	query["type"] = "withdraw"
+	err = collection.FindOne(ctx, query, opts).Decode(&records2)
+	if err != nil {
+		return 100
+	}
+
+	if records.Amount > 0 && records2.Amount > 0 {
+		return (records.Amount - records2.Amount) / records2.Amount * 100
+	}
+
+	return 0
 }

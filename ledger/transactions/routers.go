@@ -13,11 +13,10 @@ import (
 // register api in this function
 func ApisRegister(router *gin.RouterGroup) {
 	router.GET("/get", GetTransactionCall)
+	router.GET("/profitloss", ProfitLossCall)
 
 	//Authorize Routes
 	router.Use(common.AuthMiddleware(true))
-	// router.GET("/total", Total)
-	// router.GET("/list", List)
 	// router.POST("", Add)
 	// router.DELETE("/:id", DeleteRecord)
 }
@@ -75,5 +74,18 @@ func GetTransactionCall(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
+}
+
+// function to get dashboard record
+// ProfitLossCall
+func ProfitLossCall(c *gin.Context) {
+	address := c.Query("address")
+	if address == "" {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Strategy address is required"})
+		return
+	}
+	
+	records := GetProfitLoss(address)
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
 }

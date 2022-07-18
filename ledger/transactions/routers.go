@@ -85,7 +85,7 @@ func ProfitLossCall(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Strategy address is required"})
 		return
 	}
-	
-	records := GetProfitLoss(address)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
+
+	records, value := GetProfitLoss(address)
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": records, "value": value})
 }

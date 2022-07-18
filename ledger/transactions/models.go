@@ -435,7 +435,7 @@ func GetDetails() {
 }
 
 //to get the profit and loss
-func GetProfitLoss(strategy string) float64 {
+func GetProfitLoss(strategy string) (float64, float64) {
 	client := common.GetDB()
 	var records *TransactionModel
 	var records2 *TransactionModel
@@ -456,18 +456,19 @@ func GetProfitLoss(strategy string) float64 {
 
 	err := collection.FindOne(ctx, query, opts).Decode(&records)
 	if err != nil {
-		return 0
+		return 0,0
 	}
 	// withdraw
 	query["type"] = "withdraw"
 	err = collection.FindOne(ctx, query, opts).Decode(&records2)
 	if err != nil {
-		return 100
+		return 100, records.Amount
 	}
 
 	if records.Amount > 0 && records2.Amount > 0 {
-		return (records.Amount - records2.Amount) / records2.Amount * 100
+		v := (records.Amount - records2.Amount)
+		return v/ records2.Amount * 100, v
 	}
 
-	return 0
+	return 0,0
 }

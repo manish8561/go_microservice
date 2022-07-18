@@ -80,12 +80,6 @@ func GetTransactionCall(c *gin.Context) {
 // function to get dashboard record
 // ProfitLossCall
 func ProfitLossCall(c *gin.Context) {
-	address := c.Query("address")
-	if address == "" {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Strategy address is required"})
-		return
-	}
-
-	records, value := GetProfitLoss(address)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": records, "value": value})
+	records, value := GetProfitLoss()
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"percentage": records, "value": value}})
 }

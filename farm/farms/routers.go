@@ -29,7 +29,6 @@ func ApisRegister(router *gin.RouterGroup) {
 	router.Use(common.AuthMiddleware(true))
 	router.DELETE("/:id", FarmDelete)
 
-
 	router.POST("/upload", FileUpload)
 	router.POST("", FarmSave)
 	router.PUT("", FarmUpdate)
@@ -132,8 +131,9 @@ func FarmTvl(c *gin.Context) {
 		chainId = 4 //rinkeby
 	}
 	num := GetTvl(chainId)
-	c.JSON(http.StatusOK, gin.H{"success": true, "total": num})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"tvl": num}})
 }
+
 /*
 function to get AC Token Per Block
 */
@@ -143,7 +143,7 @@ func FarmACPerBlock(c *gin.Context) {
 		chainId = 4 //rinkeby
 	}
 	num := GetACPerBlock(chainId)
-	c.JSON(http.StatusOK, gin.H{"success": true, "acperblock": num})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"acperblock": num}})
 }
 
 /*
@@ -224,6 +224,7 @@ func FarmSetOperator(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"message": "updated farm successfully", "success": true})
 }
+
 /*
 function to delete farm
 */
@@ -238,6 +239,7 @@ func FarmDelete(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 	return
 }
+
 /*
 function to upload file in the farm
 */

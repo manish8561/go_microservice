@@ -41,7 +41,7 @@ func Call_GRPC_Server() {
 	defer cancel()
 	rr, err := c.SayHello(ctx, &pb.HelloRequest{Name: "world ledger"})
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Printf("could not greet: %v", err)
 	}
 	log.Printf("Greeting: %s", rr.GetMessage())
 	// grpc end

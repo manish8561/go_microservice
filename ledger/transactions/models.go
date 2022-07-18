@@ -85,7 +85,7 @@ type Filters struct {
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}, {"amount", 1}})
 	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
 
 	//start the cron
@@ -435,40 +435,72 @@ func GetDetails() {
 }
 
 //to get the profit and loss
-func GetProfitLoss(strategy string) (float64, float64) {
+/*
+db.getCollection('farms_transactions').aggregate([
+{$facet:{
+    deposit:[{$match:{type:"deposit"}},{$group:{_id:null, total:{$sum:"$amount"}}}],
+    withdraw:[{$match:{type:"withdraw"}},{$group:{_id:null, total:{$sum:"$amount"}}}]}
+}, {$project:{
+        desposit:{$first:"$deposit.total"},
+        withdraw:{$first:"$withdraw.total"},
+    } },
+])
+*/
+func GetProfitLoss() (float64, float64) {
 	client := common.GetDB()
-	var records *TransactionModel
-	var records2 *TransactionModel
-
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	sorting := bson.D{{"timestamp", -1}}
+	type Result struct {
+		Deposit  float64 `bson:"deposit" json:"deposit"`
+		Withdraw float64 `bson:"withdraw" json:"withdraw"`
+	}
 
+	var records []*Result
+	// Specify a pipeline that will return the number of times each name appears
+	// in the collection.
+	pipeline := []bson.M{
+		{"$facet": bson.M{
+			"deposit": []bson.M{
+				{"$match": bson.M{"type": "deposit"}},
+				{"$group": bson.M{
+					"_id":   nil,
+					"total": bson.M{"$sum": "$amount"},
+				}},
+			},
+			"withdraw": []bson.M{
+				{"$match": bson.M{"type": "withdraw"}},
+				{"$group": bson.M{
+					"_id":   nil,
+					"total": bson.M{"$sum": "$amount"},
+				}},
+			},
+		}},
+		{"$project": bson.M{
+			"deposit":  bson.M{"$first": "$deposit.total"},
+			"withdraw": bson.M{"$first": "$withdraw.total"},
+		}},
+	}
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
-	// The first document in the sorted order will be returned.
-	opts := options.FindOne().SetSort(sorting)
-	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
-	// deposit
-	query := bson.M{"strategy": strings.ToLower(strategy), "type": "deposit"}
+	opts := options.Aggregate()
 
-	err := collection.FindOne(ctx, query, opts).Decode(&records)
+	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
-		return 0,0
+		return 0, 0
 	}
-	// withdraw
-	query["type"] = "withdraw"
-	err = collection.FindOne(ctx, query, opts).Decode(&records2)
+	defer cursor.Close(ctx)
+	err = cursor.All(ctx, &records)
 	if err != nil {
-		return 100, records.Amount
+		return 0, 0
 	}
 
-	if records.Amount > 0 && records2.Amount > 0 {
-		v := (records.Amount - records2.Amount)
-		return v/ records2.Amount * 100, v
+	if len(records) == 1 {
+		v := records[0].Deposit - records[0].Withdraw
+		t := (v / records[0].Withdraw) * 100
+		return t, v
 	}
 
-	return 0,0
+	return 0, 0
 }

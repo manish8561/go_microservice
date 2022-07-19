@@ -161,7 +161,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	// to get latest blocknumber
 	header, err := conn.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return 0, err
 	}
 	lastestBlockNumber := header.Number.Int64()
@@ -173,7 +173,8 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	blockNumber := big.NewInt(bN)
 	block, err := conn.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return 0, err
 	}
 	blockTimestamp := int64(block.Time())
 	// fmt.Println(block.Number().Uint64()) // 5671744
@@ -204,6 +205,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 			receipt, err := conn.TransactionReceipt(context.Background(), tx.Hash())
 			if err != nil {
 				fmt.Println(err)
+				return 0, err
 			}
 
 			// 1 success status
@@ -219,12 +221,14 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 						withdrawEvent, err := strategyContract.ParseDeposit(*vLog)
 						if err != nil {
 							log.Println(err)
+							return 0, err
 						}
 
 						//converting the string to float64
 						transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
 						if err != nil {
 							fmt.Println("Float conversion", err)
+							return 0, err
 						}
 
 						d := TransactionModel{
@@ -244,12 +248,14 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 						withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
 						if err != nil {
 							log.Println(err)
+							return 0, err
 						}
 
 						//converting the string to float64
 						transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
 						if err != nil {
 							fmt.Println("Float conversion", err)
+							return 0, err
 						}
 						fmt.Println("----------------------")
 						fmt.Println("Account: ", strings.ToLower(withdrawEvent.Account.Hex()))
@@ -429,6 +435,7 @@ func GetDetails() {
 		bn, err := GetBlockTransactions(r.ChainId, r.LastBlockNumber)
 		if err != nil {
 			fmt.Println(err, "get transaction err")
+			return
 		}
 		go UpdateOne(r.ID, bn, CollectionName2)
 	}

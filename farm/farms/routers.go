@@ -59,7 +59,7 @@ func FarmTotal(c *gin.Context) {
 
 	num := GetTotal(status, filters)
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "count": num})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"count": num}})
 }
 
 /*

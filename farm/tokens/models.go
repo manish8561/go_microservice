@@ -310,7 +310,7 @@ func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
 * delete the duplicates
 * @param  {string} d
  */
-func callingDelete(CollectionName string, ChainId int) error {
+func callingDelete(CollectionName string, ChainId int)  {
 	type IDResult struct {
 		TransactionHash string
 	}
@@ -346,13 +346,12 @@ func callingDelete(CollectionName string, ChainId int) error {
 
 	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
-		log.Fatalf("err in aggregate", err)
-		return err
+		log.Println("err in aggregate", err)
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
 	if err != nil {
-		return err
+		log.Println("err in aggregate", err)
 	}
 
 	// fmt.Println("records", len(records))
@@ -365,13 +364,12 @@ func callingDelete(CollectionName string, ChainId int) error {
 
 			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
 			if err != nil {
-				return err
+				log.Println("err in aggregate", err)
 			}
 			fmt.Println("delete response", res)
 		}
 
 	}
-	return nil
 }
 
 // function to get block timestamp
@@ -379,7 +377,7 @@ func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 	blockNumber := big.NewInt(block_num)
 	block, err := client.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// fmt.Printf("%t", block.Time())
@@ -407,28 +405,29 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 	// to get latest blocknumber
 	header, err := conn.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	lastestBlockNumber := header.Number.Int64()
 
 	contractAddress := ethcommon.HexToAddress(ac)
 	token, err := NewTokens(contractAddress, conn)
 	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+		log.Println("Failed to instantiate a Token contract: %v", err)
+		return err
 	}
 	decimals, err := token.Decimals(&bind.CallOpts{})
 	if err != nil {
-		log.Fatalf("Failed to retrieve token name: %v", err)
-	}
-	fmt.Println("Token decimals:", decimals)
-	if err != nil {
-		log.Fatalf("Failed to retrieve token name: %v", err)
+		log.Println("Failed to retrieve token name: %v", err)
+		return err
 	}
 
 	record, err := GetRecord(chainId, ac)
+	if err != nil {
+		log.Println("Failed to retrieve token name: %v", err)
+		return err
+	}
 
 	if (record != TransferEventModel{}) {
-		fmt.Println(record.LastBlockNumber, "before")
 		lastBlockNumber := (record.LastBlockNumber + 1)
 		newBlockNumber := lastBlockNumber + blockDff
 		if newBlockNumber >= lastestBlockNumber {
@@ -446,7 +445,8 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 		//logs from contract
 		logs, err := conn.FilterLogs(context.Background(), query)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Failed to retrieve token name: %v", err)
+			return err
 		}
 		if len(logs) == 0 {
 			go UpdateOne(record.ID, newBlockNumber)
@@ -461,20 +461,22 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 		dd := math.Pow(10, float64(decimals))
 
 		for _, vLog := range logs {
-			fmt.Println(vLog.Topics[0].Hex(), "transfer hex")
+			// fmt.Println(vLog.Topics[0].Hex(), "transfer hex")
 			switch vLog.Topics[0].Hex() {
 			// Transfer event hex
 			case logTransferSigHash.Hex():
 
 				transferEvent, err := token.ParseTransfer(vLog)
 				if err != nil {
-					log.Fatal(err)
+					log.Println(err)
+					return err
 				}
 
 				//converting the string to float64
 				transferValue, err := strconv.ParseFloat(transferEvent.Value.String(), 64)
 				if err != nil {
-					log.Fatal(err)
+					log.Println(err)
+					return err
 				}
 				blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
 				d := TransferEventModel{
@@ -492,6 +494,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 				err = SaveOne(&d)
 				if err != nil {
 					log.Printf("Failed to retrieve token name: %v", err)
+					return err
 				}
 			}
 		}
@@ -513,7 +516,8 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 		}
 		err := SaveOne(&d)
 		if err != nil {
-			log.Fatalf("Failed to retrieve token name: %v", err)
+			log.Println("Failed to retrieve token name: %v", err)
+			return err
 		}
 	}
 	return err
@@ -523,7 +527,8 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 func GetAutocompound() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId
-		GetContract(chainId, val.AC, val.BlockNumber)
+		err := GetContract(chainId, val.AC, val.BlockNumber)
+		log.Println(">>>Failed to retrieve token name: %v", err)
 	}
 
 }

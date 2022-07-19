@@ -137,7 +137,7 @@ func SaveUnstakeEventOne(data *UnstakeEventModel) (string, error) {
 * delete the duplicates
 * @param  {string} d
  */
-func callingDelete(CollectionName string, ChainId int) error {
+func callingDelete(CollectionName string, ChainId int) {
 	type IDResult struct {
 		TransactionHash string
 	}
@@ -174,12 +174,12 @@ func callingDelete(CollectionName string, ChainId int) error {
 	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
 		log.Fatalf("err in aggregate", err)
-		return err
+
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
 	if err != nil {
-		return err
+		log.Fatalf("err in aggregate", err)
 	}
 
 	// fmt.Println("records", len(records))
@@ -192,13 +192,12 @@ func callingDelete(CollectionName string, ChainId int) error {
 
 			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
 			if err != nil {
-				return err
+				log.Fatalf("err in aggregate", err)
 			}
 			fmt.Println("delete response", res)
 		}
 
 	}
-	return nil
 }
 
 // GetAllStakeEvents list api with page and limit
@@ -305,9 +304,11 @@ func getStakingContracts() {
 	}
 	for _, element := range records {
 		//call events from network
-		GetContractEvent(element.Chain_Id, element.Address, int64(element.LastBlockNumber), element.ID)
-		go callingDelete(StakeEventCollection, element.Chain_Id)
-		go callingDelete(UnStakeEventCollection, element.Chain_Id)
+		err := GetContractEvent(element.Chain_Id, element.Address, int64(element.LastBlockNumber), element.ID)
+		if err == nil {
+			go callingDelete(StakeEventCollection, element.Chain_Id)
+			go callingDelete(UnStakeEventCollection, element.Chain_Id)
+		}
 
 	}
 }
@@ -317,7 +318,8 @@ func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 	blockNumber := big.NewInt(block_num)
 	block, err := client.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("get timestamp err", err)
+		return 0
 	}
 
 	// fmt.Printf("%t", block.Time())
@@ -335,18 +337,21 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 	// to get latest blocknumber
 	header, err := conn.HeaderByNumber(context.Background(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	lastestBlockNumber := header.Number.Int64()
 
 	contractAddress := ethcommon.HexToAddress(staking)
 	stakeObj, err := NewStakes(contractAddress, conn)
 	if err != nil {
-		log.Fatalf("Failed to instantiate a Token contract: %v", err)
+		log.Println("Failed to instantiate a Token contract: %v", err)
+		return err
 	}
 	decimals, err := stakeObj.Decimals(&bind.CallOpts{})
 	if err != nil {
 		log.Printf("Failed to retrieve token name: %v", err)
+		return err
 	}
 	//traversal
 	newBlockNumber := (lastBlockNumber + 1) + blockDiff
@@ -365,7 +370,8 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 	//logs from contract
 	logs, err := conn.FilterLogs(context.Background(), query)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	fmt.Println("length event:", len(logs))
 
@@ -385,11 +391,10 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 
 		switch vLog.Topics[0].Hex() {
 		case logStakeSigHash.Hex():
-			fmt.Printf("Log Name: Stake\n")
-
 			stakeEvent, err := stakeObj.ParseStake(vLog)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return err
 			}
 
 			blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
@@ -398,7 +403,8 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 			//converting the string to float64
 			s, err := strconv.ParseFloat(stakeEvent.Amount.String(), 64)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return err
 			}
 			//saving the event
 			data := StakeEventModel{
@@ -415,11 +421,11 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 			fmt.Println("data after saving the event", res)
 
 		case logUnstakeSigHash.Hex():
-			fmt.Printf("Log Name: Unstake\n")
 
 			unstakeEvent, err := stakeObj.ParseUnstake(vLog)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return err
 			}
 
 			blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
@@ -428,7 +434,8 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 			//converting the string to float64
 			s, err := strconv.ParseFloat(unstakeEvent.Amount.String(), 64)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return err
 			}
 			//saving the event
 			data := UnstakeEventModel{

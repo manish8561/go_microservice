@@ -146,7 +146,6 @@ func GetRecord(ID string) (StakeModel, error) {
 	// The first document in the sorted order will be returned.
 	// opts := options.FindOne().SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&record)
-
 	return *record, err
 }
 

@@ -32,6 +32,7 @@ class FarmSchema extends Schema {
             source_link: { type: String },
             autocompound_check: { type: Boolean },
             tvl_staked: { type: Number },// value should be in USD
+            tokenPrice: { type: Number, default: 0 }, //usd
             daily_apr: { type: Number },
             daily_apy: { type: Number },
             weekly_apy: { type: Number },

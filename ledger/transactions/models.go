@@ -453,7 +453,7 @@ db.getCollection('farms_transactions').aggregate([
     } },
 ])
 */
-func GetProfitLoss() (float64, float64) {
+func GetProfitLoss(chainId int64) (float64, float64) {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -470,14 +470,14 @@ func GetProfitLoss() (float64, float64) {
 	pipeline := []bson.M{
 		{"$facet": bson.M{
 			"deposit": []bson.M{
-				{"$match": bson.M{"type": "deposit"}},
+				{"$match": bson.M{"type": "deposit", "chainId": chainId}},
 				{"$group": bson.M{
 					"_id":   nil,
 					"total": bson.M{"$sum": "$amount"},
 				}},
 			},
 			"withdraw": []bson.M{
-				{"$match": bson.M{"type": "withdraw"}},
+				{"$match": bson.M{"type": "withdraw" , "chainId": chainId}},
 				{"$group": bson.M{
 					"_id":   nil,
 					"total": bson.M{"$sum": "$amount"},

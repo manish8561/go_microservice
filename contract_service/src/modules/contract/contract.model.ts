@@ -52,23 +52,24 @@ class farmModel extends BaseModel {
 
       let calTvl: any = await masterChefHelper.calculateTVLValue(deposit_token, address, token_type, chain_id);
 
-      let acPerBlock: Number = await masterChefHelper.getTokenPerBlock(ac_token, address, chain_id);
+      let acPerBlock: Number = 0;
       if (farmType === "quickswap" || farmType === "quickswapdual") {
         calApr = await quickswapHelper.calculateAPRValue(masterchef, deposit_token, chain_id, pid, farmType);
+        acPerBlock = await masterChefHelper.getTokenPerBlock(ac_token, address, chain_id);
       } else {
         calApr = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, chain_id, pid);
-
       }
 
-      calApy = await masterChefHelper.calculateAPY(calApr);
-      it.daily_apr = Number(calApr);
-      it.daily_apy = Number(calApy);
-      it.tvl_staked = calTvl;
-      it.token_per_block = acPerBlock;
-      await it.save();
+      // calApy = await masterChefHelper.calculateAPY(calApr);
+      // it.daily_apr = Number(calApr);
+      // it.daily_apy = Number(calApy);
+      // it.tvl_staked = calTvl.tvl;
+      // it.tokenPrice = calTvl.tokenPrice;//usd
+      // it.token_per_block = acPerBlock;
+      // await it.save();
       console.log((Date.now() - now) / 1000, 'inside loop---------------------');
     } catch (error) {
-      console.log(it.address, ':error strategy');
+      // console.log(it.address, ':error strategy');
       console.log(error, '-----------------get farm function--------');
     }
   }

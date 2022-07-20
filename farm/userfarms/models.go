@@ -234,6 +234,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 			"token_type":         "$farms.token_type",
 			"deposit_token":      "$farms.deposit_token",
 			"status":             "$farms.status",
+			"pid":                "$farms.pid",
 			"masterchef":         "$farms.masterchef",
 			"router":             "$farms.router",
 			"weth":               "$farms.weth",

@@ -15,7 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
 	// "go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
@@ -45,6 +44,7 @@ type FarmModel struct {
 	Token_Type       string             `bson:"token_type" json:"token_type"`
 	Deposit_Token    string             `bson:"deposit_token" json:"deposit_token"`
 	Status           string             `bson:"status" json:"status"`
+	Pid              int                `bson:"pid" json:"pid"`
 	Masterchef       string             `bson:"masterchef" json:"masterchef"`
 	// masterchef for pancakeswap, stakingRewards address for quickswap
 	Router             string  `bson:"router" json:"router"`
@@ -59,6 +59,7 @@ type FarmModel struct {
 	Source_Link        string  `bson:"source_link" json:"source_link"`
 	Autocompound_Check bool    `bson:"autocompound_check" json:"autocompound_check"`
 	Tvl_Staked         float64 `bson:"tvl_staked" json:"tvl_staked"`
+	TokenPrice         float64 `bson:"tokenPrice" json:"tokenPrice"`
 	Daily_APR          float64 `bson:"daily_apr" json:"daily_apr"`
 	Daily_APY          float64 `bson:"daily_apy" json:"daily_apy"`
 	Token0             Token   `bson:"token0" json:"token0"`
@@ -153,6 +154,9 @@ func UpdateOne(data *FarmModel) (*mongo.UpdateResult, error) {
 	}
 	if data.Deposit_Token != "" {
 		update["deposit_token"] = strings.ToLower(data.Deposit_Token)
+	}
+	if data.Pid > 0 {
+		update["pid"] = data.Pid
 	}
 	if data.Masterchef != "" {
 		update["masterchef"] = strings.ToLower(data.Masterchef)
@@ -537,5 +541,3 @@ func GetACPerBlock(chainId int64) float64 {
 
 	return results[0].Average
 }
-
-

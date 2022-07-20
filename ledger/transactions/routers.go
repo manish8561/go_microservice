@@ -80,6 +80,10 @@ func GetTransactionCall(c *gin.Context) {
 // function to get dashboard record
 // ProfitLossCall
 func ProfitLossCall(c *gin.Context) {
-	records, value := GetProfitLoss()
+	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	if err != nil {
+		chain_id = common.DefaultChainId
+	}
+	records, value := GetProfitLoss(chain_id)
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"percentage": records, "value": value}})
 }

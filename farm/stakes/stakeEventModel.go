@@ -173,13 +173,13 @@ func callingDelete(CollectionName string, ChainId int) {
 
 	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
-		log.Fatalf("err in aggregate", err)
+		log.Println("err in aggregate", err)
 
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
 	if err != nil {
-		log.Fatalf("err in aggregate", err)
+		log.Println("err in aggregate", err)
 	}
 
 	// fmt.Println("records", len(records))
@@ -192,11 +192,10 @@ func callingDelete(CollectionName string, ChainId int) {
 
 			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
 			if err != nil {
-				log.Fatalf("err in aggregate", err)
+				log.Println("err in aggregate", err)
 			}
 			fmt.Println("delete response", res)
 		}
-
 	}
 }
 
@@ -456,9 +455,10 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 	}
 	//calling delete duplicate for each event
 
+	go UpdateLastBlockNumberOne(ID, newBlockNumber)
+
 	go callingDelete(StakeEventCollection, chainId)
 	go callingDelete(UnStakeEventCollection, chainId)
 	//update event
-	go UpdateLastBlockNumberOne(ID, newBlockNumber)
 	return err
 }

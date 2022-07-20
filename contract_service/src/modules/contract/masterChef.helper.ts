@@ -39,7 +39,7 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calculateTVLValue(deposit_token: string, strategyAddress: string, token_type: string, chainId: number): Promise<string> {
+  public async calculateTVLValue(deposit_token: string, strategyAddress: string, token_type: string, chainId: number): Promise<any> {
     try {
       let ABI: any;
       if (token_type === 'pair' || token_type === 'stable_pair' || token_type === 'native') {
@@ -50,9 +50,9 @@ class MasterChef {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, ABI, strategyAddress);
       let tvl: any = await contract.methods.totalDeposits().call();
       const decimalVal: any = await contract.methods.decimals().call();
-      const dollerPrice: any = await this.calPrice2(deposit_token, chainId);
+      const dollerPrice: any = await this.calPrice(deposit_token, chainId);
       tvl = (tvl / 10 ** decimalVal) * Number(dollerPrice);
-      return tvl.toFixed(6);
+      return { tvl: tvl.toFixed(6), tokenPrice: dollerPrice };
     } catch (err) {
       throw err;
     }
@@ -105,6 +105,7 @@ class MasterChef {
       const apr: any = ((accCakePerShare / totalAllcationPoint) * ((cakePerBlock / 10 ** 18) * blockMined * 100 * acPrice)) / liquidity;
       return apr.toFixed(4);
     } catch (err) {
+      console.log(err, 'apr err')
       throw err;
     }
   }
@@ -279,67 +280,24 @@ class MasterChef {
         // fetching data from Api for token zero...
         const respTokenZero = await this.getTokenPriceUSD(symbolZero);
         if (respTokenZero) {
-          priceTokenZero = respTokenZero * reserve[0] / 10 ** decimalZero;
+          priceTokenZero = respTokenZero * (reserve[0] / 10 ** decimalZero);
         }
         // fetching data from Api for token one...
 
         const respTokenOne = await this.getTokenPriceUSD(symbolOne);
         if (respTokenOne) {
-          priceTokenOne = respTokenOne * reserve[1] / 10 ** decimalOne;
+          priceTokenOne = respTokenOne * (reserve[1] / 10 ** decimalOne);
         }
-        price = priceTokenZero + priceTokenOne;
+        // p0 = (reserve1/10**decimals1) / (reserve0/10**decimals0)
+        price = priceTokenOne / priceTokenZero;
+        // price = priceTokenZero + priceTokenOne;
         return price;
       }
     } catch (err) {
       throw err;
     }
   }
-  /**
-   * @param  {any} pairAddress
-   * @param  {number} chainId
-   * @returns Promise
-   */
-  public async calPrice2(pairAddress: any, chainId: number): Promise<Number> {
-    try {
-      let price = 0;
-      let priceTokenZero: any = 0;
-      let priceTokenOne: any = 0;
-      let tokenZero: any;
-      if (pairAddress === "") {
-        return 0;
-      }
-      try {
-        tokenZero = await this.getTokenZero(pairAddress, chainId);
-      } catch (err) {
-        // console.log('not a pair error', err);
-        const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        return await this.getTokenPriceUSD(symbolSingle);
-      }
 
-      if (tokenZero === '0x0000000000000000000000000000000000000000') {
-        const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        return await this.getTokenPriceUSD(symbolSingle);
-      } else {
-        const tokenOne: any = await this.getTokenOne(pairAddress, chainId);
-        const symbolZero: any = await this.getSymbol(tokenZero, chainId);
-        const symbolOne: any = await this.getSymbol(tokenOne, chainId);
-        // fetching data from Api for token zero...
-        const respTokenZero = await this.getTokenPriceUSD(symbolZero);
-        if (respTokenZero) {
-          priceTokenZero = respTokenZero;
-        }
-        // fetching data from Api for token one...
-        const respTokenOne = await this.getTokenPriceUSD(symbolOne);
-        if (respTokenOne) {
-          priceTokenOne = respTokenOne;
-        }
-        price = priceTokenZero + priceTokenOne;
-        return price;
-      }
-    } catch (err) {
-      throw err;
-    }
-  }
 }
 
 export default new MasterChef();

@@ -115,9 +115,9 @@ class Web3Helper {
     /* dynamically call the pair contract instance */
     public async callPairContract(contractAddress: string, chainId: number): Promise<string> {
         try {
-            if (this.contractObj && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
-                return this.contractObj;
-            }
+            // if (this.contractObj && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
+            //     return this.contractObj;
+            // }
             const web3Obj = await this.callWeb3(chainId);
             this.contractObj = new web3Obj.eth.Contract(pairABI, contractAddress);
             return this.contractObj;
@@ -125,6 +125,18 @@ class Web3Helper {
             throw error;
         }
     };
+    /**
+     * @param  {number} chainId
+     * @returns Promise
+     */
+    public async curretBlockNumber(chainId: number): Promise<number> {
+        try {
+            const web3Obj = await this.callWeb3(chainId);
+            return await web3Obj.eth.getBlockNumber();
+        } catch (error) {
+            throw error;
+        }
+    }
 
 }
 

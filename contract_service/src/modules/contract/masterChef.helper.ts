@@ -3,6 +3,7 @@ import TokenABI from '../../bin/tokenContract.ABI.json';
 import MasterchefABI from '../../bin/masterChefContractABI.json';
 import StrategyPair from '../../bin/strategy.pairABI.json';
 import StrategyToken from '../../bin/strategy.singleABI.json';
+import SmartChefInitializable from '../../bin/SmartChefInitializableABI.json';
 import axios from "axios";
 import * as Helpers from '../../helpers';
 import { network } from '../../bin/token';
@@ -16,7 +17,7 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calculateAPY(apr: any): Promise<string> {
+  public async calculateAPY(apr: any): Promise<number> {
     try {
       //  * @param interest {Number} APR as percentage (ie. 5.82)
       //  * @param frequency {Number} Compounding frequency (times a year)
@@ -25,7 +26,8 @@ class MasterChef {
       // const SECONDS_PER_YEAR = 365.25 * 24 * 60 * 60;
       const DAYS_IN_YEAR = 365;
       // const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
-      const aprToApy = (DAYS_IN_YEAR * apr).toString();
+      // APY = ((1 + (apr / 100) / 365) ** 365 - 1)  * 100;
+      const aprToApy = ((1 + (apr / 100) / 365) ** 365 - 1)  * 100;
       return aprToApy;
     } catch (err) {
       throw err;
@@ -81,31 +83,71 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number, pid: number): Promise<string> {
+  public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number, pid: number, tokenType: string): Promise<string> {
     try {
       //reward token price (cake for pancake)
-      let acPrice = 0;
-      acPrice = await this.getTokenPriceUSD('CAKE');
+      let cakePrice = 0;
+      cakePrice = await this.getTokenPriceUSD('CAKE');
 
-      const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
-      const totalAllcationPoint: any = await masterchefContract.methods.totalAllocPoint().call();
+      const rewardTokenDecimals = 18;
+      let rewardRate = 1;
 
-      const poolInfo: any = await await masterchefContract.methods.poolInfo(pid).call();
 
-      const cakePerBlock: any = await masterchefContract.methods.cakePerBlock().call();
+      // const blockMined = network[chainId].blockMined;
+      const curretBlockNumber = await Helpers.Web3Helper.curretBlockNumber(chainId);
 
-      const liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
-      // console.log({acPrice, totalAllcationPoint, cakePerBlock, liquidity});
+      let liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
+
+      console.table({ liquidity, lp, masterChefAddress });
+
       if (liquidity === 0) {
         return '0';
       }
-      const blockMined = network[chainId].blockMined;
-      //since it is in cake value
-      const accCakePerShare = poolInfo.accCakePerShare / (10 ** 18);
-      const apr: any = ((accCakePerShare / totalAllcationPoint) * ((cakePerBlock / 10 ** 18) * blockMined * 100 * acPrice)) / liquidity;
-      return apr.toFixed(4);
+
+      if (tokenType === "token" || tokenType === "stable") {
+        //SmartChefInitializable
+        const smartChefContract: any = await Helpers.Web3Helper.callContract(chainId, SmartChefInitializable, masterChefAddress);
+        const accTokenPerShare = await smartChefContract.methods.accTokenPerShare().call();
+        const cakePerBlock = await smartChefContract.methods.rewardPerBlock().call();
+
+        // const apr: any = ((poolInfo.accCakePerShare/totalAllcationPoint) * ((cakePerBlock / 10 ** 18) * blockMined * 100 * cakePrice)) / liquidity;
+        return '0';
+
+      } else {// lp pair in masterchef
+        console.log('master chef');
+        const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
+
+        const poolInfo: any = await masterchefContract.methods.poolInfo(pid).call();
+        console.table(poolInfo);
+
+        // liquidity = poolInfo.totalBoostedShare / (10 ** 18);
+
+        const cakePerBlock: any = await masterchefContract.methods.cakePerBlock(poolInfo.isRegular).call();
+
+        let totalAllcationPoint: any = 0;
+        if (poolInfo.isRegular) {
+          totalAllcationPoint = await masterchefContract.methods.totalRegularAllocPoint().call();
+        } else {
+          totalAllcationPoint = await masterchefContract.methods.totalSpecialAllocPoint().call();
+        }
+        const blockMined = curretBlockNumber - poolInfo.lastRewardBlock;
+
+        // rewardRate = poolInfo.accCakePerShare / 10 ** 12 + (poolInfo.allocPoint / totalAllcationPoint) * ((cakePerBlock) / (10 ** 18)) * blockMined;
+
+        rewardRate = ((poolInfo.allocPoint / totalAllcationPoint) * ((cakePerBlock) / (10 ** 18)) * blockMined);
+        // rewardRate = rewardRate / 10 ** 12;
+        const rewardYearly = rewardRate * 24 * 3600;
+        const rewardYearlyUsd = cakePrice * rewardYearly;
+
+        //since it is in cake value
+        const apr: any = rewardYearlyUsd / liquidity;
+        return apr.toFixed(4);
+      }
+
+
+
     } catch (err) {
-      console.log(err, 'apr err')
+      console.log(err, 'apr err');
       throw err;
     }
   }
@@ -119,8 +161,9 @@ class MasterChef {
     try {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress, chainId);
-        let tokenPrice: any = await this.calPrice(tokenAddress, chainId);
-        return d * tokenPrice;
+        let tokenPrice: Number = await this.calPrice(tokenAddress, chainId);
+        const b: Number = Number(d) * Number(tokenPrice);
+        return b;
       }
       return 0;
     } catch (error) {
@@ -250,7 +293,7 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calPrice(pairAddress: any, chainId: number): Promise<Number> {
+  public async calPrice(pairAddress: any, chainId: number): Promise<any> {
     try {
       let price = 0;
       let priceTokenZero: any = 0;
@@ -264,12 +307,15 @@ class MasterChef {
       } catch (err) {
         // console.log('not a pair error', err);
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        return await this.getTokenPriceUSD(symbolSingle);
+        const r = await this.getTokenPriceUSD(symbolSingle);
+        return r;
       }
 
       if (tokenZero === '0x0000000000000000000000000000000000000000') {
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
-        return await this.getTokenPriceUSD(symbolSingle);
+        // return await this.getTokenPriceUSD(symbolSingle);
+        const r = await this.getTokenPriceUSD(symbolSingle);
+        return r;
       } else {
         const tokenOne: any = await this.getTokenOne(pairAddress, chainId);
         const reserve: any = await this.getReserves(pairAddress, chainId);
@@ -283,18 +329,19 @@ class MasterChef {
           priceTokenZero = respTokenZero * (reserve[0] / 10 ** decimalZero);
         }
         // fetching data from Api for token one...
-
         const respTokenOne = await this.getTokenPriceUSD(symbolOne);
         if (respTokenOne) {
           priceTokenOne = respTokenOne * (reserve[1] / 10 ** decimalOne);
         }
         // p0 = (reserve1/10**decimals1) / (reserve0/10**decimals0)
-        price = priceTokenOne / priceTokenZero;
+        price = (priceTokenOne / priceTokenZero);
         // price = priceTokenZero + priceTokenOne;
-        return price;
+        // console.table({ price });
+
+        return (price);
       }
     } catch (err) {
-      throw err;
+      throw (err);
     }
   }
 

@@ -28,6 +28,9 @@ class MasterChef {
       // const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
       // APY = ((1 + (apr / 100) / 365) ** 365 - 1)  * 100;
       const aprToApy = ((1 + (apr / 100) / 365) ** 365 - 1)  * 100;
+      if(aprToApy === Infinity){
+        return 0;
+      }
       return aprToApy;
     } catch (err) {
       throw err;

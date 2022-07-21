@@ -61,6 +61,7 @@ type TransactionModel struct {
 	Type            string             `bson:"type" json:"type"`
 	Account         string             `bson:"account" json:"account"`
 	Amount          float64            `bson:"amount" json:"amount"`
+	AmountUSD       float64            `bson:"amountUSD" json:"amountUSD"`
 	BlockNumber     int64              `bson:"blockNumber" json:"blockNumber"`
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
 }
@@ -123,7 +124,7 @@ func StartCronJob() {
 
 //get farms
 // func GetFarms(chainId int)
-func checkContract(address string, farmReply *pb.FarmReply) bool {
+func checkContract(address string, farmReply *pb.FarmReply) (bool, float64) {
 	// strategies := [...]string{
 	// 	"0x3349e79dfcc1d80114c37d48a516940f06a2b7d2",
 	// 	"0xfaa931e617889a10a2f5d9537a9ff9f4d8cedfb8",
@@ -135,12 +136,16 @@ func checkContract(address string, farmReply *pb.FarmReply) bool {
 	// 	"0x3421dfd649b31f5bb48528368a68351014b5029e",
 	// 	"0x12e9a9dcDc8f276c71524Ddd102343525ddAbB26",
 	// }
+	var val float64 = 0.0
+
 	for _, e := range farmReply.Items {
 		if strings.ToLower(e.Address) == strings.ToLower(address) {
-			return true
+			// check = e
+			val = e.TokenPrice
+			return true, val
 		}
 	}
-	return false
+	return false, val
 }
 
 // You could input string which will be saved in database returning with error info
@@ -162,7 +167,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	header, err := conn.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Println(err)
-		return 0, err
+		return bN, err
 	}
 	lastestBlockNumber := header.Number.Int64()
 	// if blockNumber is greater than current blocknumber
@@ -174,7 +179,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	block, err := conn.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
 		log.Println(err)
-		return 0, err
+		return bN, err
 	}
 	blockTimestamp := int64(block.Time())
 	// fmt.Println(block.Number().Uint64()) // 5671744
@@ -187,100 +192,104 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 
 	for _, tx := range block.Transactions() {
 		// fmt.Println("Transaction: ", tx.Hash().Hex())
-		if tx.To() != nil && checkContract(tx.To().Hex(), r) {
-			strategyAddress := strings.ToLower(tx.To().Hex())
-			contractAddress := ethcommon.HexToAddress(strategyAddress)
-			strategyContract, err := NewTransactions(contractAddress, conn)
-			if err != nil {
-				fmt.Printf("Failed to instantiate a Token contract: %v", err)
-			}
-			//Withdraw
-			logWithdrawSig := []byte("Withdraw(address,uint256)")
-			logWithdrawSigHash := crypto.Keccak256Hash(logWithdrawSig)
+		if tx.To() != nil {
+			check, tokenPrice := checkContract(tx.To().Hex(), r)
+			if check {
+				strategyAddress := strings.ToLower(tx.To().Hex())
+				contractAddress := ethcommon.HexToAddress(strategyAddress)
+				strategyContract, err := NewTransactions(contractAddress, conn)
+				if err != nil {
+					fmt.Printf("Failed to instantiate a Token contract: %v", err)
+				}
+				//Withdraw
+				logWithdrawSig := []byte("Withdraw(address,uint256)")
+				logWithdrawSigHash := crypto.Keccak256Hash(logWithdrawSig)
 
-			//Deposit
-			logDepositSig := []byte("Deposit(address,uint256)")
-			logDepositSigHash := crypto.Keccak256Hash(logDepositSig)
+				//Deposit
+				logDepositSig := []byte("Deposit(address,uint256)")
+				logDepositSigHash := crypto.Keccak256Hash(logDepositSig)
 
-			receipt, err := conn.TransactionReceipt(context.Background(), tx.Hash())
-			if err != nil {
-				fmt.Println(err)
-				return 0, err
-			}
+				receipt, err := conn.TransactionReceipt(context.Background(), tx.Hash())
+				if err != nil {
+					fmt.Println(err)
+					return bN, err
+				}
 
-			// 1 success status
-			if receipt.Status == 1 {
-				// fmt.Println("Logs: ", len(receipt.Logs)) // ...
+				// 1 success status
+				if receipt.Status == 1 {
+					// fmt.Println("Logs: ", len(receipt.Logs)) // ...
 
-				for _, vLog := range receipt.Logs {
-					// fmt.Println(vLog.BlockHash.Hex())
-					// fmt.Println(vLog.BlockNumber)  // 2394201
-					switch vLog.Topics[0].Hex() {
-					// Deposit event hex
-					case logDepositSigHash.Hex():
-						withdrawEvent, err := strategyContract.ParseDeposit(*vLog)
-						if err != nil {
-							log.Println(err)
-							return 0, err
+					for _, vLog := range receipt.Logs {
+						// fmt.Println(vLog.BlockHash.Hex())
+						// fmt.Println(vLog.BlockNumber)  // 2394201
+						switch vLog.Topics[0].Hex() {
+						// Deposit event hex
+						case logDepositSigHash.Hex():
+							withdrawEvent, err := strategyContract.ParseDeposit(*vLog)
+							if err != nil {
+								log.Println(err)
+								return bN, err
+							}
+
+							//converting the string to float64
+							transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
+							if err != nil {
+								fmt.Println("Float conversion", err)
+								return bN, err
+							}
+							// convert to dollar price
+							USDValue := (transferValue / dd) * (tokenPrice)
+
+							d := TransactionModel{
+								ChainId:         chainId,
+								Strategy:        strategyAddress,
+								TransactionHash: vLog.TxHash.Hex(),
+								Type:            "deposit",
+								Account:         strings.ToLower(withdrawEvent.Account.Hex()),
+								Amount:          (transferValue / dd),
+								AmountUSD:       USDValue,
+								BlockNumber:     bN,
+								Timestamp:       blockTimestamp,
+							}
+							go SaveDataBackground(&d, CollectionName)
+
+						//Withdraw Event
+						case logWithdrawSigHash.Hex():
+							withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
+							if err != nil {
+								log.Println(err)
+								return bN, err
+							}
+
+							//converting the string to float64
+							transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
+							if err != nil {
+								fmt.Println("Float conversion", err)
+								return bN, err
+							}
+							USDValue := (transferValue / dd) * (tokenPrice)
+							// USDValue := (transferValue / dd) * tokenPrice
+
+							fmt.Println("block times: ", blockTimestamp)
+							d := TransactionModel{
+								ChainId:         chainId,
+								Strategy:        strategyAddress,
+								TransactionHash: vLog.TxHash.Hex(),
+								Type:            "withdraw",
+								Account:         strings.ToLower(withdrawEvent.Account.Hex()),
+								Amount:          (transferValue / dd),
+								AmountUSD:       USDValue,
+
+								BlockNumber: bN,
+								Timestamp:   blockTimestamp,
+							}
+							go SaveDataBackground(&d, CollectionName)
 						}
-
-						//converting the string to float64
-						transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
-						if err != nil {
-							fmt.Println("Float conversion", err)
-							return 0, err
-						}
-
-						d := TransactionModel{
-							ChainId:         chainId,
-							Strategy:        strategyAddress,
-							TransactionHash: vLog.TxHash.Hex(),
-							Type:            "deposit",
-							Account:         strings.ToLower(withdrawEvent.Account.Hex()),
-							Amount:          (transferValue / dd),
-							BlockNumber:     bN,
-							Timestamp:       blockTimestamp,
-						}
-						go SaveDataBackground(&d, CollectionName)
-
-					//Withdraw Event
-					case logWithdrawSigHash.Hex():
-						withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
-						if err != nil {
-							log.Println(err)
-							return 0, err
-						}
-
-						//converting the string to float64
-						transferValue, err := strconv.ParseFloat(withdrawEvent.Amount.String(), 64)
-						if err != nil {
-							fmt.Println("Float conversion", err)
-							return 0, err
-						}
-						fmt.Println("----------------------")
-						fmt.Println("Account: ", strings.ToLower(withdrawEvent.Account.Hex()))
-						fmt.Println("transfer value:", transferValue)
-						fmt.Println("----------------------")
-						// blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
-						fmt.Println("block times: ", blockTimestamp)
-						d := TransactionModel{
-							ChainId:         chainId,
-							Strategy:        strategyAddress,
-							TransactionHash: vLog.TxHash.Hex(),
-							Type:            "withdraw",
-							Account:         strings.ToLower(withdrawEvent.Account.Hex()),
-							Amount:          (transferValue / dd),
-							BlockNumber:     bN,
-							Timestamp:       blockTimestamp,
-						}
-						go SaveDataBackground(&d, CollectionName)
 					}
 				}
 			}
-
 		}
 	}
-
 	return (bN + 1), err
 }
 
@@ -473,14 +482,14 @@ func GetProfitLoss(chainId int64) (float64, float64) {
 				{"$match": bson.M{"type": "deposit", "chainId": chainId}},
 				{"$group": bson.M{
 					"_id":   nil,
-					"total": bson.M{"$sum": "$amount"},
+					"total": bson.M{"$sum": "$amountUSD"},
 				}},
 			},
 			"withdraw": []bson.M{
-				{"$match": bson.M{"type": "withdraw" , "chainId": chainId}},
+				{"$match": bson.M{"type": "withdraw", "chainId": chainId}},
 				{"$group": bson.M{
 					"_id":   nil,
-					"total": bson.M{"$sum": "$amount"},
+					"total": bson.M{"$sum": "$amountUSD"},
 				}},
 			},
 		}},

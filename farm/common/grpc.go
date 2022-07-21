@@ -81,7 +81,7 @@ func GettingFarms(chainId int64, status string) ([]*pb.Item, error) {
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(sorting).SetProjection(bson.M{"_id": 1, "address": 1, "status": 1})
+	opts := options.Find().SetSort(sorting).SetProjection(bson.M{"_id": 1, "address": 1, "status": 1, "tokenPrice": 1})
 	query := bson.M{"chain_id": chainId, "status": status}
 
 	cursor, err := collection.Find(ctx, query, opts)

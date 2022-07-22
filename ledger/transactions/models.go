@@ -86,7 +86,7 @@ type Filters struct {
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}, {"amount", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}, {"amountUSD", 1}})
 	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
 
 	//start the cron
@@ -446,7 +446,10 @@ func GetDetails() {
 			fmt.Println(err, "get transaction err")
 			return
 		}
-		go UpdateOne(r.ID, bn, CollectionName2)
+		//if block number is > 0
+		if bn > 0 {
+			go UpdateOne(r.ID, bn, CollectionName2)
+		}
 	}
 }
 
@@ -454,8 +457,8 @@ func GetDetails() {
 /*
 db.getCollection('farms_transactions').aggregate([
 {$facet:{
-    deposit:[{$match:{type:"deposit"}},{$group:{_id:null, total:{$sum:"$amount"}}}],
-    withdraw:[{$match:{type:"withdraw"}},{$group:{_id:null, total:{$sum:"$amount"}}}]}
+    deposit:[{$match:{type:"deposit"}},{$group:{_id:null, total:{$sum:"$amountUSD"}}}],
+    withdraw:[{$match:{type:"withdraw"}},{$group:{_id:null, total:{$sum:"$amountUSD"}}}]}
 }, {$project:{
         desposit:{$first:"$deposit.total"},
         withdraw:{$first:"$withdraw.total"},
@@ -514,8 +517,15 @@ func GetProfitLoss(chainId int64) (float64, float64) {
 
 	if len(records) == 1 {
 		v := records[0].Deposit - records[0].Withdraw
-		t := (v / records[0].Withdraw) * 100
-		return t, v
+		if records[0].Withdraw > 0 {
+			t := (v / records[0].Withdraw) * 100
+			return t, v
+		}
+		if records[0].Deposit > 0 {
+			return 100, v
+		}
+		return 0, 0
+
 	}
 
 	return 0, 0

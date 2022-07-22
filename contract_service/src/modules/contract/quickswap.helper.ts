@@ -35,6 +35,8 @@ class Quickswap {
   public async calculateAPRValue(farm: any): Promise<string> {
     try {
       const quickNew = '0xb5c064f955d8e7f38fe0460c556a72987494ee17';
+      const quickOld = '0x831753dd7087cac61ab5644b308642cc1c33dc13';
+      const dQuick = '0xf28164a485b0b2c90639e47b0f377b4a438a16b1';
       const { masterchef, deposit_token, reward, chain_id, farmType } = farm;
 
 
@@ -44,7 +46,7 @@ class Quickswap {
       const tokenSymbol = await this.getSymbol(reward, chain_id);
       if (tokenSymbol === "QUICK") {
         // OLDQUICK
-        rewardTokenPrice = await this.getTokenPriceUSD("QUICK");
+        rewardTokenPrice = await this.getTokenPriceUSD("DQUICK");
       } else {
         rewardTokenPrice = await this.getTokenPriceUSD(tokenSymbol);
         tokenDecimals = Number(await this.getDecimals(reward, chain_id));
@@ -59,6 +61,7 @@ class Quickswap {
       } else {
         depositTokenPrice = await this.calPrice(deposit_token, chain_id);
       }
+      // depositTokenPrice = 2;
 
       const stakingRewardContract: any = await Helpers.Web3Helper.callContract(chain_id, stakingRewardsABI, masterchef);
 
@@ -68,18 +71,27 @@ class Quickswap {
       if (farmType === "quickswapdual") {
         const rewardTokenA = await stakingRewardContract.methods.rewardsTokenA().call();
         const rewardTokenB = await stakingRewardContract.methods.rewardsTokenB().call();
+        let rewardTokenASymbol = 'DQUICK';
+        let rewardTokenADecimals = 18;
+        let rewardTokenAPrice = rewardTokenPrice;
+        // token is not dQuick
+        if (rewardTokenA.toLowerCase() !== dQuick.toLowerCase()) {
+          rewardTokenASymbol = await this.getSymbol(rewardTokenA, chain_id);
+          rewardTokenADecimals = Number(await this.getDecimals(rewardTokenA, chain_id));
+          rewardTokenAPrice = await this.getTokenPriceUSD(rewardTokenASymbol.toUpperCase());
+        }
 
-        const rewardTokenADecimals = await this.getDecimals(rewardTokenA, chain_id);
-        const rewardTokenBDecimals = await this.getDecimals(rewardTokenB, chain_id);
-        const rewardTokenASymbol = await this.getSymbol(rewardTokenA, chain_id);
         const rewardTokenBSymbol = await this.getSymbol(rewardTokenB, chain_id);
-
-        const rewardTokenAPrice = await this.getTokenPriceUSD(rewardTokenASymbol);
-        const rewardTokenBPrice = await this.getTokenPriceUSD(rewardTokenBSymbol);
+        const rewardTokenBDecimals = Number(await this.getDecimals(rewardTokenB, chain_id));
+        const rewardTokenBPrice = await this.getTokenPriceUSD(rewardTokenBSymbol.toUpperCase());
 
         const rewardPerTokenA = await stakingRewardContract.methods.rewardRateA().call();
         const rewardPerTokenB = await stakingRewardContract.methods.rewardRateB().call();
-        rewardRate = (Number(rewardPerTokenA) * rewardTokenAPrice) / (10 ** Number(rewardTokenADecimals)) + (Number(rewardPerTokenB) * rewardTokenBPrice) / 10 ** Number(rewardTokenBDecimals);
+        
+        // console.table({rewardTokenA, rewardPerTokenA, rewardPerTokenB, rewardTokenAPrice, rewardTokenBPrice,rewardTokenASymbol ,rewardTokenBSymbol});
+
+        rewardRate = (Number(rewardPerTokenA) * rewardTokenAPrice) / (10 ** rewardTokenADecimals);
+        rewardRate += (Number(rewardPerTokenB) * rewardTokenBPrice) / 10 ** rewardTokenBDecimals;
       } else {
         rewardRate = Number(await stakingRewardContract.methods.rewardRate().call());
         rewardRate = (rewardRate * rewardTokenPrice) / 10 ** Number(tokenDecimals);
@@ -87,7 +99,7 @@ class Quickswap {
 
       //   '-------------------------')
       const rewardRateYearly = rewardRate * (24 * 3600 * 365);
-      
+
       const liquidity = ((Number(totalSupply) * depositTokenPrice) / 10 ** 18);
       const apr: any = rewardRateYearly / liquidity * 100;
 
@@ -210,7 +222,7 @@ class Quickswap {
           priceTokenOne = respTokenOne * (reserve[1] / 10 ** decimalOne);
         }
         // p0 = (reserve1/10**decimals1) / (reserve0/10**decimals0)
-        price = (priceTokenOne / priceTokenZero);
+        price = (priceTokenOne + priceTokenZero);
         // price = priceTokenZero + priceTokenOne;
         // console.table({ price });
 

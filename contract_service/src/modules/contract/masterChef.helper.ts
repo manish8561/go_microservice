@@ -27,8 +27,8 @@ class MasterChef {
       const DAYS_IN_YEAR = 365;
       // const aprToApy: any = ((1 + (interest / 100)) ** (1 / DAYS_IN_YEAR) - 1) * DAYS_IN_YEAR * 100;
       // APY = ((1 + (apr / 100) / 365) ** 365 - 1)  * 100;
-      const aprToApy = ((1 + (apr / 100) / 365) ** 365 - 1)  * 100;
-      if(aprToApy === Infinity){
+      const aprToApy = ((1 + (apr / 100) / 365) ** 365 - 1) * 100;
+      if (aprToApy === Infinity) {
         return 0;
       }
       return aprToApy;
@@ -86,7 +86,12 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number, pid: number, tokenType: string): Promise<string> {
+  public async calculateAPRValue(masterChefAddress: string, lp: string, chainId: number, pid: number, tokenType: string, reward: string): Promise<string> {
+    const BSC_BLOCK_TIME = 3;
+    const BLOCKS_PER_YEAR = (60 / BSC_BLOCK_TIME) * 60 * 24 * 365; // 10512000
+
+
+
     try {
       //reward token price (cake for pancake)
       let cakePrice = 0;
@@ -95,37 +100,43 @@ class MasterChef {
       const rewardTokenDecimals = 18;
       let rewardRate = 1;
 
-
-      // const blockMined = network[chainId].blockMined;
+      const blockMined = network[chainId].blockMined;
       const curretBlockNumber = await Helpers.Web3Helper.curretBlockNumber(chainId);
 
       let liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
 
-      console.table({ liquidity, lp, masterChefAddress });
-
       if (liquidity === 0) {
         return '0';
       }
-
       if (tokenType === "token" || tokenType === "stable") {
         //SmartChefInitializable
         const smartChefContract: any = await Helpers.Web3Helper.callContract(chainId, SmartChefInitializable, masterChefAddress);
-        const accTokenPerShare = await smartChefContract.methods.accTokenPerShare().call();
-        const cakePerBlock = await smartChefContract.methods.rewardPerBlock().call();
 
-        // const apr: any = ((poolInfo.accCakePerShare/totalAllcationPoint) * ((cakePerBlock / 10 ** 18) * blockMined * 100 * cakePrice)) / liquidity;
-        return '0';
+        const tokenDecimals = await this.getDecimals(reward, chainId);
+        const tokenSymbol = await this.getSymbol(reward, chainId);
+
+        let rewardTokenPrice = await this.getTokenPriceUSD(tokenSymbol);
+
+        let cakePerBlock = await smartChefContract.methods.rewardPerBlock().call();
+        cakePerBlock = cakePerBlock / 10 ** Number(tokenDecimals);
+        const totalRewardPricePerYear = rewardTokenPrice * cakePerBlock * (BLOCKS_PER_YEAR);
+
+        const totalStaked = await this.getTokenDeposit(lp, masterChefAddress, chainId);
+
+        const totalStakingTokenInPool = cakePrice * Number(totalStaked);
+        const apr = (totalRewardPricePerYear / totalStakingTokenInPool) * (100);
+        // console.table({tokenSymbol, lp,cakePrice, totalStaked, totalStakingTokenInPool, apr, rewardTokenPrice });
+        return apr.toFixed(4);
 
       } else {// lp pair in masterchef
-        console.log('master chef');
         const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
 
         const poolInfo: any = await masterchefContract.methods.poolInfo(pid).call();
-        console.table(poolInfo);
+        // console.table(poolInfo);
 
-        // liquidity = poolInfo.totalBoostedShare / (10 ** 18);
+        let cakePerBlock: any = await masterchefContract.methods.cakePerBlock(poolInfo.isRegular).call();
 
-        const cakePerBlock: any = await masterchefContract.methods.cakePerBlock(poolInfo.isRegular).call();
+        cakePerBlock = cakePerBlock / (10 ** 18);
 
         let totalAllcationPoint: any = 0;
         if (poolInfo.isRegular) {
@@ -133,22 +144,16 @@ class MasterChef {
         } else {
           totalAllcationPoint = await masterchefContract.methods.totalSpecialAllocPoint().call();
         }
-        const blockMined = curretBlockNumber - poolInfo.lastRewardBlock;
+        rewardRate = (poolInfo.allocPoint / totalAllcationPoint);
 
-        // rewardRate = poolInfo.accCakePerShare / 10 ** 12 + (poolInfo.allocPoint / totalAllcationPoint) * ((cakePerBlock) / (10 ** 18)) * blockMined;
-
-        rewardRate = ((poolInfo.allocPoint / totalAllcationPoint) * ((cakePerBlock) / (10 ** 18)) * blockMined);
-        // rewardRate = rewardRate / 10 ** 12;
-        const rewardYearly = rewardRate * 24 * 3600;
-        const rewardYearlyUsd = cakePrice * rewardYearly;
+        const yearlyCakeRewardAllocation = rewardRate * (BLOCKS_PER_YEAR * cakePerBlock);
+        const apr = ((yearlyCakeRewardAllocation * cakePrice) / liquidity) * (100);
 
         //since it is in cake value
-        const apr: any = rewardYearlyUsd / liquidity;
+        // const apr: any = rewardYearlyUsd / liquidity;
+        // console.table({ cakePerBlock, rewardRate, yearlyCakeRewardAllocation, liquidity, apr });
         return apr.toFixed(4);
       }
-
-
-
     } catch (err) {
       console.log(err, 'apr err');
       throw err;
@@ -165,8 +170,8 @@ class MasterChef {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress, chainId);
         let tokenPrice: Number = await this.calPrice(tokenAddress, chainId);
-        const b: Number = Number(d) * Number(tokenPrice);
-        return b;
+        console.table({ d, tokenPrice });
+        return Number(d) * Number(tokenPrice);
       }
       return 0;
     } catch (error) {
@@ -321,24 +326,25 @@ class MasterChef {
         return r;
       } else {
         const tokenOne: any = await this.getTokenOne(pairAddress, chainId);
-        const reserve: any = await this.getReserves(pairAddress, chainId);
         const symbolZero: any = await this.getSymbol(tokenZero, chainId);
         const symbolOne: any = await this.getSymbol(tokenOne, chainId);
-        const decimalZero: any = await this.getDecimal(tokenZero, chainId);
-        const decimalOne: any = await this.getDecimal(tokenOne, chainId);
         // fetching data from Api for token zero...
         const respTokenZero = await this.getTokenPriceUSD(symbolZero);
         if (respTokenZero) {
-          priceTokenZero = respTokenZero * (reserve[0] / 10 ** decimalZero);
+          priceTokenZero = respTokenZero;
+        } else {
+          priceTokenZero = 1;
         }
         // fetching data from Api for token one...
         const respTokenOne = await this.getTokenPriceUSD(symbolOne);
         if (respTokenOne) {
-          priceTokenOne = respTokenOne * (reserve[1] / 10 ** decimalOne);
+          priceTokenOne = respTokenOne;
+        } else {
+          priceTokenOne = 1;
         }
         // p0 = (reserve1/10**decimals1) / (reserve0/10**decimals0)
-        price = (priceTokenOne / priceTokenZero);
-        // price = priceTokenZero + priceTokenOne;
+        // price = (priceTokenOne / priceTokenZero);
+        price = priceTokenZero + priceTokenOne;
         // console.table({ price });
 
         return (price);

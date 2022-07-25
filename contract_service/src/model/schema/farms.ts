@@ -35,10 +35,6 @@ class FarmSchema extends Schema {
             tokenPrice: { type: Number, default: 0 }, //usd
             daily_apr: { type: Number },
             daily_apy: { type: Number },
-            weekly_apy: { type: Number },
-            yearly_apy: { type: Number },
-            price_pool_token: { type: Number },
-            yearly_swap_fees: { type: Number },
             // token0: { type: Object },
             // token1: { type: Object },
             token0: { type: Object },

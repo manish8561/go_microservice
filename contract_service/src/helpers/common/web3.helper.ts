@@ -49,7 +49,7 @@ class Web3Helper {
      */
     public async callWeb3(chainId: Number): Promise<any> {
         try {
-            if (this.web3Obj && this.chainId === chainId) {
+            if (this.web3Obj !== undefined && this.chainId === chainId) {
                 return this.web3Obj;
             } else {
                 this.chainId = chainId;
@@ -80,7 +80,7 @@ class Web3Helper {
     public async callContract(chainId: number, contractAbi: any, contractAddress: string): Promise<string> {
         try {
             const web3Obj = await this.callWeb3(chainId);
-            if (this.contractObj && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
+            if (this.contractObj !== undefined && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
                 return this.contractObj;
             }
             this.contractAddress = contractAddress.toLowerCase();
@@ -115,7 +115,7 @@ class Web3Helper {
     /* dynamically call the pair contract instance */
     public async callPairContract(contractAddress: string, chainId: number): Promise<string> {
         try {
-            // if (this.contractObj && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
+            // if (this.contractObj !== undefined && this.contractAddress === contractAddress.toLowerCase() && this.chainId === chainId) {
             //     return this.contractObj;
             // }
             const web3Obj = await this.callWeb3(chainId);

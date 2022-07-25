@@ -21,7 +21,7 @@ class farmModel extends BaseModel {
           const farmData: any = await Farm.find({ status: 'active' }).skip(i).limit(20);
 
           for (let it of farmData) {
-            arr = [...arr, this.getFarm(it)];
+            arr = [...arr,await this.getFarm(it)];
           }
         }
 
@@ -46,7 +46,7 @@ class farmModel extends BaseModel {
     try {
       const now = Date.now();
 
-      const { chain_id, pid, masterchef, deposit_token, token_type, address, ac_token, farmType }: any = it;
+      const { chain_id, pid, masterchef, deposit_token, token_type, address, ac_token, farmType, reward }: any = it;
 
       let calApr: any = 0, calApy: any = 0;
 
@@ -57,10 +57,12 @@ class farmModel extends BaseModel {
         calApr = await quickswapHelper.calculateAPRValue(it);
         acPerBlock = await masterChefHelper.getTokenPerBlock(ac_token, address, chain_id);
       } else {
-        calApr = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, chain_id, pid, token_type);
+        calApr = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, chain_id, pid, token_type, reward);
       }
 
+      console.log(calApr,'------------calApr------------')
       calApy = await masterChefHelper.calculateAPY(calApr);
+
       it.daily_apr = Number(calApr);
       it.daily_apy = calApy;
       it.tvl_staked = calTvl.tvl;

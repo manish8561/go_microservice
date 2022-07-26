@@ -103,11 +103,6 @@ class MasterChef {
       const blockMined = network[chainId].blockMined;
       const curretBlockNumber = await Helpers.Web3Helper.curretBlockNumber(chainId);
 
-      let liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
-
-      if (liquidity === 0) {
-        return '0';
-      }
       if (tokenType === "token" || tokenType === "stable") {
         //SmartChefInitializable
         const smartChefContract: any = await Helpers.Web3Helper.callContract(chainId, SmartChefInitializable, masterChefAddress);
@@ -117,22 +112,32 @@ class MasterChef {
 
         let rewardTokenPrice = await this.getTokenPriceUSD(tokenSymbol);
 
-        let cakePerBlock = await smartChefContract.methods.rewardPerBlock().call();
-        cakePerBlock = cakePerBlock / 10 ** Number(tokenDecimals);
-        const totalRewardPricePerYear = rewardTokenPrice * cakePerBlock * (BLOCKS_PER_YEAR);
+        let tokenPerBlock = await smartChefContract.methods.rewardPerBlock().call();
+        tokenPerBlock = tokenPerBlock / 10 ** Number(tokenDecimals);
+        const totalRewardPricePerYear = rewardTokenPrice * tokenPerBlock * (BLOCKS_PER_YEAR);
 
         const totalStaked = await this.getTokenDeposit(lp, masterChefAddress, chainId);
 
         const totalStakingTokenInPool = cakePrice * Number(totalStaked);
         const apr = (totalRewardPricePerYear / totalStakingTokenInPool) * (100);
-        // console.table({tokenSymbol, lp,cakePrice, totalStaked, totalStakingTokenInPool, apr, rewardTokenPrice });
-        return apr.toFixed(4);
+        console.table({ tokenSymbol, lp, cakePrice, totalStaked, totalStakingTokenInPool, apr, rewardTokenPrice });
 
+        if (apr === Infinity) {
+          return '0';
+        }
+        return apr.toFixed(4);
       } else {// lp pair in masterchef
+        let liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
+
+
+        if (liquidity === 0) {
+          return '0';
+        }
+
         const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
 
         const poolInfo: any = await masterchefContract.methods.poolInfo(pid).call();
-        // console.table(poolInfo);
+        console.table(poolInfo);
 
         let cakePerBlock: any = await masterchefContract.methods.cakePerBlock(poolInfo.isRegular).call();
 
@@ -151,7 +156,7 @@ class MasterChef {
 
         //since it is in cake value
         // const apr: any = rewardYearlyUsd / liquidity;
-        // console.table({ cakePerBlock, rewardRate, yearlyCakeRewardAllocation, liquidity, apr });
+        console.table({ cakePerBlock, rewardRate, yearlyCakeRewardAllocation, liquidity, apr });
         return apr.toFixed(4);
       }
     } catch (err) {

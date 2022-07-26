@@ -16,12 +16,12 @@ class farmModel extends BaseModel {
       const farmLength: any = await Farm.countDocuments({ status: 'active' });
       let arr: any = [];
       if (farmLength > 0) {
-        console.log((Date.now() - now) / 1000, 'after db fetch---------------------');
+        console.log((Date.now() - now) / 1000, 'after db fetch---------------------: ', farmLength);
         for (let i = 0; i < farmLength; i += 20) {
           const farmData: any = await Farm.find({ status: 'active' }).skip(i).limit(20);
 
           for (let it of farmData) {
-            arr = [...arr,await this.getFarm(it)];
+            arr = [...arr,this.getFarm(it)];
           }
         }
 
@@ -35,6 +35,7 @@ class farmModel extends BaseModel {
       }
     } catch (error) {
       console.log("err", error);
+      return;
     }
   }
   /**
@@ -60,7 +61,6 @@ class farmModel extends BaseModel {
         calApr = await masterChefHelper.calculateAPRValue(masterchef, deposit_token, chain_id, pid, token_type, reward);
       }
 
-      console.log(calApr,'------------calApr------------')
       calApy = await masterChefHelper.calculateAPY(calApr);
 
       it.daily_apr = Number(calApr);

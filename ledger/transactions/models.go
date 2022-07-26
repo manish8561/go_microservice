@@ -28,7 +28,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	// token "./strategy.go"
 	pb "github.com/autocompound/docker_backend/ledger/helloworld"
@@ -113,7 +112,7 @@ func GetFarmFromService(chainId int) *pb.FarmReply {
 // cron func call
 func StartCronJob() {
 	c := cron.New()
-	c.AddFunc("*/10 * * * * *", func() {
+	c.AddFunc("*/5 * * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
 		//calling get transactions according to farms(strategies)
 		GetDetails()
@@ -149,7 +148,6 @@ func checkContract(address string, farmReply *pb.FarmReply) (bool, float64) {
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&record); err != nil { ... }
 func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	//GRPC call
 	r := GetFarmFromService(chainId)
@@ -200,6 +198,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 				strategyContract, err := NewTransactions(contractAddress, conn)
 				if err != nil {
 					fmt.Printf("Failed to instantiate a Token contract: %v", err)
+					return bN, err
 				}
 				//Withdraw
 				logWithdrawSig := []byte("Withdraw(address,uint256)")
@@ -227,7 +226,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 						case logDepositSigHash.Hex():
 							withdrawEvent, err := strategyContract.ParseDeposit(*vLog)
 							if err != nil {
-								log.Println(err)
+								log.Println("Parse deposit error", err)
 								return bN, err
 							}
 
@@ -257,7 +256,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 						case logWithdrawSigHash.Hex():
 							withdrawEvent, err := strategyContract.ParseWithdraw(*vLog)
 							if err != nil {
-								log.Println(err)
+								log.Println("Parse withdraw event", err)
 								return bN, err
 							}
 
@@ -270,7 +269,6 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 							USDValue := (transferValue / dd) * (tokenPrice)
 							// USDValue := (transferValue / dd) * tokenPrice
 
-							fmt.Println("block times: ", blockTimestamp)
 							d := TransactionModel{
 								ChainId:         chainId,
 								Strategy:        strategyAddress,
@@ -298,6 +296,45 @@ func SaveDataBackground(data interface{}, CollectionName string) {
 	err := common.SaveOne(data, CollectionName)
 	if err != nil {
 		log.Printf("Failed to retrieve token name: %v", err)
+	}
+}
+
+//to get all autocompound address from constant file in a map
+func GetDetails() {
+	for chainId, val := range common.NetworkMap {
+		//calling the contract as per chainId
+
+		// get record from db
+		result, err := GetRecord(chainId, CollectionName2)
+		if err != nil {
+			// if not found add block number for specific chainId
+			d := FarmBlockModel{
+				ChainId:         chainId,
+				Created:         time.Now(),
+				Modified:        time.Now(),
+				BlockNumber:     val.Strategy.BlockNumber,
+				LastBlockNumber: val.Strategy.BlockNumber,
+			}
+			err := common.SaveOne(&d, CollectionName2)
+			if err != nil {
+				log.Fatalf("Failed to retrieve token name: %v", err)
+			}
+			return
+		}
+		r := result.(FarmBlockModel)
+
+		//get block transactions
+		bn, err := GetBlockTransactions(r.ChainId, r.LastBlockNumber)
+		if err != nil {
+			fmt.Println(err, "get transaction err")
+			return
+		}
+		fmt.Println("before update blockNumber:", bn)
+		fmt.Println("------------------------------------")
+		//if block number is > 0
+		if bn > 0 {
+			go UpdateOne(r.ID, bn, CollectionName2)
+		}
 	}
 }
 
@@ -393,19 +430,6 @@ func GetTransactions(filters Filters) (*EventResult, error) {
 	return records[0], nil
 }
 
-// function to get block timestamp
-func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
-	blockNumber := big.NewInt(block_num)
-	block, err := client.BlockByNumber(context.Background(), blockNumber)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// fmt.Printf("%t", block.Time())
-	// fmt.Println(block.Time(), block_num, "block timestamp")
-	return int64(block.Time())
-}
-
 // Get date without time from timestamp
 func get_date_without_time(timestamp int64) time.Time {
 	currentDate := time.Unix(timestamp, 0).UTC()
@@ -414,43 +438,6 @@ func get_date_without_time(timestamp int64) time.Time {
 	y, m, d := currentDate.Date()
 	//convert to date
 	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
-}
-
-//to get all autocompound address from constant file in a map
-func GetDetails() {
-	for chainId, val := range common.NetworkMap {
-		//calling the contract as per chainId
-
-		// get record from db
-		result, err := GetRecord(chainId, CollectionName2)
-		if err != nil {
-			// if not found add block number for specific chainId
-			d := FarmBlockModel{
-				ChainId:         chainId,
-				Created:         time.Now(),
-				Modified:        time.Now(),
-				BlockNumber:     val.Strategy.BlockNumber,
-				LastBlockNumber: val.Strategy.BlockNumber,
-			}
-			err := common.SaveOne(&d, CollectionName2)
-			if err != nil {
-				log.Fatalf("Failed to retrieve token name: %v", err)
-			}
-			return
-		}
-		r := result.(FarmBlockModel)
-
-		//get block transactions
-		bn, err := GetBlockTransactions(r.ChainId, r.LastBlockNumber)
-		if err != nil {
-			fmt.Println(err, "get transaction err")
-			return
-		}
-		//if block number is > 0
-		if bn > 0 {
-			go UpdateOne(r.ID, bn, CollectionName2)
-		}
-	}
 }
 
 //to get the profit and loss

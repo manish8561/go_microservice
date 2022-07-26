@@ -35,7 +35,6 @@ import (
 
 const CollectionName = "farms_transactions"
 const CollectionName2 = "farms_blocks"
-const blockDff = 200
 
 //Network Block Number Model
 type FarmBlockModel struct {
@@ -112,7 +111,7 @@ func GetFarmFromService(chainId int) *pb.FarmReply {
 // cron func call
 func StartCronJob() {
 	c := cron.New()
-	c.AddFunc("*/5 * * * * *", func() {
+	c.AddFunc("*/3 * * * * *", func() {
 		fmt.Println("[Job 1]Every 30 minutes job\n")
 		//calling get transactions according to farms(strategies)
 		GetDetails()

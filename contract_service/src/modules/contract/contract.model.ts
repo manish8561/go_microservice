@@ -21,7 +21,7 @@ class farmModel extends BaseModel {
           const farmData: any = await Farm.find({ status: 'active' }).skip(i).limit(20);
 
           for (let it of farmData) {
-            arr = [...arr,this.getFarm(it)];
+            arr = [...arr,await this.getFarm(it)];
           }
         }
 

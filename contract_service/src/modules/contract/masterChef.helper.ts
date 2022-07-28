@@ -55,7 +55,7 @@ class MasterChef {
       const contract: any = await Helpers.Web3Helper.callContract(chainId, ABI, strategyAddress);
       let tvl: any = await contract.methods.totalDeposits().call();
       const decimalVal: any = await contract.methods.decimals().call();
-      const dollerPrice: any = await this.calPrice(deposit_token, chainId, true);
+      const dollerPrice: any = await this.calPrice(deposit_token, chainId);
       tvl = (tvl / 10 ** decimalVal) * Number(dollerPrice);
       return { tvl: tvl.toFixed(6), tokenPrice: dollerPrice };
     } catch (err) {
@@ -118,7 +118,7 @@ class MasterChef {
 
         const totalStakingTokenInPool = cakePrice * Number(totalStaked);
         const apr = (totalRewardPricePerYear / totalStakingTokenInPool) * (100);
-        console.log({ tokenSymbol, lp, cakePrice, totalStaked, totalStakingTokenInPool, apr, rewardTokenPrice });
+        // console.table({ tokenSymbol, lp, cakePrice, totalStaked, totalStakingTokenInPool, apr, rewardTokenPrice });
 
         if (apr === Infinity) {
           return '0';
@@ -127,7 +127,6 @@ class MasterChef {
       } else {// lp pair in masterchef
         let liquidity: any = await this.handleLiquidity(lp, masterChefAddress, chainId);
 
-
         if (liquidity === 0) {
           return '0';
         }
@@ -135,7 +134,7 @@ class MasterChef {
         const masterchefContract: any = await Helpers.Web3Helper.callContract(chainId, MasterchefABI, masterChefAddress);
 
         const poolInfo: any = await masterchefContract.methods.poolInfo(pid).call();
-        console.log(poolInfo);
+        // console.table(poolInfo);
 
         let cakePerBlock: any = await masterchefContract.methods.cakePerBlock(poolInfo.isRegular).call();
 
@@ -155,7 +154,7 @@ class MasterChef {
 
         //since it is in cake value
         // const apr: any = rewardYearlyUsd / liquidity;
-        console.log({ cakePerBlock, rewardRate, yearlyCakeRewardAllocation, liquidity, apr });
+        // console.table({ cakePerBlock, rewardRate, yearlyCakeRewardAllocation, liquidity, apr });
         return apr.toFixed(4);
       }
     } catch (err) {
@@ -173,8 +172,9 @@ class MasterChef {
     try {
       if (tokenAddress != "0x0000000000000000000000000000000000000000") {
         const d: any = await this.getTokenDeposit(tokenAddress, contractAddress, chainId);
-        let tokenPrice: Number = await this.calPrice(tokenAddress, chainId, false);
-        return Number(tokenPrice);
+        let tokenPrice: Number = await this.calPrice(tokenAddress, chainId);
+        return Number(tokenPrice) * Number(d);
+        // return Number(tokenPrice);
       }
       return 0;
     } catch (error) {
@@ -304,7 +304,7 @@ class MasterChef {
    * @param  {number} chainId
    * @returns Promise
    */
-  public async calPrice(pairAddress: any, chainId: number, check: boolean): Promise<any> {
+  public async calPrice(pairAddress: any, chainId: number): Promise<any> {
     try {
       let price = 0;
       let priceTokenZero: any = 0;
@@ -313,8 +313,9 @@ class MasterChef {
       if (pairAddress === "") {
         return 0;
       }
+      const contract: any = await Helpers.Web3Helper.callPairContract(pairAddress, chainId);
       try {
-        tokenZero = await this.getTokenZero(pairAddress, chainId);
+        tokenZero = await contract.methods.token0().call();
       } catch (err) {
         // console.log('not a pair error', err);
         const symbolSingle = await this.getSymbol(pairAddress, chainId);
@@ -327,37 +328,39 @@ class MasterChef {
         // return await this.getTokenPriceUSD(symbolSingle);
         const r = await this.getTokenPriceUSD(symbolSingle);
         return r;
-      } else {
-        const reserve: any = await this.getReserves(pairAddress, chainId);
+      } else {//lp masterchef
+        const totalSupply = await contract.methods.totalSupply().call();
+        const reserve: any = await contract.methods.getReserves().call();
+        const tokenOne: any = await contract.methods.token1().call();
 
-        const tokenOne: any = await this.getTokenOne(pairAddress, chainId);
         const symbolZero: any = await this.getSymbol(tokenZero, chainId);
         const symbolOne: any = await this.getSymbol(tokenOne, chainId);
-        const decimals0: any = await this.getDecimal(tokenZero, chainId);
-        const decimals1: any = await this.getDecimal(tokenOne, chainId);
 
         // fetching data from Api for token zero...
         const respTokenZero = await this.getTokenPriceUSD(symbolZero);
         if (respTokenZero) {
-          priceTokenZero = respTokenZero * (reserve[0] / 10 ** decimals0);
+          priceTokenZero = respTokenZero * reserve[0];
         } else {
-          priceTokenZero = (reserve[0] / 10 ** decimals0);
+          priceTokenZero = reserve[0];
         }
         // fetching data from Api for token one...
         const respTokenOne = await this.getTokenPriceUSD(symbolOne);
         if (respTokenOne) {
-          priceTokenOne = respTokenOne * (reserve[1] / 10 ** decimals1);;
+          priceTokenOne = respTokenOne * reserve[1];
         } else {
-          priceTokenOne = (reserve[1] / 10 ** decimals1);
+          priceTokenOne = reserve[1];
         }
-        // p0 = (reserve1/10**decimals1) / (reserve0/10**decimals0)
-        // price = (priceTokenOne / priceTokenZero);
-        if (check) {
-          price = priceTokenOne / priceTokenZero;
-        } else {
-          price = priceTokenZero + priceTokenOne;
-        }
-        return (price);
+        let p = 0;
+        // if (check) {
+          p = 2 * Math.sqrt(priceTokenZero * priceTokenOne) / totalSupply;
+        // } else {
+        //   const decimals0: any = await this.getDecimal(tokenZero, chainId);
+        //   const decimals1: any = await this.getDecimal(tokenOne, chainId);
+
+        //   p = (priceTokenZero / 10 ** decimals0) + (priceTokenOne / 10 ** decimals1);
+        // }
+
+        return p;
       }
     } catch (err) {
       throw (err);

@@ -4,3 +4,5 @@ test
 log
 
 config
+
+package-lock.json

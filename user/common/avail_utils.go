@@ -8,8 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/dgrijalva/jwt-go/request"
 	"github.com/joho/godotenv"
 	"gopkg.in/go-playground/validator.v8"
 
@@ -19,7 +17,10 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
 	// "github.com/autocompound/docker_backend/user/users"
+	"github.com/golang-jwt/jwt/request"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -62,17 +63,32 @@ func InitVariables() {
 }
 
 // A Util function to generate jwt_token which can be used in the request header
+
+// CustomClaims extends the default claims
+type CustomClaims struct {
+	ID   string `json:"id"`
+	Role string `json:"role"`
+	jwt.RegisteredClaims
+}
+
+// GenerateToken generates a JWT token
 func GenToken(id string, role string) string {
-	jwt_token := jwt.New(jwt.GetSigningMethod("HS256"))
-	// Set some claims
-	jwt_token.Claims = jwt.MapClaims{
-		"id":   id,
-		"exp":  time.Now().Add(time.Hour * 24).Unix(),
-		"role": role,
+	claims := CustomClaims{
+		ID:   id,
+		Role: role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "my_app",
+		},
 	}
-	// Sign and get the complete encoded token as a string
-	token, _ := jwt_token.SignedString([]byte(NBSecretPassword))
-	return token
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	str, err := token.SignedString(NBSecretPassword)
+	if err != nil {
+		fmt.Println("generate token error: ", err)
+	}
+	return str
 }
 
 // My own Error type that will help return my customized Error info
@@ -80,6 +96,19 @@ func GenToken(id string, role string) string {
 //	{"database": {"hello":"no such table", error: "not_exists"}}
 type CommonError struct {
 	Errors map[string]interface{} `json:"errors"`
+}
+
+// ValidateToken parses and validates a JWT token
+func ValidateToken(tokenString string) (*CustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return NBSecretPassword, nil
+	})
+
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
+		return claims, nil
+	} else {
+		return nil, err
+	}
 }
 
 // To handle the error returned by c.Bind in gin framework
@@ -142,12 +171,28 @@ var MyAuth2Extractor = &request.MultiExtractor{
 }
 
 // A helper to write user_id and user_model to the context
-func UpdateContextUserModel(c *gin.Context, my_user_id string, user *UserModel) {
-	if my_user_id != "" {
-		c.Set("my_user_id", my_user_id)
+func UpdateContextUserModel(c *gin.Context, MyUserID string, user *UserModel) {
+	if MyUserID != "" {
+		c.Set("my_user_id", MyUserID)
 		c.Set("user", user)
 	}
 	c.Next()
+}
+
+// ExtractTokenFromHeader extracts the token from Authorization header
+func ExtractTokenFromHeader(c *gin.Context) string {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		return ""
+	}
+
+	// Expecting header format: "Bearer <token>"
+	parts := strings.Split(authHeader, " ")
+	if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+		return parts[1]
+	}
+
+	return ""
 }
 
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
@@ -156,37 +201,28 @@ func UpdateContextUserModel(c *gin.Context, my_user_id string, user *UserModel) 
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if auto401 {
-			if c.Request.Header["Authorization"] == nil {
-				c.JSON(http.StatusUnauthorized, gin.H{"message": "No Token Found"})
-				c.AbortWithError(http.StatusUnauthorized, errors.New("No Token Found"))
+			token := ExtractTokenFromHeader(c)
+			if token == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
 				return
 			}
-			// UpdateContextUserModel(c, 0)
-			token, err := request.ParseFromRequest(c.Request, MyAuth2Extractor, func(token *jwt.Token) (interface{}, error) {
-				b := ([]byte(NBSecretPassword))
-				return b, nil
-			})
-			if err != nil {
-				c.JSON(http.StatusUnauthorized, gin.H{"message": "Token Expired"})
-				c.AbortWithError(http.StatusUnauthorized, err)
-				return
-			}
-			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+
+			if claims, err := ValidateToken(token); err == nil {
 				//checking for admin role
-				if role := claims["role"].(string); role != "admin" && auto401 {
+				if role := claims.Role; role != "admin" && auto401 {
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
 					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
 					return
 				}
-				my_user_id := claims["id"].(string)
+				MyUserID := claims.ID
 
-				user, err := GetUserProfile(my_user_id)
+				user, err := GetUserProfile(MyUserID)
 				if err != nil {
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
 					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
 					return
 				}
-				fmt.Println(my_user_id, claims["id"])
+				fmt.Println(MyUserID, claims.ID)
 				fmt.Println("user in common middleware", user)
 
 				if err != nil {
@@ -195,7 +231,13 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 					return
 				}
 
-				UpdateContextUserModel(c, my_user_id, &user)
+				UpdateContextUserModel(c, MyUserID, &user)
+			} else {
+				{
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					return
+				}
 			}
 		} else {
 			c.Next()

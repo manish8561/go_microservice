@@ -73,7 +73,7 @@ func TestRandString(t *testing.T) {
 func TestGenToken(t *testing.T) {
 	asserts := assert.New(t)
 
-	token := GenToken("2")
+	token := GenToken("2", "user")
 
 	asserts.IsType(token, string("token"), "token type should be string")
 	asserts.Len(token, 115, "JWT's length should be 115")

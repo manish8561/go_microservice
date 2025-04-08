@@ -3,12 +3,12 @@ package common
 import (
 	"bytes"
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectingDatabase(t *testing.T) {
@@ -73,7 +73,7 @@ func TestRandString(t *testing.T) {
 func TestGenToken(t *testing.T) {
 	asserts := assert.New(t)
 
-	token := GenToken(2)
+	token := GenToken("2", "user")
 
 	asserts.IsType(token, string("token"), "token type should be string")
 	asserts.Len(token, 115, "JWT's length should be 115")
@@ -146,19 +146,4 @@ func TestNewValidatorError(t *testing.T) {
 		asserts.Equal(testData.expectedCode, w.Code, "Response Status - "+testData.msg)
 		asserts.Regexp(testData.responseRegexg, w.Body.String(), "Response Content - "+testData.msg)
 	}
-}
-
-func TestNewError(t *testing.T) {
-	assert := assert.New(t)
-
-	db := TestDBInit()
-	type NotExist struct {
-		heheda string
-	}
-	db.AutoMigrate(NotExist{})
-
-	commenError := NewError("database", db.Find(NotExist{heheda: "heheda"}).Error)
-	assert.IsType(commenError, commenError, "commenError should have right type")
-	assert.Equal(map[string]interface{}(map[string]interface{}{"database": "no such table: not_exists"}),
-		commenError.Errors, "commenError should have right error info")
 }

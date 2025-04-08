@@ -24,7 +24,7 @@ import (
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-//init function
+// init function
 func init() {
 	//initial variables
 	InitVariables()
@@ -76,7 +76,8 @@ func GenToken(id string, role string) string {
 }
 
 // My own Error type that will help return my customized Error info
-//  {"database": {"hello":"no such table", error: "not_exists"}}
+//
+//	{"database": {"hello":"no such table", error: "not_exists"}}
 type CommonError struct {
 	Errors map[string]interface{} `json:"errors"`
 }
@@ -150,7 +151,8 @@ func UpdateContextUserModel(c *gin.Context, my_user_id string, user *UserModel) 
 }
 
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
-//  r.Use(AuthMiddleware(true))
+//
+//	r.Use(AuthMiddleware(true))
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if auto401 {

@@ -11,8 +11,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/request"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5/request"
+
 
 	"github.com/joho/godotenv"
 	"gopkg.in/go-playground/validator.v8"

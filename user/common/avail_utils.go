@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	// "github.com/autocompound/docker_backend/user/users"
-	"github.com/golang-jwt/jwt/request"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5/request"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")

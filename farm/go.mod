@@ -8,7 +8,6 @@ require (
 	github.com/ethereum/go-ethereum v1.14.13
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis v6.15.9+incompatible
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/joho/godotenv v1.4.0
 	github.com/robfig/cron v1.2.0

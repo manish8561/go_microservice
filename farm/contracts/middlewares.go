@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/autocompound/docker_backend/farm/common"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/request"
+		"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5/request"
 )
 
 // Strips 'TOKEN ' prefix from token string

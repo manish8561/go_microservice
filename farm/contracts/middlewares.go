@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/autocompound/docker_backend/farm/common"
-		"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5/request"
 )
 
@@ -19,7 +19,7 @@ func stripBearerPrefixFromTokenString(tok string) (string, error) {
 	return tok, nil
 }
 
-// Extract  token from Authorization header
+// Extract token from Authorization header
 // Uses PostExtractionFilter to strip "TOKEN " prefix from header
 var AuthorizationHeaderExtractor = &request.PostExtractionFilter{
 	request.HeaderExtractor{"Authorization"},

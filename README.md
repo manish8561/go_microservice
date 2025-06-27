@@ -88,4 +88,3 @@ depending on whether you want to see test coverage and how verbose the output yo
 - Test coverage (common & users 100%, article 0%)
 - ProtoBuf support
 - Code structure optimize (I think some place can use interface)
-- Continuous integration (done)

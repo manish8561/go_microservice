@@ -2,6 +2,7 @@
 package common
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"math/rand"
@@ -91,6 +92,14 @@ func GenToken(id string, role string) string {
 	return str
 }
 
+func GenerateRefreshToken() (string, error) {
+    b := make([]byte, 32)
+    _, err := rand.Read(b)
+    if err != nil {
+        return "", err
+    }
+    return base64.URLEncoding.EncodeToString(b), nil
+}
 // My own Error type that will help return my customized Error info
 //
 //	{"database": {"hello":"no such table", error: "not_exists"}}

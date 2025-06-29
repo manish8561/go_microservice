@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"log"
+
 	"github.com/autocompound/docker_backend/user/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,16 +28,18 @@ const CollectionName = "users"
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
 type UserModel struct {
-	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Created   time.Time          `bson:"_created" json:"_created"`
-	Modified  time.Time          `bson:"_modified" json:"_modified"`
-	Firstname string             `bson:"firstname" json:"firstname"`
-	Lastname  string             `bson:"lastname" json:"lastname"`
-	Status    string             `bson:"status" json:"status"`
-	Email     string             `bson:"email" json:"email"`
-	Role      string             `bson:"role" json:"role"`
+	ID                 primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Created            time.Time          `bson:"_created" json:"_created"`
+	Modified           time.Time          `bson:"_modified" json:"_modified"`
+	Firstname          string             `bson:"firstname" json:"firstname"`
+	Lastname           string             `bson:"lastname" json:"lastname"`
+	Status             string             `bson:"status" json:"status"`
+	Email              string             `bson:"email" json:"email"`
+	Role               string             `bson:"role" json:"role"`
+	PasswordHash       string             `json:"-"` // to hide filed in json
+	RefreshToken       string             `bson:"refresh_token"`
+	RefreshTokenExpiry time.Time          `bson:"refresh_token_expiry"`
 	// Image              *string
-	PasswordHash string `json:"-"` // to hide filed in json
 }
 
 // initialize function
@@ -62,7 +66,8 @@ func init() {
 // What's bcrypt? https://en.wikipedia.org/wiki/Bcrypt
 // Golang bcrypt doc: https://godoc.org/golang.org/x/crypto/bcrypt
 // You can change the value in bcrypt.DefaultCost to adjust the security index.
-// 	err := userModel.setPassword("password0")
+//
+//	err := userModel.setPassword("password0")
 func (u *UserModel) setPassword(password string) error {
 	if len(password) == 0 {
 		return errors.New("password should not be empty!")
@@ -75,7 +80,8 @@ func (u *UserModel) setPassword(password string) error {
 }
 
 // Database will only save the hashed string, you should check it by util function.
-// 	if err := serModel.checkPassword("password0"); err != nil { password error }
+//
+//	if err := serModel.checkPassword("password0"); err != nil { password error }
 func (u *UserModel) checkPassword(password string) error {
 	bytePassword := []byte(password)
 	byteHashedPassword := []byte(u.PasswordHash)
@@ -83,7 +89,8 @@ func (u *UserModel) checkPassword(password string) error {
 }
 
 // You could input the conditions and it will return an UserModel in database with error info.
-// 	userModel, err := FindOneUser(&UserModel{Username: "username0"})
+//
+//	userModel, err := FindOneUser(&UserModel{Username: "username0"})
 func FindOneUser(email string) (UserModel, error) {
 	person := &UserModel{}
 
@@ -103,7 +110,8 @@ func FindOneUser(email string) (UserModel, error) {
 }
 
 // You could input an UserModel which will be saved in database returning with error info
-// 	if err := SaveOne(&userModel); err != nil { ... }
+//
+//	if err := SaveOne(&userModel); err != nil { ... }
 func SaveOne(data *UserModel) error {
 	client := common.GetDB()
 	person := &UserModel{}
@@ -114,6 +122,10 @@ func SaveOne(data *UserModel) error {
 	// to check for unique email address
 	err := collection.FindOne(ctx, bson.M{"email": data.Email}).Decode(&person)
 	if err != nil {
+		refreshToken, _ := common.GenerateRefreshToken()
+		data.RefreshToken = refreshToken
+		data.RefreshTokenExpiry = time.Now().Add(7 * 24 * time.Hour) // 7 days
+		// Save user to DB
 		res, err := collection.InsertOne(ctx, data)
 		fmt.Println(res, "Inserted")
 		return err
@@ -122,7 +134,8 @@ func SaveOne(data *UserModel) error {
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&userModel); err != nil { ... }
+//
+//	if err := FindOne(&userModel); err != nil { ... }
 func GetProfile(ID string) (UserModel, error) {
 	client := common.GetDB()
 	person := &UserModel{}
@@ -179,16 +192,17 @@ func GetProfile(ID string) (UserModel, error) {
 // }
 
 // You could delete a following relationship as userModel1 following userModel2
-// 	err = userModel1.unFollowing(userModel2)
-// func (u UserModel) unFollowing(v UserModel) error {
-// 	db := common.GetDB()
-// 	err := db.Where(FollowModel{
-// 		FollowingID:  v.ID,
-// 		FollowedByID: u.ID,
-// 	}).Delete(FollowModel{}).Error
-// 	return err
-// }
 //
+//	err = userModel1.unFollowing(userModel2)
+//
+//	func (u UserModel) unFollowing(v UserModel) error {
+//		db := common.GetDB()
+//		err := db.Where(FollowModel{
+//			FollowingID:  v.ID,
+//			FollowedByID: u.ID,
+//		}).Delete(FollowModel{}).Error
+//		return err
+//	}
 func ChangePasswordOne(data *UserModel) (*mongo.UpdateResult, error) {
 	client := common.GetDB()
 
@@ -208,4 +222,55 @@ func ChangePasswordOne(data *UserModel) (*mongo.UpdateResult, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+// FindUserByRefreshToken finds a user by their refresh token and checks expiry
+func FindUserByRefreshToken(refreshToken string) (UserModel, error) {
+	client := common.GetDB()
+	person := &UserModel{}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.M{"refresh_token": refreshToken}).Decode(&person)
+	if err != nil {
+		return *person, err
+	}
+	if person.RefreshTokenExpiry.Before(time.Now()) {
+		return *person, errors.New("refresh token expired")
+	}
+	return *person, nil
+}
+
+func UpdateRefreshToken(userID string) string {
+	client := common.GetDB()
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	refreshToken, err := common.GenerateRefreshToken()
+	if err != nil {
+		log.Println("Error generating refresh token", err)
+		return ""
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"refresh_token":        refreshToken,
+			"refresh_token_expiry": time.Now().Add(7 * 24 * time.Hour), // 7 days
+		},
+	}
+
+	objID, _ := primitive.ObjectIDFromHex(userID)
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	if err != nil {
+		log.Println("Error updating refresh token", "error", err)
+		return ""
+	}
+	if result.MatchedCount == 0 {
+		log.Println("No user found with the given user ID", userID)
+		return ""
+	}
+	return refreshToken
 }

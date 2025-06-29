@@ -3,6 +3,7 @@ package users
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/autocompound/docker_backend/user/common"
 	"github.com/gin-gonic/gin"
@@ -13,15 +14,17 @@ import (
 func UsersRegister(router *gin.RouterGroup) {
 	router.POST("", UsersRegistration)
 	router.POST("/login", UsersLogin)
+	router.POST("/refresh", UsersRefreshToken)
 
 	router.Use(common.AuthMiddleware(true))
 	router.POST("/changePassword", ChangePassword)
 }
 
-// func UserRegister(router *gin.RouterGroup) {
-// 	router.GET("/", UserRetrieve)
-// 	router.PUT("/", UserUpdate)
-// }
+//	func UserRegister(router *gin.RouterGroup) {
+//		router.GET("/", UserRetrieve)
+//		router.PUT("/", UserUpdate)
+//	}
+//
 // register the user profile route
 func ProfileRegister(router *gin.RouterGroup) {
 	router.GET("", ProfileRetrieve)
@@ -107,7 +110,29 @@ func UsersLogin(c *gin.Context) {
 		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid email or password")))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token": common.GenToken(userModel.ID.Hex(), userModel.Role)})
+	c.JSON(http.StatusOK, gin.H{
+		"token":         common.GenToken(userModel.ID.Hex(), userModel.Role),
+		"refresh_token": UpdateRefreshToken(userModel.ID.Hex()),
+	})
+}
+
+func UsersRefreshToken(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	// Find user by refresh token, check expiry
+	user, err := FindUserByRefreshToken(req.RefreshToken)
+	if err != nil || user.RefreshTokenExpiry.Before(time.Now()) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+	// Generate new access token
+	accessToken := common.GenToken(user.ID.Hex(), user.Role)
+	c.JSON(http.StatusOK, gin.H{"access_token": accessToken})
 }
 
 // func UserRetrieve(c *gin.Context) {
@@ -133,7 +158,7 @@ func UsersLogin(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{"user": serializer.Response()})
 // }
 
-//user change password
+// user change password
 func ChangePassword(c *gin.Context) {
 	changePasswordValidator := NewChangePasswordValidator()
 	if err := changePasswordValidator.Bind(c); err != nil {

@@ -56,11 +56,11 @@ func InitVariables() {
 		secret = "secret"
 	}
 	NBSecretPassword = secret
-	random_password, ok := os.LookupEnv("RANDOM_PASSWORD")
+	randomPassword, ok := os.LookupEnv("RANDOM_PASSWORD")
 	if !ok {
-		random_password = "random password"
+		randomPassword = "random password"
 	}
-	NBSecretPassword = random_password
+	NBSecretPassword = randomPassword
 }
 
 // A Util function to generate jwt_token which can be used in the request header
@@ -93,13 +93,14 @@ func GenToken(id string, role string) string {
 }
 
 func GenerateRefreshToken() (string, error) {
-    b := make([]byte, 32)
-    _, err := rand.Read(b)
-    if err != nil {
-        return "", err
-    }
-    return base64.URLEncoding.EncodeToString(b), nil
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }
+
 // My own Error type that will help return my customized Error info
 //
 //	{"database": {"hello":"no such table", error: "not_exists"}}
@@ -169,7 +170,7 @@ func stripBearerPrefixFromTokenString(tok string) (string, error) {
 // Uses PostExtractionFilter to strip "TOKEN " prefix from header
 var AuthorizationHeaderExtractor = &request.PostExtractionFilter{
 	Extractor: request.HeaderExtractor{"Authorization"},
-	Filter: stripBearerPrefixFromTokenString,
+	Filter:    stripBearerPrefixFromTokenString,
 }
 
 // Extractor for OAuth2 access tokens.  Looks in 'Authorization'
@@ -219,34 +220,26 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 			if claims, err := ValidateToken(token); err == nil {
 				//checking for admin role
 				if role := claims.Role; role != "admin" && auto401 {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					c.JSON(http.StatusUnauthorized, gin.H{"message": ErrAccessDeniedMsg})
+					c.AbortWithError(http.StatusUnauthorized, errors.New(ErrAccessDeniedMsg))
 					return
 				}
 				MyUserID := claims.ID
 
 				user, err := GetUserProfile(MyUserID)
 				if err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					c.JSON(http.StatusUnauthorized, gin.H{"message": ErrAccessDeniedMsg})
+					c.AbortWithError(http.StatusUnauthorized, errors.New(ErrAccessDeniedMsg))
 					return
 				}
 				fmt.Println(MyUserID, claims.ID)
 				fmt.Println("user in common middleware", user)
-
-				if err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
-					return
-				}
-
+				// Update the context with user_id and user_model
 				UpdateContextUserModel(c, MyUserID, &user)
 			} else {
-				{
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
-					return
-				}
+				c.JSON(http.StatusUnauthorized, gin.H{"message": ErrAccessDeniedMsg})
+				c.AbortWithError(http.StatusUnauthorized, errors.New(ErrAccessDeniedMsg))
+				return
 			}
 		} else {
 			c.Next()

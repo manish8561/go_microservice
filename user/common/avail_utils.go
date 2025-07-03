@@ -60,7 +60,7 @@ func InitVariables() {
 	if !ok {
 		randomPassword = "random password"
 	}
-	NBSecretPassword = randomPassword
+	NBRandomPassword = randomPassword
 }
 
 // A Util function to generate jwt_token which can be used in the request header

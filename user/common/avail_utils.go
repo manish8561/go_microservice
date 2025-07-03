@@ -208,41 +208,48 @@ func ExtractTokenFromHeader(c *gin.Context) string {
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
 //
 //	r.Use(AuthMiddleware(true))
+func respondUnauthorized(c *gin.Context, message string) {
+	c.JSON(http.StatusUnauthorized, gin.H{"message": message})
+	c.AbortWithError(http.StatusUnauthorized, errors.New(message))
+}
+
+func processTokenAndUser(c *gin.Context, token string, auto401 bool) bool {
+	claims, err := ValidateToken(token)
+	if err != nil {
+		respondUnauthorized(c, ErrAccessDeniedMsg)
+		return false
+	}
+	//checking for admin role
+	if role := claims.Role; role != "admin" && auto401 {
+		respondUnauthorized(c, ErrAccessDeniedMsg)
+		return false
+	}
+	MyUserID := claims.ID
+	user, err := GetUserProfile(MyUserID)
+	if err != nil {
+		respondUnauthorized(c, ErrAccessDeniedMsg)
+		return false
+	}
+	fmt.Println(MyUserID, claims.ID)
+	fmt.Println("user in common middleware", user)
+	// Update the context with user_id and user_model
+	UpdateContextUserModel(c, MyUserID, &user)
+	return true
+}
+
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if auto401 {
-			token := ExtractTokenFromHeader(c)
-			if token == "" {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
-				return
-			}
-
-			if claims, err := ValidateToken(token); err == nil {
-				//checking for admin role
-				if role := claims.Role; role != "admin" && auto401 {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": ErrAccessDeniedMsg})
-					c.AbortWithError(http.StatusUnauthorized, errors.New(ErrAccessDeniedMsg))
-					return
-				}
-				MyUserID := claims.ID
-
-				user, err := GetUserProfile(MyUserID)
-				if err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": ErrAccessDeniedMsg})
-					c.AbortWithError(http.StatusUnauthorized, errors.New(ErrAccessDeniedMsg))
-					return
-				}
-				fmt.Println(MyUserID, claims.ID)
-				fmt.Println("user in common middleware", user)
-				// Update the context with user_id and user_model
-				UpdateContextUserModel(c, MyUserID, &user)
-			} else {
-				c.JSON(http.StatusUnauthorized, gin.H{"message": ErrAccessDeniedMsg})
-				c.AbortWithError(http.StatusUnauthorized, errors.New(ErrAccessDeniedMsg))
-				return
-			}
-		} else {
+		if !auto401 {
 			c.Next()
+			return
+		}
+		token := ExtractTokenFromHeader(c)
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
+			return
+		}
+		if !processTokenAndUser(c, token, auto401) {
+			return
 		}
 	}
 }

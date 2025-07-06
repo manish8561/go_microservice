@@ -199,50 +199,51 @@ func ExtractTokenFromHeader(c *gin.Context) string {
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
 //
 //	r.Use(AuthMiddleware(true))
+func respondUnauthorized(c *gin.Context, message string) {
+	c.JSON(http.StatusUnauthorized, gin.H{"message": message})
+	c.AbortWithError(http.StatusUnauthorized, errors.New(message))
+}
+
+func handleValidToken(c *gin.Context, claims *CustomClaims) bool {
+	if claims.Role != "admin" {
+		respondUnauthorized(c, "You dont have the access")
+		return false
+	}
+	MyUserID := claims.ID
+	grpc_server_conn := Get_GRPC_Conn()
+	cc := pb.NewGreeterClient(grpc_server_conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	user, err := cc.GetUserDetails(ctx, &pb.UserRequest{Id: MyUserID})
+	if err != nil {
+		respondUnauthorized(c, "No user found!")
+		return false
+	}
+	UpdateContextUserModel(c, MyUserID, user)
+	return true
+}
+
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if auto401 {
-			token := ExtractTokenFromHeader(c)
-			if token == "" {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
-				return
-			}
-
-			if claims, err := ValidateToken(token); err == nil {
-				//checking for admin role
-				if role := claims.Role; role != "admin" && auto401 {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
-					return
-				}
-				MyUserID := claims.ID
-
-				//requesting grpc request for user details with id
-				grpc_server_conn := Get_GRPC_Conn()
-				cc := pb.NewGreeterClient(grpc_server_conn)
-				// Contact the server and print out its response.
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-				user, err := cc.GetUserDetails(ctx, &pb.UserRequest{Id: MyUserID})
-				if err != nil {
-					// log.Fatalf("could not greet: %v", err)
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "No user found!"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("No user found!"))
-					return
-				}
-				// response from user service
-
-				// fmt.Println(my_user_id, claims["id"], user, "in the middleware")
-				UpdateContextUserModel(c, MyUserID, user)
-			} else {
-				{
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
-					return
-				}
-			}
-		} else {
+		if !auto401 {
 			c.Next()
+			return
+		}
+
+		token := ExtractTokenFromHeader(c)
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing or invalid token"})
+			return
+		}
+
+		claims, err := ValidateToken(token)
+		if err != nil {
+			respondUnauthorized(c, "You dont have the access")
+			return
+		}
+
+		if !handleValidToken(c, claims) {
+			return
 		}
 	}
 }

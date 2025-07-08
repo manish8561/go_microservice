@@ -210,8 +210,8 @@ func handleValidToken(c *gin.Context, claims *CustomClaims) bool {
 		return false
 	}
 	MyUserID := claims.ID
-	grpc_server_conn := Get_GRPC_Conn()
-	cc := pb.NewGreeterClient(grpc_server_conn)
+	grpcServerConn := Get_GRPC_Conn()
+	cc := pb.NewGreeterClient(grpcServerConn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	user, err := cc.GetUserDetails(ctx, &pb.UserRequest{Id: MyUserID})

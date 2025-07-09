@@ -172,9 +172,9 @@ var MyAuth2Extractor = &request.MultiExtractor{
 }
 
 // A helper to write user_id and user_model to the context
-func UpdateContextUserModel(c *gin.Context, my_user_id string, user *pb.UserReply) {
-	if my_user_id != "" {
-		c.Set("my_user_id", my_user_id)
+func UpdateContextUserModel(c *gin.Context, myUserID string, user *pb.UserReply) {
+	if myUserID != "" {
+		c.Set("my_user_id", myUserID)
 		c.Set("user", user)
 	}
 	c.Next()

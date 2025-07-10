@@ -30,7 +30,6 @@ const blockDff = 200
 
 // Models should only be concerned with database schema, more strict checking should be put in validator.
 // event Transfer(address indexed from, address indexed to, uint256 value);
-//
 type TransferEventModel struct {
 	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	ChainId         int                `bson:"chainId" json:"chainId"`
@@ -45,21 +44,21 @@ type TransferEventModel struct {
 	CreatedAt       time.Time          `bson:"createdAt" json:"createdAt"`
 }
 
-//struct for graph data
+// struct for graph data
 type GraphDataModel struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Value     float64            `bson:"value" json:"value"`
 	Timestamp int64              `bson:"timestamp" json:"timestamp"`
 }
 
-//struct for graph data
+// struct for graph data
 type GraphDataModel2 struct {
 	ID    time.Time `json:"_id,omitempty" bson:"_id,omitempty"`
 	Value float64   `bson:"value" json:"value"`
 	Count int64     `bson:"count" json:"count"`
 }
 
-//struct for filters
+// struct for filters
 type Filters struct {
 	ChainId int64  `bson: "chainId" json:"chainId"`
 	Address string `bson: "address" json:"address"`
@@ -87,7 +86,8 @@ func StartCall() {
 }
 
 // You could input an TransferEventModel which will be saved in database returning with error info
-// 	if err := SaveOne(&farmModel); err != nil { ... }
+//
+//	if err := SaveOne(&farmModel); err != nil { ... }
 func SaveOne(data *TransferEventModel) error {
 	client := common.GetDB()
 
@@ -104,7 +104,8 @@ func SaveOne(data *TransferEventModel) error {
 }
 
 // You could input an TransferEventModel which will be updated in database returning with error info
-// 	if err := UpdateOne(&farmModel); err != nil { ... }
+//
+//	if err := UpdateOne(&farmModel); err != nil { ... }
 func UpdateOne(ID primitive.ObjectID, lastBlockNumber int64) error {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
@@ -124,7 +125,8 @@ func UpdateOne(ID primitive.ObjectID, lastBlockNumber int64) error {
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&farmModel); err != nil { ... }
+//
+//	if err := FindOne(&farmModel); err != nil { ... }
 func GetRecord(chainId int, ac string) (TransferEventModel, error) {
 	client := common.GetDB()
 	record := &TransferEventModel{}
@@ -249,15 +251,19 @@ func GetLastSevenTransaction(filters Filters) ([]*GraphDataModel, error) {
 	return records, err
 }
 
-/* get last seven days volume
+/*
+	get last seven days volume
+
 db.getCollection('transfers').aggregate([
 {$sort: {"timestamp":-1}},
 {$match:{chainId:4}},
-{$group:{
-    _id:"$createdAt",
-    count:{$sum:1},
-    value:{$sum:"$value"}
-    }},
+
+	{$group:{
+	    _id:"$createdAt",
+	    count:{$sum:1},
+	    value:{$sum:"$value"}
+	    }},
+
 {$sort:{_id:1}}
 ])
 */
@@ -269,7 +275,7 @@ func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	//last seven day timestamp
-	currentDate := get_date_without_time(time.Now().Unix())
+	currentDate := getDateWithoutTime(time.Now().Unix())
 	lastWeekDate := currentDate.Unix() - (7 * 24 * 60 * 60)
 
 	// Specify a pipeline that will return the number of times each name appears
@@ -310,7 +316,7 @@ func GetLastSevenDaysData(filters Filters) ([]*GraphDataModel2, error) {
 * delete the duplicates
 * @param  {string} d
  */
-func callingDelete(CollectionName string, ChainId int)  {
+func callingDelete(CollectionName string, ChainId int) {
 	type IDResult struct {
 		TransactionHash string
 	}
@@ -346,7 +352,7 @@ func callingDelete(CollectionName string, ChainId int)  {
 
 	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
-		log.Println("err in aggregate", err)
+		log.Printf("err in aggregate: %q", err)
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
@@ -373,8 +379,8 @@ func callingDelete(CollectionName string, ChainId int)  {
 }
 
 // function to get block timestamp
-func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
-	blockNumber := big.NewInt(block_num)
+func GetBlockTimestamp(client *ethclient.Client, blockNum int64) int64 {
+	blockNumber := big.NewInt(blockNum)
 	block, err := client.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
 		log.Println(err)
@@ -387,7 +393,7 @@ func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 }
 
 // Get date without time from timestamp
-func get_date_without_time(timestamp int64) time.Time {
+func getDateWithoutTime(timestamp int64) time.Time {
 	currentDate := time.Unix(timestamp, 0).UTC()
 
 	//get year month day
@@ -397,7 +403,8 @@ func get_date_without_time(timestamp int64) time.Time {
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&farmModel); err != nil { ... }
+//
+//	if err := FindOne(&farmModel); err != nil { ... }
 func GetContract(chainId int, ac string, blockNumber int64) error {
 	// Create an IPC based RPC connection to a remote node
 	conn := common.GetEthConnection(chainId)
@@ -417,7 +424,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 	}
 	decimals, err := token.Decimals(&bind.CallOpts{})
 	if err != nil {
-		log.Println("Failed to retrieve token name: %v", err)
+		log.Println("Failed to retrieve token name:", err)
 		return err
 	}
 
@@ -478,7 +485,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 					log.Println(err)
 					return err
 				}
-				blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
+				blockTimestamp := GetBlockTimestamp(conn, int64(vLog.BlockNumber))
 				d := TransferEventModel{
 					ChainId:         chainId,
 					Address:         strings.ToLower(ac),
@@ -489,7 +496,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 					BlockNumber:     int64(vLog.BlockNumber),
 					LastBlockNumber: int64(vLog.BlockNumber),
 					Timestamp:       blockTimestamp,
-					CreatedAt:       get_date_without_time(blockTimestamp),
+					CreatedAt:       getDateWithoutTime(blockTimestamp),
 				}
 				err = SaveOne(&d)
 				if err != nil {
@@ -523,7 +530,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 	return err
 }
 
-//to get all autocompound address from constant file in a map
+// to get all autocompound address from constant file in a map
 func GetAutocompound() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId

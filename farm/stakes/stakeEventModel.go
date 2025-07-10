@@ -313,8 +313,8 @@ func getStakingContracts() {
 }
 
 // function to get block timestamp
-func GetBlockTimestamp(client *ethclient.Client, block_num int64) int64 {
-	blockNumber := big.NewInt(block_num)
+func GetBlockTimestamp(client *ethclient.Client, blockNum int64) int64 {
+	blockNumber := big.NewInt(blockNum)
 	block, err := client.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
 		log.Println("get timestamp err", err)
@@ -417,7 +417,7 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 			}
 			//saving data in the db
 			res, err := SaveStakeEventOne(&data)
-			fmt.Println("data after saving the event", res)
+			fmt.Println("data after saving the event", res, err)
 
 		case logUnstakeSigHash.Hex():
 
@@ -448,7 +448,7 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 			}
 			//saving data in the db
 			res, err := SaveUnstakeEventOne(&data)
-			fmt.Println("data after saving the event", res)
+			fmt.Println("data after saving the event", res, err)
 		}
 
 		fmt.Printf("\n\n")

@@ -59,11 +59,11 @@ func InitVariables() {
 		secret = "secret"
 	}
 	NBSecretPassword = secret
-	random_password, ok := os.LookupEnv("RANDOM_PASSWORD")
+	randomPassword, ok := os.LookupEnv("RANDOM_PASSWORD")
 	if !ok {
-		random_password = "random password"
+		randomPassword = "random password"
 	}
-	NBSecretPassword = random_password
+	NBSecretPassword = randomPassword
 }
 
 type CustomClaims struct {

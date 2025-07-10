@@ -400,7 +400,7 @@ func get_date_without_time(timestamp int64) time.Time {
 // 	if err := FindOne(&farmModel); err != nil { ... }
 func GetContract(chainId int, ac string, blockNumber int64) error {
 	// Create an IPC based RPC connection to a remote node
-	conn := common.Get_Eth_Connection(chainId)
+	conn := common.GetEthConnection(chainId)
 
 	// to get latest blocknumber
 	header, err := conn.HeaderByNumber(context.Background(), nil)

@@ -36,23 +36,24 @@ type UserFarmsModel struct {
 	Status           string             `bson:"status" json:"status"`
 }
 
-//struct for filters
+// struct for filters
 type Filters struct {
-	User       string `bson: "user", json:"user"`
-	Chain_Id   int64  `bson: "chain_id", json:"chain_id"`
-	Token_Type string `bson: "token_type", json:"token_type"`
-	Source     string `bson: "source", json:"source"`
-	Name       string `bson: "name", json:"name"`
+	User       string `bson:"user" json:"user"`
+	Chain_Id   int64  `bson:"chain_id" json:"chain_id"`
+	Token_Type string `bson:"token_type" json:"token_type"`
+	Source     string `bson:"source" json:"source"`
+	Name       string `bson:"name" json:"name"`
 }
 
 // init function runs first time
 func init() {
 	//create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"user", 1}, {"chain_id", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "user", Value: 1}, {Key: "chain_id", Value: 1}})
 }
 
 // You could input an UserFarmsModel which will be saved in database returning with error info
-// 	if err := SaveOne(&stakeModel); err != nil { ... }
+//
+//	if err := SaveOne(&stakeModel); err != nil { ... }
 func SaveOne(data *UserFarmsModel) (string, error) {
 	client := common.GetDB()
 	record := &UserFarmsModel{}
@@ -78,15 +79,13 @@ func SaveOne(data *UserFarmsModel) (string, error) {
 		return newID, err
 	}
 	//sending old record ID
-	newID = fmt.Sprintf("%s", record.ID)
-	newID = strings.Replace(newID, "ObjectID(", "", -1)
-	newID = strings.Replace(newID, `"`, "", -1)
-	newID = strings.Replace(newID, `)`, "", -1)
+	newID = record.ID.Hex()
 	return newID, nil
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&stakeModel); err != nil { ... }
+//
+//	if err := FindOne(&stakeModel); err != nil { ... }
 func GetRecord(ID string) (UserFarmsModel, error) {
 	client := common.GetDB()
 	record := &UserFarmsModel{}
@@ -163,7 +162,10 @@ func GetTotal(status string, filters Filters) int64 {
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
-
+	if err != nil {
+		fmt.Println("Error fetching records:", err)
+		return 0
+	}
 	if records == nil {
 		return 0
 	}
@@ -175,7 +177,7 @@ func GetTotal(status string, filters Filters) int64 {
 }
 
 // Record list api with page and limit
-func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*FarmsModule.FarmModel, error) {
+func GetAll(page int64, limit int64, status string, filters Filters, sortBy string) ([]*FarmsModule.FarmModel, error) {
 	client := common.GetDB()
 	var records []*FarmsModule.FarmModel
 
@@ -201,16 +203,16 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 
 	//sorting from userfarms
 	sorting := bson.M{"_created": -1}
-	if sort_by == "recent" {
+	if sortBy == "recent" {
 		sorting = bson.M{"_created": -1}
 	}
-	if sort_by == "apy" {
+	if sortBy == "apy" {
 		sorting = bson.M{"daily_apy": -1}
 	}
-	if sort_by == "tvl" {
+	if sortBy == "tvl" {
 		sorting = bson.M{"tvl_staked": -1}
 	}
-	if sort_by == "yourTvl" {
+	if sortBy == "yourTvl" {
 		sorting = bson.M{"tvl_staked": -1}
 	}
 	// Specify a pipeline that will return the number of times each name appears
@@ -280,7 +282,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 }
 
 // go background function to update the transaction status
-func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id int) {
+func UpdateRecordStatusBackground(ID, transactionHash string, chainId int) {
 	client := common.GetDB()
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
@@ -305,7 +307,7 @@ func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id i
 	modified := time.Now()
 	update := bson.M{"_modified": modified}
 
-	txStatus := GetTransaction(transaction_hash, chain_id, 0)
+	txStatus := GetTransaction(transactionHash, chainId, 0)
 	fmt.Println("Transaction Status", txStatus)
 
 	update["status"] = "reverted"
@@ -328,11 +330,11 @@ func UpdateRecordStatusBackground(ID string, transaction_hash string, chain_id i
 }
 
 // Recurrsive function to get Transaction details
-func GetTransaction(transaction_hash string, chain_id int, counter int) int {
+func GetTransaction(transactionHash string, chainId, counter int) int {
 	//get rpc from common file
-	conn := common.Get_Eth_Connection(chain_id)
+	conn := common.GetEthConnection(chainId)
 	//convert transaction string to hash
-	hash := ethcommon.HexToHash(transaction_hash)
+	hash := ethcommon.HexToHash(transactionHash)
 
 	//get transaction data
 	tx, err := conn.TransactionReceipt(context.Background(), hash)
@@ -344,7 +346,7 @@ func GetTransaction(transaction_hash string, chain_id int, counter int) int {
 		}
 		time.Sleep(6 * time.Second)
 		fmt.Printf("no transaction found: %v", err)
-		return GetTransaction(transaction_hash, chain_id, counter)
+		return GetTransaction(transactionHash, chainId, counter)
 	}
 	// fmt.Println("tx status:", tx.Status, tx.BlockNumber)
 

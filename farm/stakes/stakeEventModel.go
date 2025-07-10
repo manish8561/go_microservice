@@ -313,7 +313,7 @@ func getStakingContracts() {
 }
 
 // function to get block timestamp
-func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
+func GetBlockTimestamp(client *ethclient.Client, block_num int64) int64 {
 	blockNumber := big.NewInt(block_num)
 	block, err := client.BlockByNumber(context.Background(), blockNumber)
 	if err != nil {
@@ -331,7 +331,7 @@ func Get_Block_Timestamp(client *ethclient.Client, block_num int64) int64 {
 // 	if err := FindOne(&farmModel); err != nil { ... }
 func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID primitive.ObjectID) error {
 	// Create an IPC based RPC connection to a remote node
-	conn := common.Get_Eth_Connection(chainId)
+	conn := common.GetEthConnection(chainId)
 
 	// to get latest blocknumber
 	header, err := conn.HeaderByNumber(context.Background(), nil)
@@ -396,7 +396,7 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 				return err
 			}
 
-			blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
+			blockTimestamp := GetBlockTimestamp(conn, int64(vLog.BlockNumber))
 
 			d := math.Pow(10, float64(decimals))
 			//converting the string to float64
@@ -427,7 +427,7 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 				return err
 			}
 
-			blockTimestamp := Get_Block_Timestamp(conn, int64(vLog.BlockNumber))
+			blockTimestamp := GetBlockTimestamp(conn, int64(vLog.BlockNumber))
 
 			d := math.Pow(10, float64(decimals))
 			//converting the string to float64

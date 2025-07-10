@@ -11,7 +11,7 @@ var global_chain_id int
 var global_eth_client *ethclient.Client
 
 //get eth client connection
-func Get_Eth_Connection(chain_id int) *ethclient.Client {
+func GetEthConnection(chain_id int) *ethclient.Client {
 	rpc, ok := os.LookupEnv("RPC_ETH_URL")
 	if !ok {
 		log.Fatalf("end point not found to connect %v", rpc)

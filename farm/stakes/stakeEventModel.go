@@ -60,9 +60,9 @@ type UnstakeEventModel struct {
 
 //struct for filters
 type EventFilters struct {
-	ChainId   int64  `bson: "chainId" json:"chainId"`
-	Account   string `bson: "account" json:"account"`
-	Staking   string `bson: "staking" json:"staking"`
+	ChainId   int64  `bson:"chainId" json:"chainId"`
+	Account   string `bson:"account" json:"account"`
+	Staking   string `bson:"staking" json:"staking"`
 	EventType string `bson:"eventType" json:"eventType"`
 }
 

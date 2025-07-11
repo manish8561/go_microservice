@@ -331,7 +331,6 @@ func GetBlockTimestamp(client *ethclient.Client, blockNum int64) int64 {
 
 // You could input string which will be saved in database returning with error info
 //
-//	if err := FindOne(&farmModel); err != nil { ... }
 func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID primitive.ObjectID) error {
 	// Create an IPC based RPC connection to a remote node
 	conn := common.GetEthConnection(chainId)
@@ -347,7 +346,7 @@ func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID pri
 	contractAddress := ethcommon.HexToAddress(staking)
 	stakeObj, err := NewStakes(contractAddress, conn)
 	if err != nil {
-		log.Println("Failed to instantiate a Token contract: %v", err)
+		log.Printf("Failed to instantiate a Token contract: %q", err)
 		return err
 	}
 	decimals, err := stakeObj.Decimals(&bind.CallOpts{})

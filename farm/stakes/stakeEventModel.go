@@ -75,8 +75,8 @@ type EventResult struct {
 
 // init function runs first time
 func init() {
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), StakeEventCollection, bson.D{{"blockNumber", "-1"}, {"account", "1"}, {"chainId", "1"}})
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), UnStakeEventCollection, bson.D{{"blockNumber", "-1"}, {"account", "1"}, {"chainId", "1"}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), StakeEventCollection, bson.D{{Key: "blockNumber", Value: "-1"}, {Key: "account", Value: "1"}, {Key: "chainId", Value: "1"}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), UnStakeEventCollection, bson.D{{Key: "blockNumber", Value: "-1"}, {Key: "account", Value: "1"}, {Key: "chainId", Value: "1"}})
 
 	StartCall()
 }
@@ -330,7 +330,6 @@ func GetBlockTimestamp(client *ethclient.Client, blockNum int64) int64 {
 }
 
 // You could input string which will be saved in database returning with error info
-//
 func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID primitive.ObjectID) error {
 	// Create an IPC based RPC connection to a remote node
 	conn := common.GetEthConnection(chainId)

@@ -34,7 +34,7 @@ const blockDiff = 100
 // Models should only be concerned with database schema, more strict checking should be put in validator.
 //
 // HINT: If you want to split null and "", you should use *string instead of string.
-//struct for stake event
+// struct for stake event
 type StakeEventModel struct {
 	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	ChainId         int                `bson:"chainId" json:"chainId"`
@@ -46,7 +46,7 @@ type StakeEventModel struct {
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
 }
 
-//struct for unstake event
+// struct for unstake event
 type UnstakeEventModel struct {
 	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	ChainId         int                `bson:"chainId" json:"chainId"`
@@ -58,7 +58,7 @@ type UnstakeEventModel struct {
 	Timestamp       int64              `bson:"timestamp" json:"timestamp"`
 }
 
-//struct for filters
+// struct for filters
 type EventFilters struct {
 	ChainId   int64  `bson:"chainId" json:"chainId"`
 	Account   string `bson:"account" json:"account"`
@@ -66,7 +66,7 @@ type EventFilters struct {
 	EventType string `bson:"eventType" json:"eventType"`
 }
 
-//struct for votes with total
+// struct for votes with total
 type EventResult struct {
 	Total   int               `bson:"total" json:"total"`
 	Records []StakeEventModel `bson:"records" json:"records"`
@@ -85,7 +85,7 @@ func init() {
 func StartCall() {
 	c := cron.New()
 	c.AddFunc("0 */2 * * * *", func() {
-		fmt.Println("[Job 1]Every 2 minutes job\n")
+		fmt.Println("[Job 1]Every 2 minutes job")
 		getStakingContracts()
 		fmt.Println("cron job return value")
 	})
@@ -94,7 +94,8 @@ func StartCall() {
 }
 
 // You could input an StakeEventModel which will be saved in database returning with error info
-// 	if err := SaveStakeEventOne(&StakeEventModel); err != nil { ... }
+//
+//	if err := SaveStakeEventOne(&StakeEventModel); err != nil { ... }
 func SaveStakeEventOne(data *StakeEventModel) (string, error) {
 	client := common.GetDB()
 	newID := ""
@@ -114,7 +115,8 @@ func SaveStakeEventOne(data *StakeEventModel) (string, error) {
 }
 
 // You could input an UnstakeEventModel which will be saved in database returning with error info
-// 	if err := SaveUnstakeEventOne(&UnstakeEventModel); err != nil { ... }
+//
+//	if err := SaveUnstakeEventOne(&UnstakeEventModel); err != nil { ... }
 func SaveUnstakeEventOne(data *UnstakeEventModel) (string, error) {
 	client := common.GetDB()
 	newID := ""
@@ -173,13 +175,13 @@ func callingDelete(CollectionName string, ChainId int) {
 
 	cursor, err := collection.Aggregate(ctx, pipeline, opts)
 	if err != nil {
-		log.Println("err in aggregate", err)
+		log.Println(common.ErrInAggregate, err)
 
 	}
 	defer cursor.Close(ctx)
 	err = cursor.All(ctx, &records)
 	if err != nil {
-		log.Println("err in aggregate", err)
+		log.Println(common.ErrInAggregate, err)
 	}
 
 	// fmt.Println("records", len(records))
@@ -192,7 +194,7 @@ func callingDelete(CollectionName string, ChainId int) {
 
 			res, err := collection.DeleteMany(context.TODO(), bson.M{"_id": bson.M{"$in": slicedArr}})
 			if err != nil {
-				log.Println("err in aggregate", err)
+				log.Println(common.ErrInAggregate, err)
 			}
 			fmt.Println("delete response", res)
 		}
@@ -294,7 +296,7 @@ func GetAllUnstakeEvents(page int64, limit int64, filters EventFilters) (*EventR
 	return records[0], nil
 }
 
-//get staking contract address from db
+// get staking contract address from db
 func getStakingContracts() {
 	records, err := GetAllActive()
 	if err != nil {
@@ -328,7 +330,8 @@ func GetBlockTimestamp(client *ethclient.Client, blockNum int64) int64 {
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&farmModel); err != nil { ... }
+//
+//	if err := FindOne(&farmModel); err != nil { ... }
 func GetContractEvent(chainId int, staking string, lastBlockNumber int64, ID primitive.ObjectID) error {
 	// Create an IPC based RPC connection to a remote node
 	conn := common.GetEthConnection(chainId)

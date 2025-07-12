@@ -60,14 +60,14 @@ type GraphDataModel2 struct {
 
 // struct for filters
 type Filters struct {
-	ChainId int64  `bson: "chainId" json:"chainId"`
-	Address string `bson: "address" json:"address"`
+	ChainId int64  `bson:"chainId" json:"chainId"`
+	Address string `bson:"address" json:"address"`
 }
 
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"address", 1}, {"blockNumber", -1}, {"from", 1}, {"to", 1}, {"createdAt", -1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "address", Value: 1}, {Key: "blockNumber", Value: -1}, {"from", 1}, {"to", 1}, {"createdAt", -1}})
 
 	//start the cron
 	StartCall()
@@ -77,7 +77,8 @@ func init() {
 func StartCall() {
 	c := cron.New()
 	c.AddFunc("0 */2 * * * *", func() {
-		fmt.Println("[Job 1]Every 30 minutes job\n")
+		fmt.Println("[Job 1]Every 30 minutes job")
+		fmt.Println()
 		//calling get autocompounds
 		GetAutocompound()
 	})
@@ -138,7 +139,7 @@ func GetRecord(chainId int, ac string) (TransferEventModel, error) {
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.FindOne().SetSort(bson.D{{"blockNumber", -1}})
+	opts := options.FindOne().SetSort(bson.D{{Key: "blockNumber", Value: -1}})
 	err := collection.FindOne(ctx, bson.M{"chainId": chainId, "address": strings.ToLower(ac)}, opts).Decode(&record)
 
 	return *record, err
@@ -172,7 +173,7 @@ func GetAll(page int64, limit int64, status string) ([]*TransferEventModel, erro
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
+	opts := options.Find().SetSort(bson.D{{Key: "_created", Value: -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 
 	query := bson.M{}
@@ -419,7 +420,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 	contractAddress := ethcommon.HexToAddress(ac)
 	token, err := NewTokens(contractAddress, conn)
 	if err != nil {
-		log.Println("Failed to instantiate a Token contract: %v", err)
+		log.Println("Failed to instantiate a Token contract: ", err)
 		return err
 	}
 	decimals, err := token.Decimals(&bind.CallOpts{})
@@ -430,7 +431,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 
 	record, err := GetRecord(chainId, ac)
 	if err != nil {
-		log.Println("Failed to retrieve token name: %v", err)
+		log.Println("Failed to retrieve token name: ", err)
 		return err
 	}
 
@@ -452,7 +453,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 		//logs from contract
 		logs, err := conn.FilterLogs(context.Background(), query)
 		if err != nil {
-			log.Println("Failed to retrieve token name: %v", err)
+			log.Printf("Failed to retrieve token name: %q", err)
 			return err
 		}
 		if len(logs) == 0 {
@@ -523,7 +524,7 @@ func GetContract(chainId int, ac string, blockNumber int64) error {
 		}
 		err := SaveOne(&d)
 		if err != nil {
-			log.Println("Failed to retrieve token name: %v", err)
+			log.Println("Failed to retrieve token name: ", err)
 			return err
 		}
 	}
@@ -535,7 +536,7 @@ func GetAutocompound() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId
 		err := GetContract(chainId, val.AC, val.BlockNumber)
-		log.Println(">>>Failed to retrieve token name: %v", err)
+		log.Println(">>>Failed to retrieve token name: ", err)
 	}
 
 }

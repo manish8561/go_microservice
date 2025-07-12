@@ -32,13 +32,13 @@ function to total record counts
 */
 func StakeTotal(c *gin.Context) {
 	status := c.Query("status")
-	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	chainId, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
-		chain_id = 4 //rinkeby
+		chainId = 4 //rinkeby
 	}
 	// filtering
 	filters := Filters{
-		Chain_Id: chain_id,
+		ChainId: chainId,
 	}
 
 	num := GetTotal(status, filters)
@@ -67,17 +67,17 @@ func StakeList(c *gin.Context) {
 	}
 	// filtering
 	status := c.Query("status")
-	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	chainId, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
-		chain_id = 4 //rinkeby
+		chainId = 4 //rinkeby
 	}
 	filters := Filters{
-		Chain_Id: chain_id,
+		ChainId: chainId,
 	}
 	//sorting
-	sort_by := c.Query("sort_by")
+	sortBy := c.Query("sort_by")
 
-	records, err := GetAll(page, limit, status, filters, sort_by)
+	records, err := GetAll(page, limit, status, filters, sortBy)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
@@ -102,11 +102,11 @@ func StakeRetrieve(c *gin.Context) {
 function to retrive single record using get api
 */
 func StakeFromChainId(c *gin.Context) {
-	chain_id, err := strconv.ParseInt(c.Param("chain_id"), 10, 64)
+	chainId, err := strconv.ParseInt(c.Param("chain_id"), 10, 64)
 	if err != nil {
-		chain_id = 4 //rinkeby
+		chainId = 4 //rinkeby
 	}
-	record, err := GetStakeFromChainId(chain_id)
+	record, err := GetStakeFromChainId(chainId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
 		return
@@ -198,13 +198,13 @@ func StakeData(c *gin.Context) {
 	if eventType == "" {
 		eventType = "stake"
 	}
-	chain_id, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
+	chainId, err := strconv.ParseInt(c.Query("chain_id"), 10, 64)
 	if err != nil {
-		chain_id = 4 //rinkeby
+		chainId = 4 //rinkeby
 	}
 	
 	filters := EventFilters{
-		ChainId:   chain_id,
+		ChainId:   chainId,
 		Account:   account,
 		Staking:   staking,
 		EventType: eventType,
@@ -224,7 +224,6 @@ func StakeData(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"success": true, "data": records})
-
 	}
 	
 }

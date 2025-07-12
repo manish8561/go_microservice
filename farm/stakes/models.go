@@ -35,12 +35,7 @@ type StakeModel struct {
 
 //struct for filters
 type Filters struct {
-	Chain_Id int64 `bson: "chain_id", json:"chain_id"`
-}
-
-// init function runs first time
-func init() {
-	// common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"deposit_token", "text"}, {"name", "text"}})
+	ChainId int64 `bson:"chain_id" json:"chain_id"`
 }
 
 // You could input an StakeModel which will be saved in database returning with error info
@@ -150,7 +145,7 @@ func GetRecord(ID string) (StakeModel, error) {
 }
 
 //GetStakeFromChainId
-func GetStakeFromChainId(chain_id int64) (StakeModel, error) {
+func GetStakeFromChainId(chainId int64) (StakeModel, error) {
 	client := common.GetDB()
 	record := &StakeModel{}
 
@@ -158,7 +153,7 @@ func GetStakeFromChainId(chain_id int64) (StakeModel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// findone by chain_id
-	err := collection.FindOne(ctx, bson.M{"chain_id": chain_id}).Decode(&record)
+	err := collection.FindOne(ctx, bson.M{"chain_id": chainId}).Decode(&record)
 
 	return *record, err
 }
@@ -171,7 +166,7 @@ func GetTotal(status string, filters Filters) int64 {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	query := bson.M{"chain_id": filters.Chain_Id}
+	query := bson.M{"chain_id": filters.ChainId}
 	if status != "" {
 		query["status"] = status
 	}
@@ -184,7 +179,7 @@ func GetTotal(status string, filters Filters) int64 {
 }
 
 // Record list api with page and limit
-func GetAll(page int64, limit int64, status string, filters Filters, sort_by string) ([]*StakeModel, error) {
+func GetAll(page int64, limit int64, status string, filters Filters, sortBy string) ([]*StakeModel, error) {
 	client := common.GetDB()
 	var records []*StakeModel
 
@@ -192,13 +187,13 @@ func GetAll(page int64, limit int64, status string, filters Filters, sort_by str
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	sorting := bson.D{{"_created", -1}}
+	sorting := bson.D{{Key: "_created", Value: -1}}
 
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
 	opts := options.Find().SetSort(sorting).SetSkip((page - 1) * limit).SetLimit(limit)
-	query := bson.M{"chain_id": filters.Chain_Id}
+	query := bson.M{"chain_id": filters.ChainId}
 	if status != "" {
 		query["status"] = status
 	}

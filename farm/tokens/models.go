@@ -67,7 +67,7 @@ type Filters struct {
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "address", Value: 1}, {Key: "blockNumber", Value: -1}, {"from", 1}, {"to", 1}, {"createdAt", -1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "address", Value: 1}, {Key: "blockNumber", Value: -1}, {Key: "from", Value: 1}, {Key: "to", Value: 1}, {Key: "createdAt", Value: -1}})
 
 	//start the cron
 	StartCall()

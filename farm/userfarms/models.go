@@ -38,11 +38,11 @@ type UserFarmsModel struct {
 
 // struct for filters
 type Filters struct {
-	User       string `bson:"user" json:"user"`
-	Chain_Id   int64  `bson:"chain_id" json:"chain_id"`
-	Token_Type string `bson:"token_type" json:"token_type"`
-	Source     string `bson:"source" json:"source"`
-	Name       string `bson:"name" json:"name"`
+	User      string `bson:"user" json:"user"`
+	ChainId   int64  `bson:"chain_id" json:"chain_id"`
+	TokenType string `bson:"token_type" json:"token_type"`
+	Source    string `bson:"source" json:"source"`
+	Name      string `bson:"name" json:"name"`
 }
 
 // init function runs first time
@@ -121,11 +121,11 @@ func GetTotal(status string, filters Filters) int64 {
 
 	//filters on farms
 	query := bson.M{}
-	if filters.Token_Type != "" {
-		query["farms.token_type"] = filters.Token_Type
+	if filters.TokenType != "" {
+		query["farms.token_type"] = filters.TokenType
 		// checking for the stable in token type
-		if strings.Contains(filters.Token_Type, "stable") {
-			query["farms.token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		if strings.Contains(filters.TokenType, "stable") {
+			query["farms.token_type"] = primitive.Regex{Pattern: "^" + filters.TokenType + "*", Options: "i"}
 		}
 	}
 	if filters.Source != "" {
@@ -138,7 +138,7 @@ func GetTotal(status string, filters Filters) int64 {
 	// Specify a pipeline that will return the number of times each name appears
 	// in the collection.
 	pipeline := []bson.M{
-		{"$match": bson.M{"status": status, "chain_id": filters.Chain_Id, "user": filters.User}},
+		{"$match": bson.M{"status": status, "chain_id": filters.ChainId, "user": filters.User}},
 		{"$lookup": bson.M{"from": "farms", "localField": "strategy", "foreignField": "address", "as": "farmsData"}},
 		{"$project": bson.M{
 			"chain_id":  1,
@@ -187,11 +187,11 @@ func GetAll(page int64, limit int64, status string, filters Filters, sortBy stri
 
 	//filters on farms
 	query := bson.M{}
-	if filters.Token_Type != "" {
-		query["token_type"] = filters.Token_Type
+	if filters.TokenType != "" {
+		query["token_type"] = filters.TokenType
 		// checking for the stable in token type
-		if strings.Contains(filters.Token_Type, "stable") {
-			query["token_type"] = primitive.Regex{Pattern: "^" + filters.Token_Type + "*", Options: "i"}
+		if strings.Contains(filters.TokenType, "stable") {
+			query["token_type"] = primitive.Regex{Pattern: "^" + filters.TokenType + "*", Options: "i"}
 		}
 	}
 	if filters.Source != "" {
@@ -218,7 +218,7 @@ func GetAll(page int64, limit int64, status string, filters Filters, sortBy stri
 	// Specify a pipeline that will return the number of times each name appears
 	// in the collection.
 	pipeline := []bson.M{
-		{"$match": bson.M{"status": status, "chain_id": filters.Chain_Id, "user": filters.User}},
+		{"$match": bson.M{"status": status, "chain_id": filters.ChainId, "user": filters.User}},
 		{"$lookup": bson.M{"from": "farms", "localField": "strategy", "foreignField": "address", "as": "farmsData"}},
 		{"$project": bson.M{
 			"_id":   0,

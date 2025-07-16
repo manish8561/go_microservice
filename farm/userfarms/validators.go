@@ -26,33 +26,33 @@ type UserFarmsModelValidator struct {
 // There are some difference when you create or update a model, you need to fill the DataModel before
 // update so that you can use your origin data to cheat the validator.
 // BTW, you can put your general binding logic here such as setting password.
-func (self *UserFarmsModelValidator) Bind(c *gin.Context) error {
-	err := common.Bind(c, self)
+func (v *UserFarmsModelValidator) Bind(c *gin.Context) error {
+	err := common.Bind(c, v)
 	if err != nil {
 		return err
 	}
-	self.userFarmsModel.Strategy = strings.ToLower(self.Strategy)
-	self.userFarmsModel.User = strings.ToLower(self.User)
-	self.userFarmsModel.Transaction_Hash = self.Transaction_Hash
-	self.userFarmsModel.Chain_Id = self.Chain_Id
+	v.userFarmsModel.Strategy = strings.ToLower(v.Strategy)
+	v.userFarmsModel.User = strings.ToLower(v.User)
+	v.userFarmsModel.Transaction_Hash = v.Transaction_Hash
+	v.userFarmsModel.Chain_Id = v.Chain_Id
 
-	self.userFarmsModel.Status = "pending"
-	self.userFarmsModel.Created = time.Now()
-	self.userFarmsModel.Modified = time.Now()
+	v.userFarmsModel.Status = "pending"
+	v.userFarmsModel.Created = time.Now()
+	v.userFarmsModel.Modified = time.Now()
 
 	// using _id to update row in db
-	if self.ID != "" {
-		objID, err := primitive.ObjectIDFromHex(self.ID)
+	if v.ID != "" {
+		objID, err := primitive.ObjectIDFromHex(v.ID)
 		if err != nil {
 			return err
 		}
-		self.userFarmsModel.ID = objID
+		v.userFarmsModel.ID = objID
 	}
 	return nil
 }
 
 // You can put the default value of a Validator here
 func NewUserFarmsModelValidator() UserFarmsModelValidator {
-	userFarmsModelValidator := UserFarmsModelValidator{}
-	return userFarmsModelValidator
+	validator := UserFarmsModelValidator{}
+	return validator
 }

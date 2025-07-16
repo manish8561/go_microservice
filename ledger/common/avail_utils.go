@@ -14,7 +14,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/golang-jwt/jwt/v5/request"
 
-
 	"github.com/joho/godotenv"
 	"gopkg.in/go-playground/validator.v8"
 
@@ -162,7 +161,7 @@ func stripBearerPrefixFromTokenString(tok string) (string, error) {
 // Uses PostExtractionFilter to strip "TOKEN " prefix from header
 var AuthorizationHeaderExtractor = &request.PostExtractionFilter{
 	Extractor: request.HeaderExtractor{"Authorization"},
-	Filter: stripBearerPrefixFromTokenString,
+	Filter:    stripBearerPrefixFromTokenString,
 }
 
 // Extractor for OAuth2 access tokens.  Looks in 'Authorization'
@@ -173,9 +172,9 @@ var MyAuth2Extractor = &request.MultiExtractor{
 }
 
 // A helper to write user_id and user_model to the context
-func UpdateContextUserModel(c *gin.Context, my_user_id string, user *pb.UserReply) {
-	if my_user_id != "" {
-		c.Set("my_user_id", my_user_id)
+func UpdateContextUserModel(c *gin.Context, myUserId string, user *pb.UserReply) {
+	if myUserId != "" {
+		c.Set("my_user_id", myUserId)
 		c.Set("user", user)
 	}
 	c.Next()

@@ -24,24 +24,24 @@ type UserModelValidator struct {
 // There are some difference when you create or update a model, you need to fill the DataModel before
 // update so that you can use your origin data to cheat the validator.
 // BTW, you can put your general binding logic here such as setting password.
-func (self *UserModelValidator) Bind(c *gin.Context) error {
-	err := common.Bind(c, self)
+func (v *UserModelValidator) Bind(c *gin.Context) error {
+	err := common.Bind(c, v)
 	if err != nil {
 		return err
 	}
-	self.userModel.Firstname = self.Firstname
-	self.userModel.Lastname = self.Lastname
-	self.userModel.Email = self.Email
-	self.userModel.Role = "user"
-	self.userModel.Status = "active"
-	self.userModel.Created = time.Now()
-	self.userModel.Modified = time.Now()
+	v.userModel.Firstname = v.Firstname
+	v.userModel.Lastname = v.Lastname
+	v.userModel.Email = v.Email
+	v.userModel.Role = "user"
+	v.userModel.Status = "active"
+	v.userModel.Created = time.Now()
+	v.userModel.Modified = time.Now()
 
-	if self.Password != common.NBRandomPassword {
-		self.userModel.setPassword(self.Password)
+	if v.Password != common.NBRandomPassword {
+		v.userModel.setPassword(v.Password)
 	}
-	// if self.Image != "" {
-	// 	self.userModel.Image = &self.Image
+	// if v.Image != "" {
+	// 	v.userModel.Image = &v.Image
 	// }
 	return nil
 }

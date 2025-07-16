@@ -72,13 +72,13 @@ type LoginValidator struct {
 	userModel UserModel `json:"-"`
 }
 
-func (self *LoginValidator) Bind(c *gin.Context) error {
-	err := common.Bind(c, self)
+func (v *LoginValidator) Bind(c *gin.Context) error {
+	err := common.Bind(c, v)
 	if err != nil {
 		return err
 	}
 
-	self.userModel.Email = self.Email
+	v.userModel.Email = v.Email
 	return nil
 }
 
@@ -89,18 +89,17 @@ func NewLoginValidator() LoginValidator {
 }
 
 type ChangePasswordValidator struct {
-	OldPassword string    `form:"oldPassword" json:"oldPassword" binding:"required,min=8,max=255"`
-	Password    string    `form:"password" json:"password" binding:"required,min=8,max=255"`
-	userModel   UserModel `json:"-"`
+	OldPassword string `form:"oldPassword" json:"oldPassword" binding:"required,min=8,max=255"`
+	Password    string `form:"password" json:"password" binding:"required,min=8,max=255"`
 }
 
-func (self *ChangePasswordValidator) Bind(c *gin.Context) error {
-	err := common.Bind(c, self)
+func (v *ChangePasswordValidator) Bind(c *gin.Context) error {
+	err := common.Bind(c, v)
 	if err != nil {
 		return err
 	}
 
-	// self.userModel.PasswordHash = self.Password
+	// v.userModel.PasswordHash = v.Password
 	return nil
 }
 

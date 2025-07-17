@@ -1,7 +1,5 @@
 package common
 
-// import "fmt"
-
 // struct for muliple address in a network
 type ContractDetails struct {
 	Address     string // capital for export

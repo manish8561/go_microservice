@@ -197,7 +197,6 @@ func ExtractTokenFromHeader(c *gin.Context) string {
 }
 
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
-//
 //	r.Use(AuthMiddleware(true))
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -212,14 +211,14 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 				//checking for admin role
 				if role := claims.Role; role != "admin" && auto401 {
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					c.AbortWithError(http.StatusUnauthorized, errors.New("you dont have the access"))
 					return
 				}
 				MyUserID := claims.ID
 
 				//requesting grpc request for user details with id
-				grpc_server_conn := Get_GRPC_Conn()
-				cc := pb.NewGreeterClient(grpc_server_conn)
+				grpcServerConn := Get_GRPC_Conn()
+				cc := pb.NewGreeterClient(grpcServerConn)
 				// Contact the server and print out its response.
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 				defer cancel()

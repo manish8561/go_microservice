@@ -59,11 +59,11 @@ func InitVariables() {
 		secret = "secret"
 	}
 	NBSecretPassword = secret
-	random_password, ok := os.LookupEnv("RANDOM_PASSWORD")
+	randomPassword, ok := os.LookupEnv("RANDOM_PASSWORD")
 	if !ok {
-		random_password = "random password"
+		randomPassword = "random password"
 	}
-	NBSecretPassword = random_password
+	NBSecretPassword = randomPassword
 }
 
 type CustomClaims struct {
@@ -197,6 +197,7 @@ func ExtractTokenFromHeader(c *gin.Context) string {
 }
 
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
+//
 //	r.Use(AuthMiddleware(true))
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -211,7 +212,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 				//checking for admin role
 				if role := claims.Role; role != "admin" && auto401 {
 					c.JSON(http.StatusUnauthorized, gin.H{"message": NoAccess})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("you dont have the access"))
+					c.AbortWithError(http.StatusUnauthorized, errors.New(NoAccess))
 					return
 				}
 				MyUserID := claims.ID
@@ -225,8 +226,8 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 				user, err := cc.GetUserDetails(ctx, &pb.UserRequest{Id: MyUserID})
 				if err != nil {
 					// log.Fatalf("could not greet: %v", err)
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "No user found!"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("No user found!"))
+					c.JSON(http.StatusUnauthorized, gin.H{"message": "no user found"})
+					c.AbortWithError(http.StatusUnauthorized, errors.New("no user found"))
 					return
 				}
 				// response from user service
@@ -235,7 +236,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 				UpdateContextUserModel(c, MyUserID, user)
 			} else {
 				{
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
+					c.JSON(http.StatusUnauthorized, gin.H{"message": NoAccess})
 					c.AbortWithError(http.StatusUnauthorized, errors.New(NoAccess))
 					return
 				}

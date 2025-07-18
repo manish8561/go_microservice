@@ -210,7 +210,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 			if claims, err := ValidateToken(token); err == nil {
 				//checking for admin role
 				if role := claims.Role; role != "admin" && auto401 {
-					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
+					c.JSON(http.StatusUnauthorized, gin.H{"message": NoAccess})
 					c.AbortWithError(http.StatusUnauthorized, errors.New("you dont have the access"))
 					return
 				}
@@ -236,7 +236,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 			} else {
 				{
 					c.JSON(http.StatusUnauthorized, gin.H{"message": "You dont have the access"})
-					c.AbortWithError(http.StatusUnauthorized, errors.New("You dont have the access"))
+					c.AbortWithError(http.StatusUnauthorized, errors.New(NoAccess))
 					return
 				}
 			}

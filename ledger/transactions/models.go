@@ -84,8 +84,8 @@ type Filters struct {
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "strategy", Value: 1}, {Key: "blockNumber", Value: -1}, {Key: "chainId", Value: 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}, {"amountUSD", 1}})
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "strategy", Value: 1}, {Key: "blockNumber", Value: -1}, {Key: "chainId", Value: 1}, {Key: "account", Value: 1}, {Key: "type", Value: 1}, {Key: "timestamp", Value: -1}, {Key: "amountUSD", Value: 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{Key: "blockNumber", Value: -1}, {Key: "chainId", Value: 1}})
 
 	//start the cron
 	StartCronJob()
@@ -94,8 +94,8 @@ func init() {
 // get active farms
 func GetFarmFromService(chainId int) *pb.FarmReply {
 	c := int64(chainId)
-	grpc_server_conn := common.Get_GRPC_Conn()
-	cc := pb.NewGreeterClient(grpc_server_conn)
+	grpcServerConn := common.Get_GRPC_Conn()
+	cc := pb.NewGreeterClient(grpcServerConn)
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -112,7 +112,7 @@ func GetFarmFromService(chainId int) *pb.FarmReply {
 func StartCronJob() {
 	c := cron.New()
 	c.AddFunc("*/3 * * * * *", func() {
-		fmt.Println("[Job 1]Every 30 minutes job\n")
+		fmt.Println("[Job 1]Every 30 minutes job started")
 		//calling get transactions according to farms(strategies)
 		GetDetails()
 	})
@@ -137,7 +137,7 @@ func checkContract(address string, farmReply *pb.FarmReply) (bool, float64) {
 	var val float64 = 0.0
 
 	for _, e := range farmReply.Items {
-		if strings.ToLower(e.Address) == strings.ToLower(address) {
+		if strings.EqualFold(e.Address, address) {
 			// check = e
 			val = e.TokenPrice
 			return true, val
@@ -429,16 +429,6 @@ func GetTransactions(filters Filters) (*EventResult, error) {
 		return records[0], err
 	}
 	return records[0], nil
-}
-
-// Get date without time from timestamp
-func get_date_without_time(timestamp int64) time.Time {
-	currentDate := time.Unix(timestamp, 0).UTC()
-
-	//get year month day
-	y, m, d := currentDate.Date()
-	//convert to date
-	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 }
 
 //to get the profit and loss

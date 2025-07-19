@@ -4,11 +4,10 @@ Microservice with Express Gateway, Typescript, Docker and Go Lang Services
 
 > ### Golang/Gin codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [Autocompound] spec and API.
 
-
 This codebase was created to demonstrate a fully fledged fullstack application built with **Golang/Gin** including Mongodb, CRUD operations, authentication, routing, pagination, and more.
 
-
 # Directory structure
+
 ```
 docker_backend
 |
@@ -17,7 +16,7 @@ gateway_service // express gateway service
 event_service //event service in typescript to fetch events
 |
 contract_service // contract service in typscript to calculate APR
-|   
+|
 user // user service
 ├── server.go
 ├── common
@@ -41,8 +40,8 @@ farm // farm service
 |   └── validators.go   //form/json checker
 ├── pricefeeds  // get price from coingeeko
 ├── stakes      // CRUD for staking contracts
-├── contracts // for contract call  
-├── helloworld // for grpc to get user data  
+├── contracts // for contract call
+├── helloworld // for grpc to get user data
 ├── ...
 ...
 ```
@@ -59,9 +58,15 @@ https://golang.org/doc/install
 
 Set-up the standard Go environment variables according to latest guidance (see https://golang.org/doc/install#install).
 
+## Working with MongoDB and Golang
+
+Use the official MongoDB Go driver: https://github.com/mongodb/mongo-go-driver
+Install with: `go get go.mongodb.org/mongo-driver/mongo`
 
 ## Install Dependencies
+
 From the project root, run:
+
 ```
 go build ./...
 go test ./...
@@ -69,21 +74,29 @@ go mod tidy
 ```
 
 ## Testing
+
 From the project root, run:
+
 ```
 go test ./...
 ```
+
 or
+
 ```
 go test ./... -cover
 ```
+
 or
+
 ```
 go test -v ./... -cover
 ```
+
 depending on whether you want to see test coverage and how verbose the output you want.
 
 ## Todo
+
 - More elegance config
 - Test coverage (common & users 100%, article 0%)
 - ProtoBuf support

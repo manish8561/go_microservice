@@ -36,7 +36,7 @@ import (
 const CollectionName = "farms_transactions"
 const CollectionName2 = "farms_blocks"
 
-//Network Block Number Model
+// Network Block Number Model
 type FarmBlockModel struct {
 	ID              primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Created         time.Time          `bson:"_created" json:"_created"`
@@ -70,28 +70,28 @@ type EventResult struct {
 	Records []TransactionModel `bson:"records" json:"records"`
 }
 
-//struct for filters
+// struct for filters
 type Filters struct {
-	ChainId   int64  `bson: "chainId" json:"chainId"`
-	Address   string `bson: "address" json:"address"`
-	Type      string `bson: "type" json:"type"`
-	StartTime int64  `bson: "startTime" json:"startTime"`
-	EndTime   int64  `bson: "endTime" json:"endTime"`
-	Page      int64  `bson: "page" json:"page"`
-	Limit     int64  `bson: "limit" json:"limit"`
+	ChainId   int64  `bson:"chainId" json:"chainId"`
+	Address   string `bson:"address" json:"address"`
+	Type      string `bson:"type" json:"type"`
+	StartTime int64  `bson:"startTime" json:"startTime"`
+	EndTime   int64  `bson:"endTime" json:"endTime"`
+	Page      int64  `bson:"page" json:"page"`
+	Limit     int64  `bson:"limit" json:"limit"`
 }
 
 // init func in go file
 func init() {
 	// create index
-	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{"strategy", 1}, {"blockNumber", -1}, {"chainId", 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}, {"amountUSD", 1}})
+	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName, bson.D{{Key: "strategy", Value: 1}, {Key: "blockNumber", Value: -1}, {Key: "chainId", Value: 1}, {"account", 1}, {"type", 1}, {"timestamp", -1}, {"amountUSD", 1}})
 	common.AddIndex(os.Getenv("MONGO_DATABASE"), CollectionName2, bson.D{{"blockNumber", -1}, {"chainId", 1}})
 
 	//start the cron
 	StartCronJob()
 }
 
-//get active farms
+// get active farms
 func GetFarmFromService(chainId int) *pb.FarmReply {
 	c := int64(chainId)
 	grpc_server_conn := common.Get_GRPC_Conn()
@@ -120,7 +120,7 @@ func StartCronJob() {
 	c.Start()
 }
 
-//get farms
+// get farms
 // func GetFarms(chainId int)
 func checkContract(address string, farmReply *pb.FarmReply) (bool, float64) {
 	// strategies := [...]string{
@@ -298,7 +298,7 @@ func SaveDataBackground(data interface{}, CollectionName string) {
 	}
 }
 
-//to get all autocompound address from constant file in a map
+// to get all autocompound address from constant file in a map
 func GetDetails() {
 	for chainId, val := range common.NetworkMap {
 		//calling the contract as per chainId
@@ -338,7 +338,8 @@ func GetDetails() {
 }
 
 // You could input an TransactionModel which will be updated in database returning with error info
-// 	if err := UpdateOne(&record); err != nil { ... }
+//
+//	if err := UpdateOne(&record); err != nil { ... }
 func UpdateOne(ID primitive.ObjectID, lastBlockNumber int64, CollectionName string) error {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
@@ -358,7 +359,8 @@ func UpdateOne(ID primitive.ObjectID, lastBlockNumber int64, CollectionName stri
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&record); err != nil { ... }
+//
+//	if err := FindOne(&record); err != nil { ... }
 func GetRecord(chainId int, CN string) (interface{}, error) {
 	client := common.GetDB()
 

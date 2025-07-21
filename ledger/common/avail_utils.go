@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -218,7 +218,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 				MyUserID := claims.ID
 
 				//requesting grpc request for user details with id
-				grpcServerConn := Get_GRPC_Conn()
+				grpcServerConn := GetGRPCConn()
 				cc := pb.NewGreeterClient(grpcServerConn)
 				// Contact the server and print out its response.
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -267,7 +267,7 @@ func GetPrice(Id string) float64 {
 		return 0
 	}
 
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
 		return 0

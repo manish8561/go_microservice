@@ -15,11 +15,11 @@ var grpc_server_conn *grpc.ClientConn
 
 func init() {
 	//calling grpc common server
-	Call_GRPC_Server()
+	CallGRPCServer()
 }
 
 //initial function to handle grpc connection
-func Call_GRPC_Server() {
+func CallGRPCServer() {
 	// Set up a connection to the grpc client for user .
 	// grpc start
 	endpoint, ok := os.LookupEnv("FARM_GRPC_SERVER_PORT")
@@ -48,6 +48,6 @@ func Call_GRPC_Server() {
 }
 
 //get user details
-func Get_GRPC_Conn() *grpc.ClientConn {
+func GetGRPCConn() *grpc.ClientConn {
 	return grpc_server_conn
 }

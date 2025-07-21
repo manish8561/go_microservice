@@ -94,7 +94,7 @@ func init() {
 // get active farms
 func GetFarmFromService(chainId int) *pb.FarmReply {
 	c := int64(chainId)
-	grpcServerConn := common.Get_GRPC_Conn()
+	grpcServerConn := common.GetGRPCConn()
 	cc := pb.NewGreeterClient(grpcServerConn)
 	// Contact the server and print out its response.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -374,7 +374,7 @@ func GetRecord(chainId int, CN string) (interface{}, error) {
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.FindOne().SetSort(bson.D{{"blockNumber", -1}})
+	opts := options.FindOne().SetSort(bson.D{{Key: "blockNumber", Value: -1}})
 	if CN == CollectionName {
 		err := collection.FindOne(ctx, bson.M{"chainId": chainId}, opts).Decode(&record)
 		return *record, err

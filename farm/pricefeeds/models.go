@@ -29,7 +29,7 @@ type PriceFeedModel struct {
 	Coingeeko_Id string             `bson:"coingeeko_id" json:"coingeeko_id"`
 	Symbol       string             `bson:"symbol" json:"symbol"` //address field of strategy
 	Price        float64            `bson:"price" json:"price"`
-	Status       string             `bson: "status" json: "status"`
+	Status       string             `bson:"status" json:"status"`
 }
 
 // init func in go file
@@ -45,7 +45,7 @@ func init() {
 func StartCall() {
 	c := cron.New()
 	c.AddFunc("0 */30 * * * *", func() {
-		fmt.Println("[Job 1]Every 30 minutes job\n")
+		fmt.Println("[Job 1]Every 30 minutes job")
 		r := UpdateAll()
 		fmt.Println("cron job return value", r)
 	})

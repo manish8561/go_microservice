@@ -65,7 +65,7 @@ func UpdateAll() bool {
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(bson.D{{"_created", -1}})
+	opts := options.Find().SetSort(bson.D{{Key: "_created", Value: -1}})
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 	query := bson.M{"status": "active"}
 
@@ -84,12 +84,16 @@ func UpdateAll() bool {
 		fmt.Println(rr.Symbol, "after update")
 	}
 	err = cursor.All(ctx, &records)
-
+	if err != nil {
+		fmt.Println("Error in cursor all: ", err)
+		return false
+	}
 	return true
 }
 
 // You could input an PriceFeedModel which will be saved in database returning with error info
-// 	if err := SaveOne(&farmModel); err != nil { ... }
+//
+//	if err := SaveOne(&farmModel); err != nil { ... }
 func SaveOne(data *PriceFeedModel) error {
 	client := common.GetDB()
 	person := &PriceFeedModel{}
@@ -108,11 +112,12 @@ func SaveOne(data *PriceFeedModel) error {
 		fmt.Println(res, "Inserted")
 		return err
 	}
-	return errors.New("symbol already exists!")
+	return errors.New("symbol already exists")
 }
 
 // You could input an PriceFeedModel which will be updated in database returning with error info
-// 	if err := UpdateOne(&farmModel); err != nil { ... }
+//
+//	if err := UpdateOne(&farmModel); err != nil { ... }
 func UpdateOne(data *PriceFeedModel) error {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)
@@ -132,7 +137,8 @@ func UpdateOne(data *PriceFeedModel) error {
 }
 
 // You could input string which will be saved in database returning with error info
-// 	if err := FindOne(&farmModel); err != nil { ... }
+//
+//	if err := FindOne(&farmModel); err != nil { ... }
 func GetFarm(ID string) (PriceFeedModel, error) {
 	client := common.GetDB()
 	farm := &PriceFeedModel{}

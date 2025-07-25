@@ -224,7 +224,7 @@ func GetAll(page int64, limit int64, status string) ([]*PriceFeedModel, error) {
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
 	// The first document in the sorted order will be returned.
-	opts := options.Find().SetSort(bson.D{{"_created", -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
+	opts := options.Find().SetSort(bson.D{{Key: "_created", Value: -1}}).SetSkip((page - 1) * limit).SetLimit(limit)
 	//SetProjection(bson.M{"_id": 0, "_created": 1, "_modified": 1, "firstname": 1, "lastname": 1, "status": 1, "email": 1, "role": 1, "passwordhash": 0})
 
 	query := bson.M{}

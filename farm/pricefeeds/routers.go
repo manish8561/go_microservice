@@ -116,5 +116,4 @@ func DeletePrice(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusNotFound, gin.H{"error": err.Error(), "success": false})
-	return
 }

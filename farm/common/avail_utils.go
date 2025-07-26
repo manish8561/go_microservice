@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -161,7 +161,7 @@ func stripBearerPrefixFromTokenString(tok string) (string, error) {
 // Uses PostExtractionFilter to strip "TOKEN " prefix from header
 var AuthorizationHeaderExtractor = &request.PostExtractionFilter{
 	Extractor: request.HeaderExtractor{"Authorization"},
-	Filter: stripBearerPrefixFromTokenString,
+	Filter:    stripBearerPrefixFromTokenString,
 }
 
 // Extractor for OAuth2 access tokens.  Looks in 'Authorization'
@@ -268,7 +268,7 @@ func GetPrice(Id string) float64 {
 		return 0
 	}
 
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
 		return 0

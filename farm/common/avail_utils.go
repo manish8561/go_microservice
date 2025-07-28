@@ -65,7 +65,7 @@ func InitVariables() {
 	}
 	NBSecretPassword = randomPassword
 }
-
+// CustomClaims is a struct that holds the custom claims for JWT
 type CustomClaims struct {
 	ID   string `json:"id"`
 	Role string `json:"role"`
@@ -222,7 +222,7 @@ func handleValidToken(c *gin.Context, claims *CustomClaims) bool {
 	UpdateContextUserModel(c, MyUserID, user)
 	return true
 }
-
+// AuthMiddleware is a middleware that checks if the user is authenticated
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !auto401 {

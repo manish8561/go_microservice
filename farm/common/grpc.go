@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -11,28 +12,34 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/grpc"
 
-	// "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // client global variable
-var grpc_server_conn *grpc.ClientConn
+var grpcServerConn *grpc.ClientConn
+
 type Server struct {
 	pb.UnimplementedGreeterServer
 }
 
 func init() {
 	//calling grpc common server
-	Call_GRPC_Server()
+	CallGRPCServer()
 }
 
-// SayHello implements helloworld.GreeterServer(grpc)
+// SayHello implements the GreeterServer interface
+// This function is called when a client sends a request to the server
+// It receives a HelloRequest and returns a HelloReply
+// This is a simple example of a gRPC server method
 func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	log.Printf("Received Handshake: %v", in.GetName())
 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
-//send user details
+// GetUserDetails implements the GreeterServer interface
+// This function is called to get user details based on the user ID
+// It receives a UserRequest and returns a UserReply
+// This is a simple example of a gRPC server method to fetch user details
 func (s *Server) GetUserDetails(ctx context.Context, in *pb.UserRequest) (*pb.UserReply, error) {
 	// log.Printf("Received ID: %v", in.GetId())
 	// user, err := GetUserProfile(in.GetId())
@@ -51,21 +58,26 @@ func (s *Server) GetUserDetails(ctx context.Context, in *pb.UserRequest) (*pb.Us
 	}, nil
 }
 
-//send user details
+// GetFarms implements the GreeterServer interface
+// This function is called to get farms based on the chain ID and status
 func (s *Server) GetFarms(ctx context.Context, in *pb.FarmRequest) (*pb.FarmReply, error) {
 	log.Printf("Received ID: %v", in.GetChainId())
 	result, err := GettingFarms(in.GetChainId(), in.GetStatus())
 	if err != nil {
 		return &pb.FarmReply{}, err
 	}
-	log.Printf("user from db:", result)
+	fmt.Println("user from db:", result)
 
 	return &pb.FarmReply{
 		Items: result,
 	}, nil
 }
 
-// Farm for grpc from db collection
+// GettingFarms retrieves farms from the database based on chain ID and status
+// It connects to the MongoDB client, queries the farms collection, and returns the results
+// chainId: the ID of the blockchain
+// status: the status of the farms to filter by
+// Returns a slice of Item and an error if any occurs
 func GettingFarms(chainId int64, status string) ([]*pb.Item, error) {
 	CollectionName := "farms"
 
@@ -76,7 +88,7 @@ func GettingFarms(chainId int64, status string) ([]*pb.Item, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	sorting := bson.D{{"_created", -1}}
+	sorting := bson.D{{Key: "_created", Value: -1}}
 
 	// Find the document for which the _id field matches id.
 	// Specify the Sort option to sort the documents by age.
@@ -97,8 +109,10 @@ func GettingFarms(chainId int64, status string) ([]*pb.Item, error) {
 	return records, err
 }
 
-//initial function to handle grpc connection
-func Call_GRPC_Server() {
+// CallGRPCServer initializes the gRPC server and client connection
+// It listens on the specified port and registers the Greeter service
+// It also sets up a connection to the user gRPC server for user details
+func CallGRPCServer() {
 	// grpc Server as farm
 	// grpc start
 
@@ -113,7 +127,7 @@ func Call_GRPC_Server() {
 		}
 		s := grpc.NewServer()
 		pb.RegisterGreeterServer(s, &Server{})
-	
+
 		log.Printf("farm grpc server listening at %v", lis.Addr())
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("could not start grpc server: %v", err)
@@ -125,14 +139,14 @@ func Call_GRPC_Server() {
 	// grpc start
 	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")
 	if !ok {
-		log.Fatalf("end point not found to connect", endpoint)
+		log.Fatalf("end point not found to connect: %s", endpoint)
 	}
 	conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	log.Println("GRPC connected server.")
-	grpc_server_conn = conn
+	grpcServerConn = conn
 
 	// defer conn.Close()
 	c := pb.NewGreeterClient(conn)
@@ -147,7 +161,7 @@ func Call_GRPC_Server() {
 
 }
 
-//get user client connection for user details
-func Get_GRPC_Conn() *grpc.ClientConn {
-	return grpc_server_conn
+// get user client connection for user details
+func GetGRPCConn() *grpc.ClientConn {
+	return grpcServerConn
 }

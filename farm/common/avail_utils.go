@@ -203,14 +203,14 @@ func respondUnauthorized(c *gin.Context, message string) {
 	c.JSON(http.StatusUnauthorized, gin.H{"message": message})
 	c.AbortWithError(http.StatusUnauthorized, errors.New(message))
 }
-
+// handleValidToken checks if the token is valid and updates the context with user details
 func handleValidToken(c *gin.Context, claims *CustomClaims) bool {
 	if claims.Role != "admin" {
 		respondUnauthorized(c, "You dont have the access")
 		return false
 	}
 	MyUserID := claims.ID
-	grpcServerConn := Get_GRPC_Conn()
+	grpcServerConn := GetGRPCConn()
 	cc := pb.NewGreeterClient(grpcServerConn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

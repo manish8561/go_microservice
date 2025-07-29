@@ -73,7 +73,11 @@ func GetDB() *mongo.Client {
 	return client
 }
 
-// common add Index function
+// AddIndex adds an index to a collection in the specified database
+// dbName: name of the database
+// collection: name of the collection
+// indexKeys: keys to be indexed, e.g., bson.D{{"field", 1}}
+// Returns an error if the index creation fails	
 func AddIndex(dbName string, collection string, indexKeys interface{}) error {
 	
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -7,16 +7,15 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-var global_chain_id int
-var global_eth_client *ethclient.Client
-
-//get eth client connection
-func GetEthConnection(chain_id int) *ethclient.Client {
+var globalChainId int
+var globalEthClient *ethclient.Client
+//	
+func GetEthConnection(chainId int) *ethclient.Client {
 	rpc, ok := os.LookupEnv("RPC_ETH_URL")
 	if !ok {
 		log.Fatalf("end point not found to connect %v", rpc)
 	}
-	switch chain_id {
+	switch chainId {
 	case 1:
 		rpc, ok = os.LookupEnv("RPC_ETH_URL")
 	case 4:
@@ -35,14 +34,14 @@ func GetEthConnection(chain_id int) *ethclient.Client {
 		log.Printf("end point not found to connect %v", rpc)
 	}
 
-	if global_chain_id != chain_id {
+	if globalChainId != chainId {
 		//create eth client object
 		conn, err := ethclient.Dial(rpc)
-		global_eth_client = conn
+		globalEthClient = conn
 		if err != nil {
 			log.Printf("Failed to connect to the Ethereum client: %v", err)
 		}
 	}
 
-	return global_eth_client
+	return globalEthClient
 }

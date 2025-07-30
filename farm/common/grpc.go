@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -22,6 +21,10 @@ type Server struct {
 	pb.UnimplementedGreeterServer
 }
 
+// init function to call the grpc server
+// This function initializes the gRPC server and client connection
+// It listens on the specified port and registers the Greeter service
+// It also sets up a connection to the user gRPC server for user details
 func init() {
 	//calling grpc common server
 	CallGRPCServer()
@@ -66,7 +69,7 @@ func (s *Server) GetFarms(ctx context.Context, in *pb.FarmRequest) (*pb.FarmRepl
 	if err != nil {
 		return &pb.FarmReply{}, err
 	}
-	fmt.Println("user from db:", result)
+	log.Println("user from db:", result)
 
 	return &pb.FarmReply{
 		Items: result,

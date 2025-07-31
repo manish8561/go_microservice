@@ -9,7 +9,8 @@ import (
 
 var globalChainId int
 var globalEthClient *ethclient.Client
-//	
+
+// SetGlobalChainId sets the global chain ID
 func GetEthConnection(chainId int) *ethclient.Client {
 	rpc, ok := os.LookupEnv("RPC_ETH_URL")
 	if !ok {
@@ -17,17 +18,17 @@ func GetEthConnection(chainId int) *ethclient.Client {
 	}
 	switch chainId {
 	case 1:
-		rpc, ok = os.LookupEnv("RPC_ETH_URL")
+		rpc, ok = os.LookupEnv(rpcEthURL)
 	case 4:
-		rpc, ok = os.LookupEnv("RPC_RINKEBY_URL")
+		rpc, ok = os.LookupEnv(rpcRinkebyURL)
 	case 56:
-		rpc, ok = os.LookupEnv("RPC_BNB_URL")
+		rpc, ok = os.LookupEnv(rpcBscURL)
 	case 97:
-		rpc, ok = os.LookupEnv("RPC_BSC_TESTNET_URL")
+		rpc, ok = os.LookupEnv(rpcBscTestnet)
 	case 137:
-		rpc, ok = os.LookupEnv("RPC_POLYGON_URL")
+		rpc, ok = os.LookupEnv(rpcPolygonURL)
 	case 80001:
-		rpc, ok = os.LookupEnv("RPC_POLYGON_TESTNET_URL")
+		rpc, ok = os.LookupEnv(rpcPolygonTest)
 	}
 
 	if !ok {

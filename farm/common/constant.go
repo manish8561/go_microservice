@@ -1,6 +1,12 @@
 package common
 
 const (
+	rpcEthURL      = "RPC_ETH_URL"
+	rpcRinkebyURL  = "RPC_RINKEBY_URL"
+	rpcBscURL      = "RPC_BNB_URL"
+	rpcBscTestnet  = "RPC_BSC_TESTNET_URL"
+	rpcPolygonURL  = "RPC_POLYGON_URL"
+	rpcPolygonTest = "RPC_POLYGON_TESTNET_URL"
 	ErrInAggregate = "err in aggregate: "
 )
 

@@ -1,3 +1,17 @@
+// Package users provides HTTP route handlers and registration functions for user-related operations
+// such as registration, login, token refresh, profile retrieval, and password change.
+//
+// Functions:
+//
+//   - UsersRegister: Registers user-related routes (registration, login, refresh token, change password) to the provided Gin router group.
+//   - ProfileRegister: Registers the user profile retrieval route to the provided Gin router group.
+//   - ProfileRetrieve: Retrieves the authenticated user's profile from the request context and returns it as JSON.
+//   - UsersRegistration: Handles user registration by validating input, saving the user, and returning a success response.
+//   - UsersLogin: Handles user login, validates credentials, and returns JWT and refresh tokens upon success.
+//   - UsersRefreshToken: Handles refresh token requests, validates the refresh token, and issues a new access token.
+//   - ChangePassword: Allows authenticated users to change their password after validating the old password and ensuring the new password is different.
+//
+// Note: Some functions related to user profile following/unfollowing and user update/retrieve are commented out and not currently active.
 package users
 
 import (
@@ -115,7 +129,7 @@ func UsersLogin(c *gin.Context) {
 		"refresh_token": UpdateRefreshToken(userModel.ID.Hex()),
 	})
 }
-
+//
 func UsersRefreshToken(c *gin.Context) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`

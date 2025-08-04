@@ -242,7 +242,7 @@ func FindUserByRefreshToken(refreshToken string) (UserModel, error) {
 	}
 	return *person, nil
 }
-
+// UpdateRefreshToken updates the refresh token for a user and returns the new token
 func UpdateRefreshToken(userID string) string {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)

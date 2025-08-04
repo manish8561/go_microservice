@@ -53,6 +53,7 @@ func NewUserModelValidator() UserModelValidator {
 	return userModelValidator
 }
 
+// You can use this function to fill the validator with a UserModel, so that you can update the UserModel
 func NewUserModelValidatorFillWith(userModel UserModel) UserModelValidator {
 	userModelValidator := NewUserModelValidator()
 	userModelValidator.Firstname = userModel.Firstname
@@ -66,12 +67,17 @@ func NewUserModelValidatorFillWith(userModel UserModel) UserModelValidator {
 	return userModelValidator
 }
 
+// LoginValidator is used to validate the login request
 type LoginValidator struct {
 	Email     string    `form:"email" json:"email" binding:"required,email"`
 	Password  string    `form:"password" json:"password" binding:"required,min=8,max=255"`
 	userModel UserModel `json:"-"`
 }
 
+// Bind method binds the request data to the LoginValidator struct
+// It uses the common.Bind function to perform the binding
+// After binding, it sets the Email field of the userModel to the Email provided in the request
+// This allows the userModel to be used for further processing, such as finding the user
 func (v *LoginValidator) Bind(c *gin.Context) error {
 	err := common.Bind(c, v)
 	if err != nil {
@@ -88,11 +94,20 @@ func NewLoginValidator() LoginValidator {
 	return loginValidator
 }
 
+// ChangePasswordValidator is used to validate the change password request
+// It requires the old password and the new password to be provided
+// The new password must be at least 8 characters long and can be up to 255 characters long
+// The old password is used to verify the user's identity before allowing the password change
+// It is important to ensure that the old password is correct before changing the password
 type ChangePasswordValidator struct {
 	OldPassword string `form:"oldPassword" json:"oldPassword" binding:"required,min=8,max=255"`
 	Password    string `form:"password" json:"password" binding:"required,min=8,max=255"`
 }
 
+// Bind method binds the request data to the ChangePasswordValidator struct
+// It uses the common.Bind function to perform the binding
+// After binding, it sets the PasswordHash field of the userModel to the new password
+// This allows the userModel to be used for further processing, such as updating the user's password
 func (v *ChangePasswordValidator) Bind(c *gin.Context) error {
 	err := common.Bind(c, v)
 	if err != nil {

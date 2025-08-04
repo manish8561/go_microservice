@@ -116,12 +116,12 @@ func UsersLogin(c *gin.Context) {
 	userModel, err := FindOneUser(loginValidator.Email)
 
 	if err != nil {
-		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid  email or password")))
+		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("invalid  email or password")))
 		return
 	}
 
 	if userModel.checkPassword(loginValidator.Password) != nil {
-		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid email or password")))
+		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("invalid email or password")))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -187,7 +187,7 @@ func ChangePassword(c *gin.Context) {
 	userModel, err := FindOneUser(u.Email)
 
 	if err != nil {
-		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("Invalid  email or password")))
+		c.JSON(http.StatusForbidden, common.NewError("message", errors.New("invalid  email or password")))
 		return
 	}
 	//checking old password

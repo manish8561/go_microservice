@@ -129,7 +129,7 @@ func UsersLogin(c *gin.Context) {
 		"refresh_token": UpdateRefreshToken(userModel.ID.Hex()),
 	})
 }
-//
+
 func UsersRefreshToken(c *gin.Context) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
@@ -201,7 +201,7 @@ func ChangePassword(c *gin.Context) {
 		return
 	}
 	userModel.setPassword(changePasswordValidator.Password)
-
+	
 	res, err := ChangePasswordOne(&userModel)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"success": false, "error": err.Error()})

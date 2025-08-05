@@ -224,7 +224,10 @@ func ChangePasswordOne(data *UserModel) (*mongo.UpdateResult, error) {
 	return result, nil
 }
 
-// FindUserByRefreshToken finds a user by their refresh token and checks expiry
+// FindUserByRefreshToken retrieves a user by their refresh token.
+// It checks if the refresh token exists and is not expired.
+// It returns the user model and an error if the user is not found or the token is expired.
+// If the token is valid, it returns the user model and nil error.
 func FindUserByRefreshToken(refreshToken string) (UserModel, error) {
 	client := common.GetDB()
 	person := &UserModel{}
@@ -242,7 +245,12 @@ func FindUserByRefreshToken(refreshToken string) (UserModel, error) {
 	}
 	return *person, nil
 }
+
 // UpdateRefreshToken updates the refresh token for a user and returns the new token
+// It generates a new refresh token, updates the user's record in the database, and returns the new token.
+// It also sets the expiry for the refresh token to 7 days from now.
+// This function is typically called when a user logs in or refreshes their session.
+// It returns an empty string if there is an error during the process.
 func UpdateRefreshToken(userID string) string {
 	client := common.GetDB()
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection(CollectionName)

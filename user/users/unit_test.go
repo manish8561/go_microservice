@@ -14,7 +14,6 @@ package users
 // )
 
 // var image_url = "https://golang.org/doc/gopher/frontpage.png"
-// // var test_db *gorm.DB
 
 // func newUserModel() UserModel {
 // 	return UserModel{

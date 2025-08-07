@@ -1,5 +1,5 @@
 #!/bin/bash
-
+// This script checks if all Go files in the project are formatted according to `gofmt` standards.
 gofmt=$(govendor fmt +l)
 echo $gofmt
 

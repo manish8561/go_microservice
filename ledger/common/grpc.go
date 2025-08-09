@@ -25,7 +25,7 @@ func CallGRPCServer() {
 	endpoint, ok := os.LookupEnv("FARM_GRPC_SERVER_PORT")
 	fmt.Println("GRPC", endpoint)
 	if !ok {
-		log.Fatalf("end point not found to connect", endpoint)
+		log.Fatalf("end point not found to connect: %s", endpoint)
 	}
 	conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
 	if err != nil {

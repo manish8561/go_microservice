@@ -158,7 +158,7 @@ func GetBlockTransactions(chainId int, bN int64) (int64, error) {
 	fmt.Println("gprc result: ", len(r.Items), "chainId: ", chainId)
 
 	// Create an IPC based RPC connection to a remote node
-	conn := common.Get_Eth_Connection(chainId)
+	conn := common.GetEthConnection(chainId)
 
 	// to get latest blocknumber
 	header, err := conn.HeaderByNumber(context.Background(), nil)

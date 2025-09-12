@@ -29,6 +29,8 @@ func GetEthConnection(chainId int) *ethclient.Client {
 		rpc, ok = os.LookupEnv("RPC_POLYGON_URL")
 	case 80001:
 		rpc, ok = os.LookupEnv("RPC_POLYGON_TESTNET_URL")
+	default:
+		rpc, ok = os.LookupEnv("RPC_RINKEBY_URL")
 	}
 
 	if !ok {

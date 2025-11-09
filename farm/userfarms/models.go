@@ -156,11 +156,11 @@ func GetTotal(status string, filters Filters) int64 {
 	opts := options.Aggregate()
 
 	cursor, err := collection.Aggregate(ctx, pipeline, opts)
-
 	if err != nil {
 		return 0
 	}
 	defer cursor.Close(ctx)
+
 	err = cursor.All(ctx, &records)
 	if err != nil {
 		fmt.Println("Error fetching records:", err)
@@ -172,7 +172,6 @@ func GetTotal(status string, filters Filters) int64 {
 
 	//convert int32
 	num := int64((records[0]["count"]).(int32))
-	// n := int64(num)
 	return num
 }
 

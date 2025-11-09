@@ -167,5 +167,4 @@ func InitTestDB() interface{} {
 	var obj interface{}
 
 	return obj
-
 }

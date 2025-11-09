@@ -112,7 +112,7 @@ type UserModel struct {
 	// Image              *string
 	PasswordHash string `json:"-"` // to hide filed in json
 }
-
+// check password function
 func (u *UserModel) checkPassword(password string) error {
 	bytePassword := []byte(password)
 	byteHashedPassword := []byte(u.PasswordHash)

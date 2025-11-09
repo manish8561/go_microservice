@@ -159,50 +159,10 @@ func GetProfile(ID string) (UserModel, error) {
 	return *person, err
 }
 
-// You could update properties of an UserModel to database returning with error info.
-//  err := db.Model(userModel).Update(UserModel{Username: "wangzitian0"}).Error
-// func (model *UserModel) Update(data interface{}) error {
-// 	db := common.GetDB()
-// 	err := db.Model(model).Update(data).Error
-// 	return err
-// }
-
-// You could add a following relationship as userModel1 following userModel2
-// 	err = userModel1.following(userModel2)
-// func (u UserModel) following(v UserModel) error {
-// 	db := common.GetDB()
-// 	var follow FollowModel
-// 	err := db.FirstOrCreate(&follow, &FollowModel{
-// 		FollowingID:  v.ID,
-// 		FollowedByID: u.ID,
-// 	}).Error
-// 	return err
-// }
-
-// You could check whether  userModel1 following userModel2
-// 	followingBool = myUserModel.isFollowing(self.UserModel)
-// func (u UserModel) isFollowing(v UserModel) bool {
-// 	db := common.GetDB()
-// 	var follow FollowModel
-// 	db.Where(FollowModel{
-// 		FollowingID:  v.ID,
-// 		FollowedByID: u.ID,
-// 	}).First(&follow)
-// 	return follow.ID != 0
-// }
-
-// You could delete a following relationship as userModel1 following userModel2
-//
-//	err = userModel1.unFollowing(userModel2)
-//
-//	func (u UserModel) unFollowing(v UserModel) error {
-//		db := common.GetDB()
-//		err := db.Where(FollowModel{
-//			FollowingID:  v.ID,
-//			FollowedByID: u.ID,
-//		}).Delete(FollowModel{}).Error
-//		return err
-//	}
+// ChangePasswordOne updates the password hash for a user.
+// It takes a UserModel containing the user ID and the new password hash.
+// The function updates the user's password hash and modification timestamp in the database.
+// It returns the result of the update operation and an error if any occurred during the process.
 func ChangePasswordOne(data *UserModel) (*mongo.UpdateResult, error) {
 	client := common.GetDB()
 

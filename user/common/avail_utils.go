@@ -63,8 +63,6 @@ func InitVariables() {
 	NBRandomPassword = randomPassword
 }
 
-// A Util function to generate jwt_token which can be used in the request header
-
 // CustomClaims extends the default claims
 type CustomClaims struct {
 	ID   string `json:"id"`
@@ -102,7 +100,6 @@ func GenerateRefreshToken() (string, error) {
 }
 
 // My own Error type that will help return my customized Error info
-//	{"database": {"hello":"no such table", error: "not_exists"}}
 type CommonError struct {
 	Errors map[string]interface{} `json:"errors"`
 }
@@ -128,7 +125,6 @@ func NewValidatorError(err error) CommonError {
 	errs := err.(validator.ValidationErrors)
 	for _, v := range errs {
 		// can translate each error one at a time.
-		//fmt.Println("gg",v.NameNamespace)
 		if v.Param != "" {
 			res.Errors[v.Field] = fmt.Sprintf("{%v: %v}", v.Tag, v.Param)
 		} else {
@@ -148,7 +144,6 @@ func NewError(key string, err error) CommonError {
 }
 
 // Changed the c.MustBindWith() ->  c.ShouldBindWith().
-// I don't want to auto return 400 when error happened.
 // origin function is here: https://github.com/gin-gonic/gin/blob/master/context.go
 func Bind(c *gin.Context, obj interface{}) error {
 	b := binding.Default(c.Request.Method, c.ContentType())
@@ -205,13 +200,11 @@ func ExtractTokenFromHeader(c *gin.Context) string {
 }
 
 // You can custom middlewares yourself as the doc: https://github.com/gin-gonic/gin#custom-middleware
-//
-//	r.Use(AuthMiddleware(true))
 func respondUnauthorized(c *gin.Context, message string) {
 	c.JSON(http.StatusUnauthorized, gin.H{"message": message})
 	c.AbortWithError(http.StatusUnauthorized, errors.New(message))
 }
-
+// A helper function to process token and user
 func processTokenAndUser(c *gin.Context, token string, auto401 bool) bool {
 	claims, err := ValidateToken(token)
 	if err != nil {
@@ -235,7 +228,7 @@ func processTokenAndUser(c *gin.Context, token string, auto401 bool) bool {
 	UpdateContextUserModel(c, MyUserID, &user)
 	return true
 }
-
+// AuthMiddleware is a Gin middleware for authentication
 func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !auto401 {

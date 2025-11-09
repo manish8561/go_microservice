@@ -17,7 +17,7 @@ type Server struct {
 
 // initialize function
 func init() {
-	Call_GRPC_Server()
+	CallGRPCServer()
 }
 
 // SayHello implements helloworld.GreeterServer(grpc)
@@ -26,7 +26,7 @@ func (s *Server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
-//send user details
+// send user details
 func (s *Server) GetUserDetails(ctx context.Context, in *pb.UserRequest) (*pb.UserReply, error) {
 	// log.Printf("Received ID: %v", in.GetId())
 	user, err := GetUserProfile(in.GetId())
@@ -45,7 +45,7 @@ func (s *Server) GetUserDetails(ctx context.Context, in *pb.UserRequest) (*pb.Us
 	}, nil
 }
 
-func Call_GRPC_Server() {
+func CallGRPCServer() {
 	// grpc Server as user
 	// grpc start
 	endpoint, ok := os.LookupEnv("USER_GRPC_SERVER_PORT")

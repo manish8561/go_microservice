@@ -161,7 +161,6 @@ func CallGRPCServer() {
 		log.Fatalf("could not greet: %v", err)
 	}
 	log.Printf("Greeting: %s", rr.GetMessage())
-
 }
 
 // get user client connection for user details
